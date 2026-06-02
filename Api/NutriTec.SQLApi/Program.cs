@@ -1,29 +1,24 @@
 using NutriTec.Application;
+using NutriTec.Infrastructure.Sql;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-// Añadir referencias de Inyección de Dependencias
-builder.Services.AddApplicationServices();
-// builder.Services.AddSqlInfrastructureServices(builder.Configuration); // Descomentar cuando implementes DI en Infra
+// La API SQL compone únicamente la lógica compartida y el adaptador relacional.
+builder.Services.AddNutriTecApplication();
+builder.Services.AddNutriTecSqlInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
