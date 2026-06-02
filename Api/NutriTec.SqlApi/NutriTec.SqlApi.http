@@ -1,0 +1,3 @@
+@NutriTec.SqlApi_HostAddress = http://localhost:5255
+
+# Los endpoints SQL se agregarán gradualmente al implementar sus módulos funcionales.

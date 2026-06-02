@@ -5,34 +5,34 @@ using NutriTec.Infrastructure.Sql.Persistence;
 
 namespace NutriTec.Infrastructure.Sql;
 
-/// <summary>
-/// Descripción:
-/// Expone el registro de dependencias exclusivas de la persistencia SQL Server.
-///
-/// Entradas:
-/// Recibe la colección de servicios y la configuración del host de la API SQL.
-///
-/// Salidas:
-/// Retorna la colección con Entity Framework Core configurado para SQL Server.
-///
-/// Restricciones:
-/// Este punto de composición solo debe invocarse desde NutriTec.SqlApi.
-/// </summary>
+/*
+ * Descripción:
+ * Expone el registro de dependencias exclusivas de la persistencia SQL Server.
+ *
+ * Entradas:
+ * Recibe la colección de servicios y la configuración del host de la API SQL.
+ *
+ * Salidas:
+ * Retorna la colección con Entity Framework Core configurado para SQL Server.
+ *
+ * Restricciones:
+ * Este punto de composición solo debe invocarse desde NutriTec.SqlApi.
+ */
 public static class DependencyInjection
 {
-    /// <summary>
-    /// Descripción:
-    /// Registra el contexto relacional de NutriTEC con el proveedor de Entity Framework Core para SQL Server.
-    ///
-    /// Entradas:
-    /// Recibe la colección de servicios y una configuración que debe incluir la cadena NutriTecSqlServer.
-    ///
-    /// Salidas:
-    /// Retorna la colección para permitir una configuración encadenada.
-    ///
-    /// Restricciones:
-    /// La cadena de conexión debe suministrarse mediante configuración externa o placeholders de desarrollo; nunca debe codificarse como secreto en C#.
-    /// </summary>
+    /*
+     * Descripción:
+     * Registra el contexto relacional de NutriTEC con el proveedor de Entity Framework Core para SQL Server.
+     *
+     * Entradas:
+     * Recibe la colección de servicios y una configuración que debe incluir la cadena NutriTecSqlServer.
+     *
+     * Salidas:
+     * Retorna la colección para permitir una configuración encadenada.
+     *
+     * Restricciones:
+     * La cadena de conexión debe suministrarse mediante configuración externa o placeholders de desarrollo; nunca debe codificarse como secreto en C#.
+     */
     public static IServiceCollection AddNutriTecSqlInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)

@@ -1,6 +1,0 @@
-@NutriTec.SqlApi_HostAddress = http://localhost:5255
-
-GET {{NutriTec.SqlApi_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
