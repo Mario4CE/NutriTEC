@@ -60,16 +60,6 @@ Los archivos `appsettings.Development.json` contienen valores locales de ejemplo
 
 Antes de iniciar la API SQL, configure `ConnectionStrings:NutriTecSqlServer`. Antes de iniciar la API Mongo, configure `MongoDb:ConnectionString` y `MongoDb:DatabaseName`. Para secretos locales puede utilizar variables de entorno o .NET User Secrets.
 
-## Inicialización SQL Server
-
-Ejecute los scripts versionados en orden ascendente. El primer script disponible crea la tabla de productos:
-
-```text
-Database/SqlServer/Tables/001_Productos.sql
-```
-
-Los stored procedures, vistas, funciones y triggers requeridos se agregarán gradualmente con los módulos que los necesiten.
-
 ## Ejecutar las APIs
 
 ```bash
@@ -111,7 +101,7 @@ Los archivos `.http` dentro de cada API incluyen solicitudes de ejemplo para rea
 - La documentación interna relevante utiliza bloques `/* ... */` con las secciones `Descripción`, `Entradas`, `Salidas` y `Restricciones`.
 - No se versionan contraseñas ni cadenas de conexión reales.
 
-## Próximos pasos sugeridos
+## Próximos pasos
 
 1. Agregar el caso de uso administrativo para aprobar productos.
 2. Incorporar triggers, vistas y stored procedures SQL Server conforme se implementen los módulos relacionales.
