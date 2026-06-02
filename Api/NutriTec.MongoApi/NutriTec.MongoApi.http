@@ -1,0 +1,6 @@
+@NutriTec.MongoApi_HostAddress = http://localhost:5272
+
+GET {{NutriTec.MongoApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
