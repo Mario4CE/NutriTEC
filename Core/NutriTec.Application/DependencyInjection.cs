@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using NutriTec.Application.Abstractions.Services;
+using NutriTec.Application.Productos;
 using NutriTec.Application.Retroalimentaciones;
 
 namespace NutriTec.Application;
@@ -34,6 +35,7 @@ public static class DependencyInjection
      */
     public static IServiceCollection AddNutriTecApplication(this IServiceCollection services)
     {
+        services.AddScoped<IProductoService, ProductoService>();
         services.AddScoped<IRetroalimentacionService, RetroalimentacionService>();
 
         return services;

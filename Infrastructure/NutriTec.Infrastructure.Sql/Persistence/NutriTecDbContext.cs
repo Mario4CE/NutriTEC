@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using NutriTec.Domain.Productos;
 
 namespace NutriTec.Infrastructure.Sql.Persistence;
 
@@ -10,9 +11,28 @@ namespace NutriTec.Infrastructure.Sql.Persistence;
  * Recibe las opciones de configuración preparadas por el contenedor de inyección de dependencias.
  *
  * Salidas:
- * Proporciona el punto central para consultar y persistir entidades relacionales cuando se agreguen los módulos funcionales.
+ * Proporciona acceso relacional a los agregados SQL configurados.
  *
  * Restricciones:
- * Debe utilizarse únicamente desde la infraestructura SQL; los controllers no deben acceder directamente a este contexto.
+ * Debe utilizarse únicamente desde Infrastructure.Sql; los controllers no deben acceder directamente al contexto.
  */
-public sealed class NutriTecDbContext(DbContextOptions<NutriTecDbContext> options) : DbContext(options);
+public sealed class NutriTecDbContext(DbContextOptions<NutriTecDbContext> options) : DbContext(options)
+{
+    public DbSet<Producto> Productos => Set<Producto>();
+
+    /*
+     * Descripción:
+     * Aplica automáticamente las configuraciones relacionales del ensamblado.
+     * Entradas:
+     * Recibe el constructor del modelo EF Core.
+     * Salidas:
+     * Completa el modelo utilizado por NutriTecDbContext.
+     * Restricciones:
+     * Las configuraciones deben implementar IEntityTypeConfiguration<T>.
+     */
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(NutriTecDbContext).Assembly);
+        base.OnModelCreating(modelBuilder);
+    }
+}

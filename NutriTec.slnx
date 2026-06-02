@@ -1,2 +1,15 @@
 <Solution>
+  <Folder Name="/Api/">
+    <Project Path="Api/NutriTec.MongoApi/NutriTec.MongoApi.csproj" />
+    <Project Path="Api/NutriTec.SqlApi/NutriTec.SqlApi.csproj" />
+  </Folder>
+  <Folder Name="/Core/">
+    <Project Path="Core/NutriTec.Application/NutriTec.Application.csproj" />
+    <Project Path="Core/NutriTec.Contracts/NutriTec.Contracts.csproj" />
+    <Project Path="Core/NutriTec.Domain/NutriTec.Domain.csproj" />
+  </Folder>
+  <Folder Name="/Infrastructure/">
+    <Project Path="Infrastructure/NutriTec.Infrastructure.Mongo/NutriTec.Infrastructure.Mongo.csproj" />
+    <Project Path="Infrastructure/NutriTec.Infrastructure.Sql/NutriTec.Infrastructure.Sql.csproj" />
+  </Folder>
 </Solution>

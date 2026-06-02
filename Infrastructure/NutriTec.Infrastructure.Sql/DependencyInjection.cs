@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NutriTec.Application.Abstractions.Persistence;
 using NutriTec.Infrastructure.Sql.Persistence;
+using NutriTec.Infrastructure.Sql.Repositories;
 
 namespace NutriTec.Infrastructure.Sql;
 
@@ -42,6 +44,7 @@ public static class DependencyInjection
                 "No se configuró la cadena de conexión 'ConnectionStrings:NutriTecSqlServer'.");
 
         services.AddDbContext<NutriTecDbContext>(options => options.UseSqlServer(connectionString));
+        services.AddScoped<IProductoRepository, ProductoSqlRepository>();
 
         return services;
     }
