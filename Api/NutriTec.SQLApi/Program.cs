@@ -1,6 +1,12 @@
+using NutriTec.Application;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+// Añadir referencias de Inyección de Dependencias
+builder.Services.AddApplicationServices();
+// builder.Services.AddSqlInfrastructureServices(builder.Configuration); // Descomentar cuando implementes DI en Infra
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
