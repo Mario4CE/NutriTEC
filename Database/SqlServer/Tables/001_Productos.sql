@@ -11,6 +11,12 @@ Crea dbo.Productos y su restricción única de código de barras.
 Restricciones:
 Ejecutar una sola vez durante la inicialización del esquema SQL Server.
 */
+
+
+/// <summary>
+/// Esta es un tabla de ejmplo de como se va a trabajar, si se tiene que hacer algun cambio se hace ya que aun no esta crada la base de datos. La tabla es de referencia
+/// </summary>
+
 CREATE TABLE dbo.Productos
 (
     Id UNIQUEIDENTIFIER NOT NULL,
