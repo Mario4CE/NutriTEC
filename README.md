@@ -6,14 +6,14 @@ NutriTEC es una plataforma para acompañar hábitos de nutrición saludable. Sus
 
 El repositorio contiene una arquitectura inicial de APIs separadas por motor de persistencia, con lógica compartida en capas reutilizables:
 
-- **API SQL Server:** primer corte vertical del módulo de productos.
+- **API SQL Server:** CRUD inicial de productos y revisión administrativa de productos pendientes.
 - **API MongoDB:** primer corte vertical del módulo de retroalimentaciones tipo foro.
 - **Application:** servicios e interfaces compartidos, sin dependencia de bases de datos concretas.
 - **Domain:** entidades centrales del dominio.
 - **Contracts:** DTOs y respuestas HTTP estandarizadas.
 - **Infrastructure:** adaptadores independientes para SQL Server y MongoDB.
 
-Todavía no están implementados Auth, clientes, nutricionistas, recetas, planes alimenticios, consumo diario, administración ni reportes.
+Todavía no están implementados Auth, clientes, nutricionistas, recetas, planes alimenticios, consumo diario ni reportes. El módulo administrativo solo incluye por ahora la revisión de productos.
 
 ## Arquitectura
 
@@ -92,6 +92,13 @@ dotnet run --project Api/NutriTec.MongoApi/NutriTec.MongoApi.csproj
 | `PUT` | `/api/productos/{idProducto}` | Edita un producto. |
 | `DELETE` | `/api/productos/{idProducto}` | Elimina un producto. |
 
+### Administración de productos — SQL Server
+
+| Método | Ruta | Descripción |
+| --- | --- | --- |
+| `GET` | `/api/administracion/productos/pendientes` | Lista productos pendientes de aprobación. |
+| `PUT` | `/api/administracion/productos/{idProducto}/aprobacion` | Aprueba un producto pendiente. |
+
 ### Retroalimentaciones — MongoDB
 
 | Método | Ruta | Descripción |
@@ -113,7 +120,7 @@ Los archivos `.http` dentro de cada API incluyen solicitudes de ejemplo para rea
 
 ## Próximos pasos sugeridos
 
-1. Agregar el caso de uso administrativo para aprobar productos.
-2. Incorporar triggers, vistas y stored procedures SQL Server conforme se implementen los módulos relacionales.
-3. Implementar Auth con contraseñas hasheadas y JWT.
-4. Agregar pruebas automatizadas cuando el entorno de desarrollo incluya el SDK de .NET.
+1. Implementar Auth con contraseñas hasheadas y JWT.
+2. Agregar clientes y nutricionistas como módulos relacionales.
+3. Incorporar pruebas automatizadas cuando el entorno de desarrollo incluya el SDK de .NET.
+4. Mantener scripts, vistas, funciones y procedimientos de base de datos fuera del alcance de los incrementos exclusivos del API.

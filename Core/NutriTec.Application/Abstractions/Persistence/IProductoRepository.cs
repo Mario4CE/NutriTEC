@@ -38,6 +38,12 @@ public interface IProductoRepository
     /* Descripción: Persiste cambios. Entradas: Agregado y cancelación. Salidas: Confirmación. Restricciones: Recibe reglas ya aplicadas. */
     Task<bool> ActualizarAsync(Producto producto, CancellationToken cancellationToken);
 
+    /* Descripción: Lista productos pendientes. Entradas: Cancelación. Salidas: Productos no aprobados. Restricciones: No modifica datos. */
+    Task<IReadOnlyCollection<Producto>> ListarPendientesAsync(CancellationToken cancellationToken);
+
+    /* Descripción: Aprueba un producto pendiente. Entradas: Identificador y cancelación. Salidas: Confirmación. Restricciones: No modifica productos ya aprobados. */
+    Task<bool> AprobarAsync(Guid idProducto, CancellationToken cancellationToken);
+
     /* Descripción: Elimina por identificador. Entradas: Identificador y cancelación. Salidas: Confirmación. Restricciones: Devuelve falso si no existe. */
     Task<bool> EliminarAsync(Guid idProducto, CancellationToken cancellationToken);
 }

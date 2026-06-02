@@ -136,6 +136,46 @@ public sealed class ProductoSqlRepository(NutriTecDbContext context) : IProducto
 
     /*
      * Descripción:
+     * Lista productos que todavía requieren aprobación administrativa.
+     * Entradas:
+     * Recibe token de cancelación.
+     * Salidas:
+     * Devuelve productos pendientes ordenados por fecha de creación.
+     * Restricciones:
+     * Utiliza una consulta sin seguimiento y no modifica datos.
+     */
+    public async Task<IReadOnlyCollection<Producto>> ListarPendientesAsync(CancellationToken cancellationToken)
+    {
+        return await context.Productos
+            .AsNoTracking()
+            .Where(producto => !producto.EstaAprobado)
+            .OrderBy(producto => producto.FechaCreacionUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    /*
+     * Descripción:
+     * Cambia atómicamente un producto pendiente al estado aprobado.
+     * Entradas:
+     * Recibe identificador del producto y token de cancelación.
+     * Salidas:
+     * Devuelve verdadero cuando actualiza exactamente un producto pendiente.
+     * Restricciones:
+     * No vuelve a escribir productos aprobados y evita cargar la entidad completa.
+     */
+    public async Task<bool> AprobarAsync(Guid idProducto, CancellationToken cancellationToken)
+    {
+        var productosActualizados = await context.Productos
+            .Where(producto => producto.Id == idProducto && !producto.EstaAprobado)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(producto => producto.EstaAprobado, true),
+                cancellationToken);
+
+        return productosActualizados == 1;
+    }
+
+    /*
+     * Descripción:
      * Elimina un producto por identificador.
      * Entradas:
      * Recibe identificador y token de cancelación.
