@@ -51,3 +51,12 @@ Content-Type: application/json
 ###
 
 DELETE {{NutriTec.SqlApi_HostAddress}}/api/productos/{{ProductoId}}
+
+###
+
+GET {{NutriTec.SqlApi_HostAddress}}/api/administracion/productos/pendientes
+Accept: application/json
+
+###
+
+PUT {{NutriTec.SqlApi_HostAddress}}/api/administracion/productos/{{ProductoId}}/aprobacion

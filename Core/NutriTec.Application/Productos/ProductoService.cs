@@ -50,7 +50,7 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
             FechaCreacionUtc = DateTime.UtcNow
         };
 
-        return Mapear(await repository.CrearAsync(producto, cancellationToken));
+        return ProductoMapper.Mapear(await repository.CrearAsync(producto, cancellationToken));
     }
 
     /*
@@ -67,7 +67,7 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
     {
         ValidarIdentificador(idProducto);
         var producto = await repository.ObtenerPorIdAsync(idProducto, cancellationToken);
-        return producto is null ? null : Mapear(producto);
+        return producto is null ? null : ProductoMapper.Mapear(producto);
     }
 
     /*
@@ -83,7 +83,7 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
     public async Task<IReadOnlyCollection<ProductoResponse>> ListarAsync(CancellationToken cancellationToken)
     {
         var productos = await repository.ListarAsync(cancellationToken);
-        return productos.Select(Mapear).ToArray();
+        return productos.Select(ProductoMapper.Mapear).ToArray();
     }
 
     /*
@@ -100,7 +100,7 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
     {
         ValidarTexto(nombre, nameof(nombre));
         var productos = await repository.BuscarPorNombreAsync(nombre.Trim(), cancellationToken);
-        return productos.Select(Mapear).ToArray();
+        return productos.Select(ProductoMapper.Mapear).ToArray();
     }
 
     /*
@@ -117,7 +117,7 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
     {
         ValidarTexto(codigoBarras, nameof(codigoBarras));
         var producto = await repository.ObtenerPorCodigoBarrasAsync(codigoBarras.Trim(), cancellationToken);
-        return producto is null ? null : Mapear(producto);
+        return producto is null ? null : ProductoMapper.Mapear(producto);
     }
 
     /*
@@ -209,19 +209,5 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
         {
             throw new ArgumentException("El texto no puede estar vacío.", nombreParametro);
         }
-    }
-
-    private static ProductoResponse Mapear(Producto producto)
-    {
-        return new ProductoResponse(
-            producto.Id,
-            producto.Nombre,
-            producto.CodigoBarras,
-            producto.Calorias,
-            producto.Proteinas,
-            producto.Carbohidratos,
-            producto.Grasas,
-            producto.EstaAprobado,
-            producto.FechaCreacionUtc);
     }
 }
