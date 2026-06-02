@@ -1,13 +1,44 @@
 using Microsoft.Extensions.DependencyInjection;
+using NutriTec.Application.Abstractions.Services;
+using NutriTec.Application.Administracion;
+using NutriTec.Application.Productos;
+using NutriTec.Application.Retroalimentaciones;
 
 namespace NutriTec.Application;
 
+/*
+ * Descripción:
+ * Expone el punto de composición de la capa de aplicación compartida por las APIs de NutriTEC.
+ *
+ * Entradas:
+ * Recibe la colección de servicios configurada por el host ASP.NET Core.
+ *
+ * Salidas:
+ * Retorna la misma colección con los servicios de aplicación registrados.
+ *
+ * Restricciones:
+ * No debe registrar dependencias específicas de SQL Server ni de MongoDB.
+ */
 public static class DependencyInjection
 {
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    /*
+     * Descripción:
+     * Registra los servicios y casos de uso compartidos de NutriTEC.
+     *
+     * Entradas:
+     * Recibe la colección de servicios del contenedor de inyección de dependencias.
+     *
+     * Salidas:
+     * Retorna la colección para permitir una configuración encadenada.
+     *
+     * Restricciones:
+     * No registra repositorios concretos ni conexiones a bases de datos.
+     */
+    public static IServiceCollection AddNutriTecApplication(this IServiceCollection services)
     {
-        // Aquí puedes registrar los servicios de aplicación, casos de uso (o CQRS/MediatR), validadores, etc.
-        // services.AddScoped<IAlgunServicio, AlgunServicio>();
+        services.AddScoped<IAdministracionService, AdministracionService>();
+        services.AddScoped<IProductoService, ProductoService>();
+        services.AddScoped<IRetroalimentacionService, RetroalimentacionService>();
 
         return services;
     }

@@ -1,29 +1,28 @@
 using NutriTec.Application;
+using NutriTec.Infrastructure.Mongo;
+using NutriTec.MongoApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-// Añadir referencias de Inyección de Dependencias
-builder.Services.AddApplicationServices();
-// builder.Services.AddMongoInfrastructureServices(builder.Configuration); // Descomentar cuando implementes DI en Infra
+// La API Mongo compone únicamente la lógica compartida y el adaptador documental.
+builder.Services.AddNutriTecApplication();
+builder.Services.AddNutriTecMongoInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddExceptionHandler<ArgumentExceptionHandler>();
+builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
+app.UseExceptionHandler();
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
