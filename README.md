@@ -114,3 +114,6 @@ Los archivos `.http` dentro de cada API incluyen solicitudes de ejemplo para rea
 2. Agregar clientes y nutricionistas como módulos relacionales.
 3. Incorporar pruebas automatizadas cuando el entorno de desarrollo incluya el SDK de .NET.
 4. Mantener scripts, vistas, funciones y procedimientos de base de datos fuera del alcance de los incrementos exclusivos del API.
+
+
+Detalle importante de ir actualizando el readme a medida que se avanza en el desarrollo para mantener la documentación alineada con el estado actual del proyecto. Esto facilitará la colaboración y el onboarding de nuevos desarrolladores.
