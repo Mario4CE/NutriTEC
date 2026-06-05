@@ -12,8 +12,10 @@ El repositorio contiene una arquitectura inicial de APIs separadas por motor de 
 - **Domain:** entidades centrales del dominio.
 - **Contracts:** DTOs y respuestas HTTP estandarizadas.
 - **Infrastructure:** adaptadores independientes para SQL Server y MongoDB.
+- **Auth inicial:** contratos y abstracciones base para login, registro y hashing, todavía sin endpoints ni persistencia concreta.
+- **Documentación interna:** archivos `README.md` por carpeta relevante dentro de `Api/`, `Core/` e `Infrastructure/` para explicar responsabilidades y restricciones.
 
-Todavía no están implementados Auth, clientes, nutricionistas, recetas, planes alimenticios, consumo diario ni reportes. El módulo administrativo solo incluye por ahora la revisión de productos.
+Todavía no están implementados los endpoints de Auth, JWT, clientes, nutricionistas, recetas, planes alimenticios, consumo diario ni reportes. El módulo administrativo solo incluye por ahora la revisión de productos.
 
 ## Arquitectura
 
@@ -48,6 +50,20 @@ Cada API registra únicamente su adaptador de persistencia:
 - `NutriTec.MongoApi` registra `AddNutriTecMongoInfrastructure()`.
 - Ambas APIs reutilizan `AddNutriTecApplication()`.
 
+
+## Documentación interna por carpeta
+
+Además del README principal, el repositorio incluye archivos `README.md` internos dentro de `Api/`, `Core/` e `Infrastructure/`. Estos documentos explican qué responsabilidad tiene cada carpeta y qué restricciones deben respetarse al extender el proyecto.
+
+Ejemplos relevantes:
+
+- `Api/README.md`: describe la responsabilidad de los proyectos ASP.NET Core y recuerda que los controllers no acceden directamente a bases de datos.
+- `Core/README.md`: resume el núcleo compartido del sistema y su independencia frente a infraestructura concreta.
+- `Core/NutriTec.Contracts/Autenticacion/README.md`: explica los DTOs públicos iniciales de autenticación.
+- `Infrastructure/README.md`: documenta los adaptadores concretos y la separación entre SQL Server y MongoDB.
+
+Cuando se agregue una carpeta nueva dentro del alcance del API o sus capas de soporte, debe incluirse un README breve que describa responsabilidades y restricciones.
+
 ## Requisitos locales
 
 - .NET SDK 10.
@@ -67,6 +83,18 @@ dotnet restore NutriTec.slnx
 dotnet run --project Api/NutriTec.SqlApi/NutriTec.SqlApi.csproj
 dotnet run --project Api/NutriTec.MongoApi/NutriTec.MongoApi.csproj
 ```
+
+## Autenticación inicial
+
+El proyecto ya cuenta con contratos y abstracciones iniciales para comenzar Auth de forma gradual:
+
+- `LoginRequest` y `LoginResponse` definen la solicitud y respuesta segura de login.
+- `RegistrarClienteRequest` y `RegistrarNutricionistaRequest` definen los datos mínimos de registro.
+- `IAuthService` define los casos de uso esperados para login y registro.
+- `IPasswordHasher` separa la generación y validación de hashes de una implementación concreta.
+- `IAuthRepository`, `CredencialAutenticacion` y `NuevoUsuarioAutenticacion` expresan la persistencia mínima requerida sin acoplar Application a SQL Server.
+
+Este primer corte no implementa `AuthController`, JWT, hash concreto, repositorio SQL concreto ni cambios de base de datos. Las contraseñas no deben persistirse en texto plano y los hashes no deben exponerse al frontend.
 
 ## Endpoints implementados
 
@@ -110,10 +138,11 @@ Los archivos `.http` dentro de cada API incluyen solicitudes de ejemplo para rea
 
 ## Próximos pasos
 
-1. Implementar Auth con contraseñas hasheadas y JWT.
-2. Agregar clientes y nutricionistas como módulos relacionales.
-3. Incorporar pruebas automatizadas cuando el entorno de desarrollo incluya el SDK de .NET.
-4. Mantener scripts, vistas, funciones y procedimientos de base de datos fuera del alcance de los incrementos exclusivos del API.
-
-
-Detalle importante de ir actualizando el readme a medida que se avanza en el desarrollo para mantener la documentación alineada con el estado actual del proyecto. Esto facilitará la colaboración y el onboarding de nuevos desarrolladores.
+1. Implementar `AuthService` usando `IAuthRepository` e `IPasswordHasher`.
+2. Agregar una implementación concreta y segura de hashing de contraseñas.
+3. Implementar la persistencia SQL concreta de autenticación cuando exista el soporte relacional correspondiente.
+4. Agregar `AuthController` y endpoints de login/registro después de completar servicio e infraestructura.
+5. Incorporar JWT en un incremento posterior, sin exponer secretos reales en código ni configuración versionada.
+6. Agregar clientes y nutricionistas como módulos relacionales.
+7. Incorporar pruebas automatizadas cuando el entorno de desarrollo incluya el SDK de .NET.
+8. Mantener scripts, vistas, funciones y procedimientos de base de datos fuera del alcance de los incrementos exclusivos del API.
