@@ -13,6 +13,7 @@ namespace NutriTec.Domain.Retroalimentaciones;
  * Restricciones:
  * Debe contener participantes válidos y al menos el mensaje inicial al momento de su creación.
  */
+
 public sealed class Retroalimentacion
 {
     public Guid Id { get; init; }

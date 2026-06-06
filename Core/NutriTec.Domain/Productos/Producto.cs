@@ -13,6 +13,7 @@ namespace NutriTec.Domain.Productos;
  * Restricciones:
  * Los productos nuevos deben permanecer pendientes de aprobación hasta que un administrador los revise.
  */
+
 public sealed class Producto
 {
     public Guid Id { get; set; }
