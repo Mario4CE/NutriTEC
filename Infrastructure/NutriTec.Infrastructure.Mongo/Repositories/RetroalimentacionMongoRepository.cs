@@ -17,10 +17,13 @@ namespace NutriTec.Infrastructure.Mongo.Repositories;
  * Restricciones:
  * Es una implementación exclusiva de Infrastructure.Mongo; Application depende únicamente de la interfaz.
  */
+
 public sealed class RetroalimentacionMongoRepository(IMongoDatabase database) : IRetroalimentacionRepository
 {
     private const string CollectionName = "Retroalimentaciones";
     private readonly IMongoCollection<Retroalimentacion> _collection = database.GetCollection<Retroalimentacion>(CollectionName);
+
+
 
     /*
      * Descripción:
@@ -35,6 +38,7 @@ public sealed class RetroalimentacionMongoRepository(IMongoDatabase database) : 
      * Restricciones:
      * El servicio de aplicación debe validar el agregado antes de invocar este método.
      */
+
     public async Task<Retroalimentacion> CrearAsync(
         Retroalimentacion retroalimentacion,
         CancellationToken cancellationToken)
@@ -42,6 +46,8 @@ public sealed class RetroalimentacionMongoRepository(IMongoDatabase database) : 
         await _collection.InsertOneAsync(retroalimentacion, cancellationToken: cancellationToken);
         return retroalimentacion;
     }
+
+
 
     /*
      * Descripción:
@@ -56,6 +62,7 @@ public sealed class RetroalimentacionMongoRepository(IMongoDatabase database) : 
      * Restricciones:
      * No aplica reglas de negocio ni transforma DTOs.
      */
+
     public async Task<IReadOnlyCollection<Retroalimentacion>> ObtenerPorPacienteAsync(
         Guid idPaciente,
         CancellationToken cancellationToken)
@@ -65,6 +72,7 @@ public sealed class RetroalimentacionMongoRepository(IMongoDatabase database) : 
             .SortByDescending(retroalimentacion => retroalimentacion.FechaCreacionUtc)
             .ToListAsync(cancellationToken);
     }
+
 
     /*
      * Descripción:
@@ -79,6 +87,7 @@ public sealed class RetroalimentacionMongoRepository(IMongoDatabase database) : 
      * Restricciones:
      * No aplica reglas de negocio ni transforma DTOs.
      */
+
     public async Task<IReadOnlyCollection<Retroalimentacion>> ObtenerPorNutricionistaAsync(
         Guid idNutricionista,
         CancellationToken cancellationToken)
@@ -88,6 +97,8 @@ public sealed class RetroalimentacionMongoRepository(IMongoDatabase database) : 
             .SortByDescending(retroalimentacion => retroalimentacion.FechaCreacionUtc)
             .ToListAsync(cancellationToken);
     }
+
+
 
     /*
      * Descripción:
@@ -102,6 +113,7 @@ public sealed class RetroalimentacionMongoRepository(IMongoDatabase database) : 
      * Restricciones:
      * Usa Push para evitar reemplazar el documento completo y reducir conflictos concurrentes.
      */
+
     public async Task<bool> AgregarMensajeAsync(
         Guid idRetroalimentacion,
         MensajeRetroalimentacion mensaje,

@@ -13,8 +13,11 @@ namespace NutriTec.Infrastructure.Mongo.Configuration;
  * Restricciones:
  * Los valores reales de ambientes desplegados deben inyectarse mediante configuración externa y no almacenarse en el repositorio.
  */
+
 public sealed class MongoDbOptions
 {
+
+
     /*
      * Descripción:
      * Define el nombre de la sección que agrupa las opciones de MongoDB.
@@ -30,6 +33,7 @@ public sealed class MongoDbOptions
      */
     public const string SectionName = "MongoDb";
 
+
     /*
      * Descripción:
      * Obtiene o establece la URI utilizada para conectar con MongoDB.
@@ -43,7 +47,9 @@ public sealed class MongoDbOptions
      * Restricciones:
      * No puede ser nula, vacía ni contener secretos versionados para ambientes reales.
      */
+
     public string ConnectionString { get; init; } = string.Empty;
+
 
     /*
      * Descripción:
@@ -58,5 +64,6 @@ public sealed class MongoDbOptions
      * Restricciones:
      * No puede ser nulo ni vacío.
      */
+
     public string DatabaseName { get; init; } = string.Empty;
 }

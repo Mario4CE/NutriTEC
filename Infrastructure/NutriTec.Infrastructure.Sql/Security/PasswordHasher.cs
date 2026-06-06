@@ -16,6 +16,7 @@ namespace NutriTec.Infrastructure.Sql.Security;
  * Restricciones:
  * No guarda contraseñas en texto plano, no utiliza secretos reales y debe ejecutarse únicamente detrás de IPasswordHasher.
  */
+
 public sealed class PasswordHasher : IPasswordHasher
 {
     private const int SaltSizeBytes = 16;
@@ -23,6 +24,7 @@ public sealed class PasswordHasher : IPasswordHasher
     private const int Iterations = 310_000;
     private const char Separator = '$';
     private const string Algorithm = "PBKDF2-SHA256";
+
 
     /*
      * Descripción:
@@ -34,6 +36,7 @@ public sealed class PasswordHasher : IPasswordHasher
      * Restricciones:
      * No devuelve la contraseña original ni utiliza sal fija o secretos codificados en la aplicación.
      */
+
     public string GenerarHash(string contrasena)
     {
         ValidarContrasena(contrasena);
@@ -49,6 +52,7 @@ public sealed class PasswordHasher : IPasswordHasher
             Convert.ToBase64String(hash));
     }
 
+
     /*
      * Descripción:
      * Verifica si una contraseña en texto claro corresponde a un hash previamente persistido.
@@ -59,6 +63,7 @@ public sealed class PasswordHasher : IPasswordHasher
      * Restricciones:
      * No modifica datos persistidos y no expone el hash ni la contraseña en respuestas.
      */
+
     public bool Verificar(string contrasena, string contrasenaHash)
     {
         ValidarContrasena(contrasena);
@@ -94,27 +99,63 @@ public sealed class PasswordHasher : IPasswordHasher
         return CryptographicOperations.FixedTimeEquals(hashCalculado, hashEsperado);
     }
 
+    /*
+
+    * Descripción:
+    * Decodifica una cadena en formato Base64 y la convierte en un arreglo de bytes.
+    * Entradas:
+    * Recibe una cadena de texto en formato Base64.
+    * Salidas:
+    * Devuelve un arreglo de bytes con el contenido decodificado. Si el valor no es válido, devuelve un arreglo vacío.
+    * Restricciones:
+    * El valor recibido debe estar en formato Base64 válido para poder ser decodificado correctamente.
+      */
     private static byte[] DecodificarBase64(string valor)
     {
         var buffer = new byte[valor.Length];
+
         return Convert.TryFromBase64String(valor, buffer, out var bytesEscritos)
-            ? buffer[..bytesEscritos]
-            : Array.Empty<byte>();
+        ? buffer[..bytesEscritos]
+        : Array.Empty<byte>();
     }
 
+
+    /*
+    * Descripción:
+    * Genera una clave derivada a partir de una contraseña utilizando PBKDF2 con SHA-256.
+    * Entradas:
+    * Recibe la contraseña, el salt, la cantidad de iteraciones y el tamaño del hash en bytes.
+    * Salidas:
+    * Devuelve un arreglo de bytes con la clave derivada.
+    * Restricciones:
+    * La contraseña debe ser válida, el salt debe existir y la cantidad de iteraciones debe ser suficiente para proteger la clave.
+      */
+
     private static byte[] DerivarClave(
-        string contrasena,
-        byte[] salt,
-        int iteraciones,
-        int hashSizeBytes = HashSizeBytes)
+    string contrasena,
+    byte[] salt,
+    int iteraciones,
+    int hashSizeBytes = HashSizeBytes)
     {
         return Rfc2898DeriveBytes.Pbkdf2(
-            contrasena,
-            salt,
-            iteraciones,
-            HashAlgorithmName.SHA256,
-            hashSizeBytes);
+        contrasena,
+        salt,
+        iteraciones,
+        HashAlgorithmName.SHA256,
+        hashSizeBytes);
     }
+
+
+    /*
+    * Descripción:
+    * Valida que la contraseña tenga contenido antes de procesarla.
+    * Entradas:
+    * Recibe una contraseña en formato de texto.
+    * Salidas:
+    * No devuelve valor. Si la contraseña es válida, permite continuar la ejecución.
+    * Restricciones:
+    * La contraseña no puede ser nula, vacía o contener únicamente espacios en blanco.
+      */
 
     private static void ValidarContrasena(string contrasena)
     {
@@ -123,4 +164,5 @@ public sealed class PasswordHasher : IPasswordHasher
             throw new ArgumentException("La contraseña no puede estar vacía.", nameof(contrasena));
         }
     }
+
 }

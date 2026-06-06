@@ -21,8 +21,10 @@ namespace NutriTec.Infrastructure.Mongo;
  * Restricciones:
  * Este punto de composición solo debe invocarse desde NutriTec.MongoApi.
  */
+
 public static class DependencyInjection
 {
+
     /*
      * Descripción:
      * Enlaza y valida las opciones de MongoDB, registra el cliente oficial y expone la base de datos configurada.
@@ -36,6 +38,7 @@ public static class DependencyInjection
      * Restricciones:
      * La configuración se valida al iniciar la aplicación y los secretos de ambientes reales deben suministrarse externamente.
      */
+
     public static IServiceCollection AddNutriTecMongoInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
