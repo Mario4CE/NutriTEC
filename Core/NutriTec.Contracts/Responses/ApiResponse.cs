@@ -13,12 +13,15 @@ namespace NutriTec.Contracts.Responses;
  * Restricciones:
  * Los controllers deben devolver DTOs dentro de Data en lugar de exponer entidades del dominio.
  */
+
 public class ApiResponse<T>
 {
     public bool Success { get; set; }
     public string Message { get; set; } = string.Empty;
     public T? Data { get; set; }
     public List<string>? Errors { get; set; }
+
+
 
     /*
      * Descripción:
@@ -33,6 +36,7 @@ public class ApiResponse<T>
      * Restricciones:
      * No agrega errores cuando la operación finalizó correctamente.
      */
+
     public static ApiResponse<T> SuccessResponse(T data, string message = "Success")
     {
         return new ApiResponse<T>
@@ -43,6 +47,7 @@ public class ApiResponse<T>
             Errors = null
         };
     }
+
 
     /*
      * Descripción:
@@ -57,6 +62,7 @@ public class ApiResponse<T>
      * Restricciones:
      * Data siempre se establece con el valor predeterminado del tipo genérico.
      */
+
     public static ApiResponse<T> ErrorResponse(string message, List<string>? errors = null)
     {
         return new ApiResponse<T>

@@ -15,6 +15,7 @@ namespace NutriTec.Contracts.Autenticacion;
  * Restricciones:
  * La contraseña debe ser hasheada antes de persistirse y los datos profesionales específicos se agregarán cuando el dominio los defina.
  */
+
 public sealed record RegistrarNutricionistaRequest(
     [Required, MaxLength(150)] string Nombre,
     [Required, EmailAddress, MaxLength(254)] string Correo,

@@ -13,4 +13,5 @@ namespace NutriTec.Contracts.Retroalimentaciones;
  * Restricciones:
  * La capa de aplicación rechaza valores vacíos antes de actualizar el documento.
  */
+
 public sealed record ResponderRetroalimentacionRequest(string Autor, string Mensaje);

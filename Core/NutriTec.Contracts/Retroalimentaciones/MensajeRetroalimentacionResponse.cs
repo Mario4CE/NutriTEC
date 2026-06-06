@@ -13,4 +13,5 @@ namespace NutriTec.Contracts.Retroalimentaciones;
  * Restricciones:
  * Solo se utiliza como DTO de salida.
  */
+
 public sealed record MensajeRetroalimentacionResponse(string Autor, string Mensaje, DateTime FechaUtc);

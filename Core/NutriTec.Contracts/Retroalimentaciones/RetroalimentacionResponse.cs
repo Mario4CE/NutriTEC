@@ -13,6 +13,7 @@ namespace NutriTec.Contracts.Retroalimentaciones;
  * Restricciones:
  * No debe contener tipos dependientes de MongoDB ni entidades internas.
  */
+
 public sealed record RetroalimentacionResponse(
     Guid Id,
     Guid IdPaciente,

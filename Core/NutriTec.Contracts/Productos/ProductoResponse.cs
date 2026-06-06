@@ -13,6 +13,7 @@ namespace NutriTec.Contracts.Productos;
  * Restricciones:
  * No debe exponer tipos propios de persistencia ni permitir modificar el estado de aprobación desde el módulo de productos.
  */
+
 public sealed record ProductoResponse(
     Guid Id,
     string Nombre,

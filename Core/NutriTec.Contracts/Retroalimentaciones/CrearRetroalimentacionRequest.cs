@@ -13,6 +13,7 @@ namespace NutriTec.Contracts.Retroalimentaciones;
  * Restricciones:
  * La capa de aplicación valida identificadores, autor y contenido antes de persistirlos.
  */
+
 public sealed record CrearRetroalimentacionRequest(
     Guid IdPaciente,
     Guid IdNutricionista,

@@ -15,6 +15,7 @@ namespace NutriTec.Contracts.Autenticacion;
  * Restricciones:
  * El correo debe tener formato válido y la contraseña no debe persistirse ni devolverse en respuestas.
  */
+
 public sealed record LoginRequest(
     [Required, EmailAddress, MaxLength(254)] string Correo,
     [Required, MinLength(8), MaxLength(128)] string Contrasena);

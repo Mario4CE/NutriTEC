@@ -15,6 +15,7 @@ namespace NutriTec.Contracts.Productos;
  * Restricciones:
  * Los textos son obligatorios y los valores nutricionales no pueden ser negativos.
  */
+
 public sealed record ActualizarProductoRequest(
     [Required, MaxLength(150)] string Nombre,
     [Required, MaxLength(64)] string CodigoBarras,

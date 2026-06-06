@@ -15,6 +15,7 @@ namespace NutriTec.Contracts.Autenticacion;
  * Restricciones:
  * La contraseña debe ser hasheada antes de persistirse y el correo debe ser único en la fuente relacional.
  */
+
 public sealed record RegistrarClienteRequest(
     [Required, MaxLength(150)] string Nombre,
     [Required, EmailAddress, MaxLength(254)] string Correo,
