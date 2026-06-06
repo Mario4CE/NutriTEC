@@ -8,7 +8,7 @@ namespace NutriTec.Application.Autenticacion;
 /*
  * Descripción:
  * Implementa los casos de uso iniciales de autenticación y registro de usuarios para NutriTEC.
- * 
+ *
  *
  * Entradas:
  * Recibe DTOs de login y registro, un repositorio de autenticación desacoplado y un servicio de hashing de contraseñas.
