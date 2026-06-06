@@ -19,8 +19,10 @@ namespace NutriTec.Application.Productos;
  * Restricciones:
  * Rechaza textos vacíos, nutrientes negativos y códigos de barras duplicados; cada producto nuevo queda pendiente de aprobación.
  */
+
 public sealed class ProductoService(IProductoRepository repository) : IProductoService
 {
+
     /*
      * Descripción:
      * Registra un producto nuevo pendiente de aprobación.
@@ -31,6 +33,7 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
      * Restricciones:
      * El código de barras debe ser único.
      */
+
     public async Task<ProductoResponse> CrearAsync(CrearProductoRequest request, CancellationToken cancellationToken)
     {
         Validar(request.Nombre, request.CodigoBarras, request.Calorias, request.Proteinas, request.Carbohidratos, request.Grasas);
@@ -63,12 +66,14 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
      * Restricciones:
      * El identificador no puede ser vacío.
      */
+
     public async Task<ProductoResponse?> ObtenerPorIdAsync(Guid idProducto, CancellationToken cancellationToken)
     {
         ValidarIdentificador(idProducto);
         var producto = await repository.ObtenerPorIdAsync(idProducto, cancellationToken);
         return producto is null ? null : ProductoMapper.Mapear(producto);
     }
+
 
     /*
      * Descripción:
@@ -80,11 +85,13 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
      * Restricciones:
      * No modifica datos.
      */
+
     public async Task<IReadOnlyCollection<ProductoResponse>> ListarAsync(CancellationToken cancellationToken)
     {
         var productos = await repository.ListarAsync(cancellationToken);
         return productos.Select(ProductoMapper.Mapear).ToArray();
     }
+
 
     /*
      * Descripción:
@@ -96,12 +103,14 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
      * Restricciones:
      * El criterio no puede estar vacío.
      */
+
     public async Task<IReadOnlyCollection<ProductoResponse>> BuscarPorNombreAsync(string nombre, CancellationToken cancellationToken)
     {
         ValidarTexto(nombre, nameof(nombre));
         var productos = await repository.BuscarPorNombreAsync(nombre.Trim(), cancellationToken);
         return productos.Select(ProductoMapper.Mapear).ToArray();
     }
+
 
     /*
      * Descripción:
@@ -113,12 +122,14 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
      * Restricciones:
      * El código no puede estar vacío.
      */
+
     public async Task<ProductoResponse?> ObtenerPorCodigoBarrasAsync(string codigoBarras, CancellationToken cancellationToken)
     {
         ValidarTexto(codigoBarras, nameof(codigoBarras));
         var producto = await repository.ObtenerPorCodigoBarrasAsync(codigoBarras.Trim(), cancellationToken);
         return producto is null ? null : ProductoMapper.Mapear(producto);
     }
+
 
     /*
      * Descripción:
@@ -130,6 +141,7 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
      * Restricciones:
      * No modifica el estado de aprobación y conserva la unicidad del código de barras.
      */
+
     public async Task<bool> ActualizarAsync(
         Guid idProducto,
         ActualizarProductoRequest request,
@@ -155,6 +167,7 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
         return await repository.ActualizarAsync(producto, cancellationToken);
     }
 
+
     /*
      * Descripción:
      * Elimina un producto por identificador.
@@ -165,13 +178,29 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
      * Restricciones:
      * El identificador no puede ser vacío.
      */
+
     public Task<bool> EliminarAsync(Guid idProducto, CancellationToken cancellationToken)
     {
         ValidarIdentificador(idProducto);
         return repository.EliminarAsync(idProducto, cancellationToken);
     }
 
-    private async Task ValidarCodigoBarrasUnicoAsync(string codigoBarras, Guid? idProductoExcluido, CancellationToken cancellationToken)
+
+    /*
+    * Descripción:
+    * Valida que el código de barras de un producto sea único en el sistema.
+    * Entradas:
+    * Recibe el código de barras, un identificador de producto excluido y el token de cancelación.
+    * Salidas:
+    * No devuelve valor. Si el código de barras no existe, permite continuar la ejecución.
+    * Restricciones:
+    * Si ya existe un producto con el mismo código de barras, lanza una ConflictoException.
+      */
+
+    private async Task ValidarCodigoBarrasUnicoAsync(
+    string codigoBarras,
+    Guid? idProductoExcluido,
+    CancellationToken cancellationToken)
     {
         if (await repository.ExisteCodigoBarrasAsync(codigoBarras, idProductoExcluido, cancellationToken))
         {
@@ -179,21 +208,49 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
         }
     }
 
+
+
+    /*
+
+    * Descripción:
+    * Valida los datos principales y nutricionales de un producto.
+    * Entradas:
+    * Recibe nombre, código de barras, calorías, proteínas, carbohidratos y grasas.
+    * Salidas:
+    * No devuelve valor. Si los datos son válidos, permite continuar la ejecución.
+    * Restricciones:
+    * El nombre y el código de barras no pueden estar vacíos. Los valores nutricionales no pueden ser negativos.
+      */
+
     private static void Validar(
-        string nombre,
-        string codigoBarras,
-        decimal calorias,
-        decimal proteinas,
-        decimal carbohidratos,
-        decimal grasas)
+    string nombre,
+    string codigoBarras,
+    decimal calorias,
+    decimal proteinas,
+    decimal carbohidratos,
+    decimal grasas)
     {
         ValidarTexto(nombre, nameof(nombre));
         ValidarTexto(codigoBarras, nameof(codigoBarras));
+
         if (calorias < 0 || proteinas < 0 || carbohidratos < 0 || grasas < 0)
         {
             throw new ArgumentException("Los valores nutricionales no pueden ser negativos.");
         }
     }
+
+
+
+    /*
+    * Descripción:
+    * Valida que un identificador tenga un valor válido.
+    * Entradas:
+    * Recibe un identificador de tipo Guid.
+    * Salidas:
+    * No devuelve valor. Si el identificador es válido, permite continuar la ejecución.
+    * Restricciones:
+    * El identificador no puede estar vacío ni ser igual a Guid.Empty.
+      */
 
     private static void ValidarIdentificador(Guid identificador)
     {
@@ -203,6 +260,19 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
         }
     }
 
+
+    /*
+
+    * Descripción:
+    * Valida que una cadena de texto tenga contenido.
+    * Entradas:
+    * Recibe el texto a validar y el nombre del parámetro asociado.
+    * Salidas:
+    * No devuelve valor. Si el texto es válido, permite continuar la ejecución.
+    * Restricciones:
+    * El texto no puede ser nulo, vacío o contener únicamente espacios en blanco.
+      */
+
     private static void ValidarTexto(string texto, string nombreParametro)
     {
         if (string.IsNullOrWhiteSpace(texto))
@@ -210,4 +280,5 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
             throw new ArgumentException("El texto no puede estar vacío.", nombreParametro);
         }
     }
+
 }

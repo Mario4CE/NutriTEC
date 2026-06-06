@@ -17,6 +17,7 @@ namespace NutriTec.Application.Abstractions.Services;
  */
 public interface IRetroalimentacionService
 {
+
     /*
      * Descripción:
      * Abre un foro con su mensaje inicial.
@@ -30,6 +31,7 @@ public interface IRetroalimentacionService
      * Restricciones:
      * Debe validar participantes y contenido antes de persistir.
      */
+
     Task<RetroalimentacionResponse> CrearAsync(CrearRetroalimentacionRequest request, CancellationToken cancellationToken);
 
     /*
@@ -45,6 +47,7 @@ public interface IRetroalimentacionService
      * Restricciones:
      * No expone entidades de dominio.
      */
+
     Task<IReadOnlyCollection<RetroalimentacionResponse>> ObtenerPorPacienteAsync(Guid idPaciente, CancellationToken cancellationToken);
 
     /*
@@ -60,6 +63,7 @@ public interface IRetroalimentacionService
      * Restricciones:
      * No expone entidades de dominio.
      */
+
     Task<IReadOnlyCollection<RetroalimentacionResponse>> ObtenerPorNutricionistaAsync(Guid idNutricionista, CancellationToken cancellationToken);
 
     /*
@@ -75,5 +79,6 @@ public interface IRetroalimentacionService
      * Restricciones:
      * Debe validar autor y contenido antes de persistir.
      */
+
     Task<bool> ResponderAsync(Guid idRetroalimentacion, ResponderRetroalimentacionRequest request, CancellationToken cancellationToken);
 }

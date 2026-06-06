@@ -16,6 +16,7 @@ namespace NutriTec.Application.Productos;
  * Restricciones:
  * No aplica reglas de negocio ni modifica las entidades recibidas.
  */
+
 internal static class ProductoMapper
 {
     /*
@@ -24,6 +25,7 @@ internal static class ProductoMapper
      * Salidas: Devuelve el DTO equivalente.
      * Restricciones: La entidad no puede ser nula.
      */
+
     public static ProductoResponse Mapear(Producto producto)
     {
         return new ProductoResponse(

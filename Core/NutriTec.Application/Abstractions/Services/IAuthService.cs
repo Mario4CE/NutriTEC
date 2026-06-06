@@ -17,12 +17,30 @@ namespace NutriTec.Application.Abstractions.Services;
  */
 public interface IAuthService
 {
-    /* Descripción: Valida credenciales de acceso. Entradas: DTO de login y cancelación. Salidas: Usuario autenticado o nulo. Restricciones: No devuelve secretos. */
+    /* 
+     * Descripción: Valida credenciales de acceso. 
+     * Entradas: DTO de login y cancelación. 
+     * Salidas: Usuario autenticado o nulo. 
+     * Restricciones: No devuelve secretos. 
+     */
+
     Task<LoginResponse?> LoginAsync(LoginRequest request, CancellationToken cancellationToken);
 
-    /* Descripción: Registra un cliente. Entradas: DTO de registro y cancelación. Salidas: Usuario registrado. Restricciones: El correo debe ser único. */
+    /* 
+     * Descripción: Registra un cliente. 
+     * Entradas: DTO de registro y cancelación. 
+     * Salidas: Usuario registrado. 
+     * Restricciones: El correo debe ser único. 
+     */
+
     Task<LoginResponse> RegistrarClienteAsync(RegistrarClienteRequest request, CancellationToken cancellationToken);
 
-    /* Descripción: Registra un nutricionista. Entradas: DTO de registro y cancelación. Salidas: Usuario registrado. Restricciones: El correo debe ser único. */
+    /*
+     * Descripción: Registra un nutricionista. 
+     * Entradas: DTO de registro y cancelación. 
+     * Salidas: Usuario registrado. 
+     * Restricciones: El correo debe ser único. 
+     */
+
     Task<LoginResponse> RegistrarNutricionistaAsync(RegistrarNutricionistaRequest request, CancellationToken cancellationToken);
 }

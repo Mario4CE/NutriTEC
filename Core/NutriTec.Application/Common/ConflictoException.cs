@@ -13,4 +13,5 @@ namespace NutriTec.Application.Common;
  * Restricciones:
  * Debe utilizarse únicamente para conflictos de negocio controlados, como códigos de barras duplicados.
  */
+
 public sealed class ConflictoException(string message) : Exception(message);

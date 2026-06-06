@@ -15,12 +15,29 @@ namespace NutriTec.Application.Abstractions.Persistence;
  */
 public interface IAuthRepository
 {
-    /* Descripción: Consulta credenciales por correo. Entradas: Correo y cancelación. Salidas: Credencial o nulo. Restricciones: No modifica datos. */
+
+    /* 
+     * Descripción: Consulta credenciales por correo. 
+     * Entradas: Correo y cancelación.
+     * Salidas: Credencial o nulo. 
+     * Restricciones: No modifica datos.
+     */
+
     Task<CredencialAutenticacion?> ObtenerCredencialPorCorreoAsync(string correo, CancellationToken cancellationToken);
 
-    /* Descripción: Verifica si un correo ya existe. Entradas: Correo y cancelación. Salidas: Existencia. Restricciones: No modifica datos. */
+    /* Descripción: Verifica si un correo ya existe. 
+     * Entradas: Correo y cancelación. 
+     * Salidas: Existencia.
+     * Restricciones: No modifica datos.
+     */
+
     Task<bool> ExisteCorreoAsync(string correo, CancellationToken cancellationToken);
 
-    /* Descripción: Registra un usuario para autenticación. Entradas: Usuario con hash y cancelación. Salidas: Credencial registrada. Restricciones: La contraseña ya debe estar hasheada. */
+    /*
+     * Descripción: Registra un usuario para autenticación.
+     * Entradas: Usuario con hash y cancelación. 
+     * Salidas: Credencial registrada.
+     * Restricciones: La contraseña ya debe estar hasheada. 
+     */
     Task<CredencialAutenticacion> RegistrarUsuarioAsync(NuevoUsuarioAutenticacion usuario, CancellationToken cancellationToken);
 }

@@ -13,6 +13,7 @@ namespace NutriTec.Application.Abstractions.Persistence;
  * Restricciones:
  * Debe recibir una contraseña ya hasheada; nunca debe transportar contraseñas en texto claro hacia persistencia.
  */
+
 public sealed record NuevoUsuarioAutenticacion(
     string Nombre,
     string Correo,

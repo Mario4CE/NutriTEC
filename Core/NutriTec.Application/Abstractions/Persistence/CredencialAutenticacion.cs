@@ -13,6 +13,7 @@ namespace NutriTec.Application.Abstractions.Persistence;
  * Restricciones:
  * No debe exponerse al frontend porque contiene el hash de la contraseña persistida.
  */
+
 public sealed record CredencialAutenticacion(
     Guid IdUsuario,
     string Nombre,

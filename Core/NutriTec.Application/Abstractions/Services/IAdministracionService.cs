@@ -5,6 +5,8 @@ namespace NutriTec.Application.Abstractions.Services;
 /*
  * Descripción:
  * Define los casos de uso administrativos disponibles para revisar productos.
+ * 
+ * Que hace esto ? Esto se encarga las reviciones de los productos
  *
  * Entradas:
  * Recibe identificadores y tokens de cancelación enviados por la API SQL.
@@ -15,6 +17,7 @@ namespace NutriTec.Application.Abstractions.Services;
  * Restricciones:
  * Mantiene separadas las operaciones administrativas del CRUD general de productos.
  */
+
 public interface IAdministracionService
 {
     /*
@@ -23,6 +26,7 @@ public interface IAdministracionService
      * Salidas: Devuelve DTOs de productos pendientes.
      * Restricciones: No modifica datos.
      */
+
     Task<IReadOnlyCollection<ProductoResponse>> ListarProductosPendientesAsync(CancellationToken cancellationToken);
 
     /*
@@ -31,5 +35,6 @@ public interface IAdministracionService
      * Salidas: Devuelve verdadero cuando el producto existe y cambia a aprobado.
      * Restricciones: Un producto previamente aprobado no vuelve a modificarse.
      */
+
     Task<bool> AprobarProductoAsync(Guid idProducto, CancellationToken cancellationToken);
 }

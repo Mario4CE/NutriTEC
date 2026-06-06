@@ -15,6 +15,7 @@ namespace NutriTec.Application.Abstractions.Persistence;
  * Restricciones:
  * La interfaz no conoce detalles de MongoDB para conservar el desacoplamiento de Application.
  */
+
 public interface IRetroalimentacionRepository
 {
     /*
@@ -30,6 +31,7 @@ public interface IRetroalimentacionRepository
      * Restricciones:
      * El agregado debe llegar validado desde el servicio.
      */
+
     Task<Retroalimentacion> CrearAsync(Retroalimentacion retroalimentacion, CancellationToken cancellationToken);
 
     /*
@@ -45,6 +47,7 @@ public interface IRetroalimentacionRepository
      * Restricciones:
      * El identificador debe llegar validado desde el servicio.
      */
+
     Task<IReadOnlyCollection<Retroalimentacion>> ObtenerPorPacienteAsync(Guid idPaciente, CancellationToken cancellationToken);
 
     /*
