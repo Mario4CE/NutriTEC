@@ -8,6 +8,9 @@ namespace NutriTec.MongoApi.Controllers;
 /*
  * Descripción:
  * Expone endpoints REST para crear, consultar y responder foros de retroalimentación almacenados en MongoDB.
+ * 
+ * Retroalimentacion se refiere a los comentarios y discusiones entre pacientes y nutricionistas sobre planes alimenticios, dietas, etc.
+ * La razon de usar MongoDB es su flexibilidad para manejar estructuras de datos anidadas y dinámicas, como los mensajes dentro de un foro de retroalimentación.
  *
  * Entradas:
  * Recibe solicitudes HTTP, identificadores de ruta, DTOs y un servicio de aplicación.
@@ -18,6 +21,7 @@ namespace NutriTec.MongoApi.Controllers;
  * Restricciones:
  * No accede directamente a MongoDB ni contiene reglas de negocio.
  */
+
 [ApiController]
 [Route("api/retroalimentaciones")]
 public sealed class RetroalimentacionesController(IRetroalimentacionService service) : ControllerBase
@@ -25,6 +29,8 @@ public sealed class RetroalimentacionesController(IRetroalimentacionService serv
     /*
      * Descripción:
      * Crea un foro de retroalimentación con su primer mensaje.
+     * 
+     * El foro se inicia con un mensaje del autor (paciente o nutricionista) y puede ser respondido posteriormente por la otra parte.
      *
      * Entradas:
      * Recibe el DTO de creación y token de cancelación HTTP.
@@ -35,6 +41,7 @@ public sealed class RetroalimentacionesController(IRetroalimentacionService serv
      * Restricciones:
      * Delega validaciones y persistencia al servicio de aplicación.
      */
+
     [HttpPost]
     [ProducesResponseType(typeof(ApiResponse<RetroalimentacionResponse>), StatusCodes.Status201Created)]
     public async Task<ActionResult<ApiResponse<RetroalimentacionResponse>>> CrearAsync(
@@ -50,6 +57,8 @@ public sealed class RetroalimentacionesController(IRetroalimentacionService serv
     /*
      * Descripción:
      * Consulta los foros correspondientes a un paciente.
+     * 
+     * Los foros se filtran por el identificador del paciente, mostrando solo aquellos en los que el paciente es parte de la conversación (ya sea como autor o destinatario).
      *
      * Entradas:
      * Recibe el identificador del paciente y token de cancelación HTTP.
@@ -60,6 +69,7 @@ public sealed class RetroalimentacionesController(IRetroalimentacionService serv
      * Restricciones:
      * No consulta MongoDB directamente.
      */
+
     [HttpGet("pacientes/{idPaciente:guid}")]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyCollection<RetroalimentacionResponse>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<IReadOnlyCollection<RetroalimentacionResponse>>>> ObtenerPorPacienteAsync(
