@@ -17,8 +17,10 @@ namespace NutriTec.SqlApi.Middleware;
  * Restricciones:
  * No intercepta excepciones inesperadas para evitar ocultar errores internos.
  */
+
 public sealed class ApplicationExceptionHandler : IExceptionHandler
 {
+
     /*
      * Descripción:
      * Intenta convertir una excepción conocida en una respuesta HTTP estándar.
@@ -32,6 +34,7 @@ public sealed class ApplicationExceptionHandler : IExceptionHandler
      * Restricciones:
      * Solo maneja ArgumentException y ConflictoException generadas por reglas de aplicación.
      */
+
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,

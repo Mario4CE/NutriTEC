@@ -6,6 +6,12 @@ using NutriTec.SqlApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
+/*
+ * En esta parte de la aplicación, solo se registra la lógica compartida y el adaptador relacional.
+ * La lógica de negocio, los casos de uso y las entidades se encuentran en el proyecto NutriTec.Application, que es independiente de la infraestructura.
+ * El API SQL se encarga únicamente de exponer los endpoints y manejar las solicitudes HTTP, delegando la lógica de negocio a la capa de aplicación y el acceso a datos a la capa de infraestructura SQL.
+*/
+
 // La API SQL compone únicamente la lógica compartida y el adaptador relacional.
 builder.Services.AddNutriTecApplication();
 builder.Services.AddNutriTecSqlInfrastructure(builder.Configuration);

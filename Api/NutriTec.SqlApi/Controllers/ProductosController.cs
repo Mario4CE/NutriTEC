@@ -8,6 +8,8 @@ namespace NutriTec.SqlApi.Controllers;
 /*
  * Descripción:
  * Expone endpoints REST iniciales para gestionar productos alimenticios almacenados en SQL Server.
+ * Los productos registrados a través de este controlador quedan pendientes de aprobación administrativa.
+ * Los productos son visibles en listados y búsquedas, pero no se pueden aprobar ni eliminar desde este controlador.
  *
  * Entradas:
  * Recibe solicitudes HTTP, identificadores, criterios de búsqueda y un servicio de aplicación.
@@ -18,10 +20,13 @@ namespace NutriTec.SqlApi.Controllers;
  * Restricciones:
  * No accede directamente a Entity Framework Core ni implementa aprobación administrativa.
  */
+
 [ApiController]
 [Route("api/productos")]
 public sealed class ProductosController(IProductoService service) : ControllerBase
 {
+
+
     /*
      * Descripción:
      * Registra un producto pendiente de aprobación.
@@ -32,6 +37,7 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
      * Restricciones:
      * Delega reglas al servicio.
      */
+
     [HttpPost]
     public async Task<ActionResult<ApiResponse<ProductoResponse>>> CrearAsync(
         [FromBody] CrearProductoRequest request,
@@ -40,6 +46,8 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
         var producto = await service.CrearAsync(request, cancellationToken);
         return StatusCode(StatusCodes.Status201Created, ApiResponse<ProductoResponse>.SuccessResponse(producto, "Producto creado."));
     }
+
+
 
     /*
      * Descripción:
@@ -51,12 +59,15 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
      * Restricciones:
      * No consulta EF Core directamente.
      */
+
     [HttpGet]
     public async Task<ActionResult<ApiResponse<IReadOnlyCollection<ProductoResponse>>>> ListarAsync(CancellationToken cancellationToken)
     {
         var productos = await service.ListarAsync(cancellationToken);
         return Ok(ApiResponse<IReadOnlyCollection<ProductoResponse>>.SuccessResponse(productos));
     }
+
+
 
     /*
      * Descripción:
@@ -68,6 +79,7 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
      * Restricciones:
      * Delega reglas al servicio.
      */
+
     [HttpGet("{idProducto:guid}")]
     public async Task<ActionResult<ApiResponse<ProductoResponse>>> ObtenerPorIdAsync(Guid idProducto, CancellationToken cancellationToken)
     {
@@ -76,6 +88,8 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
             ? NotFound(ApiResponse<ProductoResponse>.ErrorResponse("No se encontró el producto solicitado."))
             : Ok(ApiResponse<ProductoResponse>.SuccessResponse(producto));
     }
+
+
 
     /*
      * Descripción:
@@ -87,6 +101,7 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
      * Restricciones:
      * El criterio se valida en Application.
      */
+
     [HttpGet("buscar")]
     public async Task<ActionResult<ApiResponse<IReadOnlyCollection<ProductoResponse>>>> BuscarPorNombreAsync(
         [FromQuery] string nombre,
@@ -95,6 +110,8 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
         var productos = await service.BuscarPorNombreAsync(nombre, cancellationToken);
         return Ok(ApiResponse<IReadOnlyCollection<ProductoResponse>>.SuccessResponse(productos));
     }
+
+
 
     /*
      * Descripción:
@@ -106,6 +123,7 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
      * Restricciones:
      * Delega reglas al servicio.
      */
+
     [HttpGet("codigo-barras/{codigoBarras}")]
     public async Task<ActionResult<ApiResponse<ProductoResponse>>> ObtenerPorCodigoBarrasAsync(
         string codigoBarras,
@@ -117,6 +135,8 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
             : Ok(ApiResponse<ProductoResponse>.SuccessResponse(producto));
     }
 
+
+
     /*
      * Descripción:
      * Edita un producto existente.
@@ -127,6 +147,7 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
      * Restricciones:
      * No permite aprobar productos.
      */
+
     [HttpPut("{idProducto:guid}")]
     public async Task<IActionResult> ActualizarAsync(
         Guid idProducto,
@@ -138,6 +159,8 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
             : NotFound(ApiResponse<object>.ErrorResponse("No se encontró el producto solicitado."));
     }
 
+
+
     /*
      * Descripción:
      * Elimina un producto existente.
@@ -148,6 +171,7 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
      * Restricciones:
      * Delega persistencia al servicio.
      */
+
     [HttpDelete("{idProducto:guid}")]
     public async Task<IActionResult> EliminarAsync(Guid idProducto, CancellationToken cancellationToken)
     {
