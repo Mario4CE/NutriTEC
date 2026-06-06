@@ -9,7 +9,7 @@ namespace NutriTec.SqlApi.Controllers;
  * Descripción:
  * Expone endpoints REST iniciales para gestionar productos alimenticios almacenados en SQL Server.
  * Los productos registrados a través de este controlador quedan pendientes de aprobación administrativa.
- * Los productos son visibles en listados y búsquedas, pero no se pueden aprobar ni eliminar desde este controlador.
+ * Los productos son visibles en listados y búsquedas, pero no se pueden aprobar desde este controlador.
  *
  * Entradas:
  * Recibe solicitudes HTTP, identificadores, criterios de búsqueda y un servicio de aplicación.
