@@ -9,7 +9,7 @@ namespace NutriTec.SqlApi.Controllers;
  * Descripción:
  * Expone endpoints REST administrativos para revisar productos alimenticios.
  * Se encarga de listar productos pendientes de aprobación y aprobarlos, delegando la lógica al servicio administrativo.
- * Los productos pendientes se identifican por su estado y solo pueden ser aprobados o negados, sin modificaciones adicionales.
+ * Los productos pendientes se identifican por su estado y solo pueden ser aprobados, sin modificaciones adicionales.
  *
  * Entradas:
  * Recibe solicitudes HTTP, identificadores y un servicio administrativo.
