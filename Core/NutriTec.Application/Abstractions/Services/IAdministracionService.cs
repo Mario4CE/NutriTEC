@@ -6,7 +6,7 @@ namespace NutriTec.Application.Abstractions.Services;
  * Descripción:
  * Define los casos de uso administrativos disponibles para revisar productos.
  * 
- * Que hace esto ? Esto se encarga las reviciones de los productos
+ * ¿Qué hace esto? Se encarga de las revisiones de los productos.
  *
  * Entradas:
  * Recibe identificadores y tokens de cancelación enviados por la API SQL.
