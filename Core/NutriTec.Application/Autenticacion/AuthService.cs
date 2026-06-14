@@ -58,9 +58,9 @@ public sealed class AuthService(IAuthRepository repository, IPasswordHasher pass
 
     /*
      * Descripción:
-     * Registra un cliente nuevo con contraseña hasheada.
+     * Registra un cliente nuevo con contraseña hasheada y datos requeridos por el esquema SQL de usuarios.
      * Entradas:
-     * Recibe nombre, correo, contraseña inicial y token de cancelación.
+     * Recibe datos personales, métricas corporales, correo, contraseña inicial y token de cancelación.
      * Salidas:
      * Devuelve la información segura del cliente registrado.
      * Restricciones:
@@ -71,20 +71,49 @@ public sealed class AuthService(IAuthRepository repository, IPasswordHasher pass
         RegistrarClienteRequest request,
         CancellationToken cancellationToken)
     {
-        return RegistrarUsuarioAsync(
-            request.Nombre,
-            request.Correo,
-            request.Contrasena,
-            TipoUsuarioCliente,
-            cancellationToken);
+        ValidarTexto(request.Nombre, nameof(request.Nombre));
+        ValidarTexto(request.Apellidos, nameof(request.Apellidos));
+        ValidarTexto(request.Pais, nameof(request.Pais));
+        ValidarTexto(request.Correo, nameof(request.Correo));
+        ValidarTexto(request.Contrasena, nameof(request.Contrasena));
+        ValidarMayorQueCero(request.Peso, nameof(request.Peso));
+        ValidarMayorQueCero(request.Imc, nameof(request.Imc));
+        ValidarMayorQueCero(request.CaloriasDiariasMax, nameof(request.CaloriasDiariasMax));
+        ValidarEnteroNoNegativo(request.Edad, nameof(request.Edad));
+
+        var usuario = new NuevoUsuarioAutenticacion(
+            Cedula: null,
+            Nombre: NormalizarTexto(request.Nombre),
+            Apellidos: NormalizarTexto(request.Apellidos),
+            Edad: request.Edad,
+            FechaNacimiento: request.FechaNacimiento,
+            Peso: request.Peso,
+            Imc: request.Imc,
+            Pais: NormalizarTexto(request.Pais),
+            Cintura: request.Cintura,
+            Cuello: request.Cuello,
+            Caderas: request.Caderas,
+            PctMusculo: request.PctMusculo,
+            PctGrasa: request.PctGrasa,
+            CaloriasDiariasMax: request.CaloriasDiariasMax,
+            CodigoNutricionista: null,
+            Direccion: null,
+            FotoUrl: null,
+            TarjetaCredito: null,
+            TipoCobro: null,
+            Correo: NormalizarTexto(request.Correo),
+            ContrasenaHash: passwordHasher.GenerarHash(request.Contrasena),
+            TipoUsuario: TipoUsuarioCliente);
+
+        return RegistrarUsuarioAsync(usuario, cancellationToken);
     }
 
 
     /*
      * Descripción:
-     * Registra un nutricionista nuevo con contraseña hasheada.
+     * Registra un nutricionista nuevo con contraseña hasheada y datos requeridos por el esquema SQL de nutricionistas.
      * Entradas:
-     * Recibe nombre, correo, contraseña inicial y token de cancelación.
+     * Recibe identificación, datos personales, datos profesionales, correo, contraseña inicial y token de cancelación.
      * Salidas:
      * Devuelve la información segura del nutricionista registrado.
      * Restricciones:
@@ -95,52 +124,67 @@ public sealed class AuthService(IAuthRepository repository, IPasswordHasher pass
         RegistrarNutricionistaRequest request,
         CancellationToken cancellationToken)
     {
-        return RegistrarUsuarioAsync(
-            request.Nombre,
-            request.Correo,
-            request.Contrasena,
-            TipoUsuarioNutricionista,
-            cancellationToken);
+        ValidarTexto(request.Cedula, nameof(request.Cedula));
+        ValidarTexto(request.Nombre, nameof(request.Nombre));
+        ValidarTexto(request.Apellidos, nameof(request.Apellidos));
+        ValidarTexto(request.CodigoNutricionista, nameof(request.CodigoNutricionista));
+        ValidarTexto(request.Direccion, nameof(request.Direccion));
+        ValidarTexto(request.TarjetaCredito, nameof(request.TarjetaCredito));
+        ValidarTexto(request.TipoCobro, nameof(request.TipoCobro));
+        ValidarTexto(request.Correo, nameof(request.Correo));
+        ValidarTexto(request.Contrasena, nameof(request.Contrasena));
+        ValidarMayorQueCero(request.Peso, nameof(request.Peso));
+        ValidarMayorQueCero(request.Imc, nameof(request.Imc));
+        ValidarEnteroNoNegativo(request.Edad, nameof(request.Edad));
+        ValidarTipoCobro(request.TipoCobro);
+
+        var usuario = new NuevoUsuarioAutenticacion(
+            Cedula: NormalizarTexto(request.Cedula),
+            Nombre: NormalizarTexto(request.Nombre),
+            Apellidos: NormalizarTexto(request.Apellidos),
+            Edad: request.Edad,
+            FechaNacimiento: request.FechaNacimiento,
+            Peso: request.Peso,
+            Imc: request.Imc,
+            Pais: null,
+            Cintura: null,
+            Cuello: null,
+            Caderas: null,
+            PctMusculo: null,
+            PctGrasa: null,
+            CaloriasDiariasMax: null,
+            CodigoNutricionista: NormalizarTexto(request.CodigoNutricionista),
+            Direccion: NormalizarTexto(request.Direccion),
+            FotoUrl: NormalizarTextoOpcional(request.FotoUrl),
+            TarjetaCredito: NormalizarTexto(request.TarjetaCredito),
+            TipoCobro: NormalizarTexto(request.TipoCobro),
+            Correo: NormalizarTexto(request.Correo),
+            ContrasenaHash: passwordHasher.GenerarHash(request.Contrasena),
+            TipoUsuario: TipoUsuarioNutricionista);
+
+        return RegistrarUsuarioAsync(usuario, cancellationToken);
     }
 
 
     /*
      * Descripción:
-     * Registra un usuario nuevo en el sistema, normalizando los datos, validando que el correo no exista
-     * y almacenando la contraseña de forma hasheada.
+     * Registra un usuario nuevo en el sistema, validando que el correo no exista y almacenando la contraseña de forma hasheada.
      * Entradas:
-     * Recibe nombre, correo, contraseña, tipo de usuario y token de cancelación.
+     * Recibe datos normalizados del usuario con contraseña hasheada y token de cancelación.
      * Salidas:
      * Devuelve la información segura del usuario registrado para iniciar sesión.
      * Restricciones:
-     * El nombre, correo y contraseña no pueden estar vacíos. El correo debe ser único.
-     * La contraseña se guarda hasheada y no en texto plano.
+     * El correo debe ser único. La contraseña se guarda hasheada y no en texto plano.
      */
 
     private async Task<LoginResponse> RegistrarUsuarioAsync(
-        string nombre,
-        string correo,
-        string contrasena,
-        string tipoUsuario,
+        NuevoUsuarioAutenticacion usuario,
         CancellationToken cancellationToken)
     {
-        ValidarTexto(nombre, nameof(nombre));
-        ValidarTexto(correo, nameof(correo));
-        ValidarTexto(contrasena, nameof(contrasena));
-
-        var nombreNormalizado = NormalizarTexto(nombre);
-        var correoNormalizado = NormalizarTexto(correo);
-
-        if (await repository.ExisteCorreoAsync(correoNormalizado, cancellationToken))
+        if (await repository.ExisteCorreoAsync(usuario.Correo, cancellationToken))
         {
             throw new ConflictoException("Ya existe un usuario registrado con el correo indicado.");
         }
-
-        var usuario = new NuevoUsuarioAutenticacion(
-            nombreNormalizado,
-            correoNormalizado,
-            passwordHasher.GenerarHash(contrasena),
-            tipoUsuario);
 
         var credencial = await repository.RegistrarUsuarioAsync(usuario, cancellationToken);
 
@@ -186,6 +230,22 @@ public sealed class AuthService(IAuthRepository repository, IPasswordHasher pass
 
     /*
      * Descripción:
+     * Elimina espacios externos de un texto opcional y conserva nulos cuando no hay valor útil.
+     * Entradas:
+     * Recibe una cadena opcional.
+     * Salidas:
+     * Devuelve texto normalizado o nulo.
+     * Restricciones:
+     * No debe convertir valores vacíos en datos persistibles.
+     */
+
+    private static string? NormalizarTextoOpcional(string? texto)
+    {
+        return string.IsNullOrWhiteSpace(texto) ? null : texto.Trim();
+    }
+
+    /*
+     * Descripción:
      * Valida que una cadena de texto no esté vacía, nula o compuesta solo por espacios.
      * Entradas:
      * Recibe el texto a validar y el nombre del parámetro asociado.
@@ -200,6 +260,66 @@ public sealed class AuthService(IAuthRepository repository, IPasswordHasher pass
         if (string.IsNullOrWhiteSpace(texto))
         {
             throw new ArgumentException("El texto no puede estar vacío.", nombreParametro);
+        }
+    }
+
+    /*
+     * Descripción:
+     * Valida que un valor decimal sea mayor que cero.
+     * Entradas:
+     * Recibe el valor decimal y el nombre del parámetro asociado.
+     * Salidas:
+     * No devuelve valor. Si el valor es válido, permite continuar la ejecución.
+     * Restricciones:
+     * Si el valor es cero o negativo, lanza una excepción ArgumentOutOfRangeException.
+     */
+
+    private static void ValidarMayorQueCero(decimal valor, string nombreParametro)
+    {
+        if (valor <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nombreParametro, "El valor debe ser mayor que cero.");
+        }
+    }
+
+    /*
+     * Descripción:
+     * Valida que un valor entero no sea negativo.
+     * Entradas:
+     * Recibe el valor entero y el nombre del parámetro asociado.
+     * Salidas:
+     * No devuelve valor. Si el valor es válido, permite continuar la ejecución.
+     * Restricciones:
+     * Si el valor es negativo, lanza una excepción ArgumentOutOfRangeException.
+     */
+
+    private static void ValidarEnteroNoNegativo(int valor, string nombreParametro)
+    {
+        if (valor < 0)
+        {
+            throw new ArgumentOutOfRangeException(nombreParametro, "El valor no puede ser negativo.");
+        }
+    }
+
+    /*
+     * Descripción:
+     * Valida que el tipo de cobro de un nutricionista coincida con los valores permitidos por SQL.
+     * Entradas:
+     * Recibe el tipo de cobro.
+     * Salidas:
+     * No devuelve valor. Si el valor es válido, permite continuar la ejecución.
+     * Restricciones:
+     * Solo se permiten semanal, mensual o anual.
+     */
+
+    private static void ValidarTipoCobro(string tipoCobro)
+    {
+        var tipoNormalizado = NormalizarTexto(tipoCobro);
+        if (!string.Equals(tipoNormalizado, "semanal", StringComparison.Ordinal)
+            && !string.Equals(tipoNormalizado, "mensual", StringComparison.Ordinal)
+            && !string.Equals(tipoNormalizado, "anual", StringComparison.Ordinal))
+        {
+            throw new ArgumentException("El tipo de cobro debe ser semanal, mensual o anual.", nameof(tipoCobro));
         }
     }
 }

@@ -11,11 +11,11 @@ namespace NutriTec.Application.Abstractions.Persistence;
  * Transporta información interna para validar credenciales y construir una respuesta de autenticación.
  *
  * Restricciones:
- * No debe exponerse al frontend porque contiene el hash de la contraseña persistida.
+ * No debe exponerse al frontend porque contiene el hash de la contraseña persistida; el identificador se mantiene como texto para soportar claves SQL heterogéneas.
  */
 
 public sealed record CredencialAutenticacion(
-    Guid IdUsuario,
+    string IdUsuario,
     string Nombre,
     string Correo,
     string ContrasenaHash,
