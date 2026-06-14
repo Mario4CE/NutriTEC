@@ -17,6 +17,7 @@ builder.Services.AddNutriTecApplication();
 builder.Services.AddNutriTecSqlInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
+builder.Services.AddAuthorization();
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.InvalidModelStateResponseFactory = context =>

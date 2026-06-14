@@ -16,6 +16,7 @@ builder.Services.AddNutriTecApplication();
 builder.Services.AddNutriTecMongoInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
+builder.Services.AddAuthorization();
 builder.Services.AddExceptionHandler<ArgumentExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
