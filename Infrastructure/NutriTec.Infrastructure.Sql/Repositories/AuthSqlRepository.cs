@@ -1,0 +1,151 @@
+using Microsoft.EntityFrameworkCore;
+using NutriTec.Application.Abstractions.Persistence;
+using NutriTec.Infrastructure.Sql.Persistence;
+using NutriTec.Infrastructure.Sql.Persistence.Entities;
+
+namespace NutriTec.Infrastructure.Sql.Repositories;
+
+/*
+Descripción:
+Repositorio SQL de autenticación que adapta las tablas USUARIO, NUTRICIONISTA y ADMINISTRADOR
+al contrato de persistencia definido en Application, sin exponer entidades de infraestructura.
+
+Entradas:
+Recibe correos normalizados o usuarios nuevos con contraseña previamente hasheada por Application.
+
+Salidas:
+Devuelve CredencialAutenticacion para que Application pueda construir DTOs públicos sin password_hash.
+
+Restricciones:
+No genera hashes, no usa SQL crudo, no registra administradores y no implementa JWT ni lógica de controllers.
+*/
+public sealed class AuthSqlRepository(NutriTecDbContext dbContext) : IAuthRepository
+{
+    private const string TipoCliente = "Cliente";
+    private const string TipoNutricionista = "Nutricionista";
+    private const string TipoAdministrador = "Administrador";
+
+    public async Task<CredencialAutenticacion?> ObtenerCredencialPorCorreoAsync(string correo, CancellationToken cancellationToken)
+    {
+        var correoNormalizado = NormalizarCorreo(correo);
+
+        var usuario = await dbContext.Usuarios
+            .AsNoTracking()
+            .FirstOrDefaultAsync(usuario => usuario.Email == correoNormalizado, cancellationToken);
+
+        if (usuario is not null)
+        {
+            return MapearUsuario(usuario);
+        }
+
+        var nutricionista = await dbContext.Nutricionistas
+            .AsNoTracking()
+            .FirstOrDefaultAsync(nutricionista => nutricionista.Email == correoNormalizado, cancellationToken);
+
+        if (nutricionista is not null)
+        {
+            return MapearNutricionista(nutricionista);
+        }
+
+        var administrador = await dbContext.Administradores
+            .AsNoTracking()
+            .FirstOrDefaultAsync(administrador => administrador.Email == correoNormalizado, cancellationToken);
+
+        return administrador is null ? null : MapearAdministrador(administrador);
+    }
+
+    public async Task<bool> ExisteCorreoAsync(string correo, CancellationToken cancellationToken)
+    {
+        var correoNormalizado = NormalizarCorreo(correo);
+
+        return await dbContext.Usuarios.AnyAsync(usuario => usuario.Email == correoNormalizado, cancellationToken)
+            || await dbContext.Nutricionistas.AnyAsync(nutricionista => nutricionista.Email == correoNormalizado, cancellationToken)
+            || await dbContext.Administradores.AnyAsync(administrador => administrador.Email == correoNormalizado, cancellationToken);
+    }
+
+    public async Task<CredencialAutenticacion> RegistrarUsuarioAsync(NuevoUsuarioAutenticacion usuario, CancellationToken cancellationToken)
+    {
+        return usuario.TipoUsuario switch
+        {
+            TipoCliente => await RegistrarClienteAsync(usuario, cancellationToken),
+            TipoNutricionista => await RegistrarNutricionistaAsync(usuario, cancellationToken),
+            _ => throw new InvalidOperationException($"El tipo de usuario '{usuario.TipoUsuario}' no está soportado para registro SQL.")
+        };
+    }
+
+    private async Task<CredencialAutenticacion> RegistrarClienteAsync(NuevoUsuarioAutenticacion usuario, CancellationToken cancellationToken)
+    {
+        var entidad = new UsuarioSql
+        {
+            Nombre = usuario.Nombre,
+            Apellidos = usuario.Apellidos,
+            Edad = usuario.Edad,
+            FechaNacimiento = usuario.FechaNacimiento,
+            Peso = usuario.Peso,
+            Imc = usuario.Imc,
+            Pais = usuario.Pais ?? string.Empty,
+            Cintura = usuario.Cintura,
+            Cuello = usuario.Cuello,
+            Caderas = usuario.Caderas,
+            PctMusculo = usuario.PctMusculo,
+            PctGrasa = usuario.PctGrasa,
+            CaloriasDiariasMax = usuario.CaloriasDiariasMax ?? 0,
+            Email = NormalizarCorreo(usuario.Correo),
+            PasswordHash = usuario.ContrasenaHash
+        };
+
+        dbContext.Usuarios.Add(entidad);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return MapearUsuario(entidad);
+    }
+
+    private async Task<CredencialAutenticacion> RegistrarNutricionistaAsync(NuevoUsuarioAutenticacion usuario, CancellationToken cancellationToken)
+    {
+        var entidad = new NutricionistaSql
+        {
+            Cedula = usuario.Cedula ?? throw new InvalidOperationException("La cédula es obligatoria para registrar nutricionistas."),
+            Nombre = usuario.Nombre,
+            Apellidos = usuario.Apellidos,
+            CodigoNutricionista = usuario.CodigoNutricionista ?? throw new InvalidOperationException("El código de nutricionista es obligatorio."),
+            Edad = usuario.Edad,
+            FechaNacimiento = usuario.FechaNacimiento,
+            Peso = usuario.Peso,
+            Imc = usuario.Imc,
+            Direccion = usuario.Direccion ?? string.Empty,
+            FotoUrl = usuario.FotoUrl,
+            TarjetaCredito = usuario.TarjetaCredito ?? string.Empty,
+            TipoCobro = usuario.TipoCobro ?? string.Empty,
+            Email = NormalizarCorreo(usuario.Correo),
+            PasswordHash = usuario.ContrasenaHash
+        };
+
+        dbContext.Nutricionistas.Add(entidad);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return MapearNutricionista(entidad);
+    }
+
+    private static CredencialAutenticacion MapearUsuario(UsuarioSql usuario) => new(
+        usuario.IdUsuario.ToString(),
+        usuario.Nombre,
+        usuario.Email,
+        usuario.PasswordHash,
+        TipoCliente);
+
+    private static CredencialAutenticacion MapearNutricionista(NutricionistaSql nutricionista) => new(
+        nutricionista.Cedula,
+        nutricionista.Nombre,
+        nutricionista.Email,
+        nutricionista.PasswordHash,
+        TipoNutricionista);
+
+    private static CredencialAutenticacion MapearAdministrador(AdministradorSql administrador) => new(
+        administrador.IdAdmin.ToString(),
+        "Administrador",
+        administrador.Email,
+        administrador.PasswordHash,
+        TipoAdministrador);
+
+    private static string NormalizarCorreo(string correo) => correo.Trim();
+}

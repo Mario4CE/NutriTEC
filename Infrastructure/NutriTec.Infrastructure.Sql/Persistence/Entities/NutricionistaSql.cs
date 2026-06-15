@@ -1,18 +1,5 @@
 namespace NutriTec.Infrastructure.Sql.Persistence.Entities;
 
-/*
- * Descripción:
- * Representa la tabla NUTRICIONISTA dentro del adaptador SQL Server.
- *
- * Entradas:
- * Recibe identificación, datos personales, datos profesionales, correo y hash de contraseña desde la persistencia relacional.
- *
- * Salidas:
- * Permite a Entity Framework Core materializar nutricionistas sin exponer la entidad al frontend.
- *
- * Restricciones:
- * Es una entidad de infraestructura; la contraseña debe persistirse únicamente como hash y tipo cobro debe respetar los valores aceptados por SQL.
- */
 public sealed class NutricionistaSql
 {
     public string Cedula { get; set; } = string.Empty;
