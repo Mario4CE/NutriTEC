@@ -53,7 +53,9 @@ Respuesta exitosa `200 OK`:
   "idUsuario": "1",
   "nombre": "Cliente Demo",
   "correo": "cliente@example.com",
-  "tipoUsuario": "Cliente"
+  "tipoUsuario": "Cliente",
+  "token": "<jwt>",
+  "expiraEn": "2026-06-15T18:00:00+00:00"
 }
 ```
 
@@ -94,7 +96,7 @@ Body:
 }
 ```
 
-Respuesta exitosa `201 Created` devuelve `LoginResponse` sin contraseña ni `password_hash`.
+Respuesta exitosa `201 Created` devuelve `LoginResponse` con JWT, sin contraseña ni `password_hash`.
 
 Correo duplicado `409 Conflict`:
 
@@ -139,7 +141,24 @@ Body:
 - `mensual`
 - `anual`
 
-Respuesta exitosa `201 Created` devuelve `LoginResponse` sin contraseña ni `password_hash`.
+Respuesta exitosa `201 Created` devuelve `LoginResponse` con JWT, sin contraseña ni `password_hash`.
+
+## Autenticación JWT
+
+El login y los registros devuelven un JWT firmado. Para consumir endpoints protegidos en futuros módulos, enviar el token así:
+
+```http
+Authorization: Bearer <jwt>
+```
+
+Claims incluidos inicialmente:
+
+- `sub`: identificador del usuario.
+- `email`: correo del usuario.
+- `name`: nombre del usuario.
+- `role`: tipo de usuario (`Cliente`, `Nutricionista` o `Administrador`).
+
+La configuración base vive en `Jwt`. El valor de `Jwt:Secret` no debe ser un secreto real dentro del repositorio; para ambientes reales debe venir de variables de entorno, user-secrets o un gestor de secretos.
 
 ## Verificación básica
 
@@ -156,5 +175,5 @@ Respuesta exitosa `201 Created` devuelve `LoginResponse` sin contraseña ni `pas
 - Los DTOs públicos viven en `Core/NutriTec.Contracts`.
 - Las entidades SQL viven en `Infrastructure` y no deben exponerse al frontend.
 - No se devuelve `password_hash` ni contraseña desde el API.
-- JWT todavía no está habilitado; se agregará después de validar login/registro contra SQL.
-- No usar secretos reales en `appsettings.json`; usar variables de entorno o user-secrets cuando aplique.
+- JWT está habilitado para emitir tokens en login y registro.
+- No usar secretos reales en `appsettings.json`; usar variables de entorno o user-secrets para `Jwt:Secret` cuando aplique.

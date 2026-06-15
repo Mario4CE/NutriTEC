@@ -9,4 +9,7 @@
     <ProjectReference Include="..\..\Core\NutriTec.Contracts\NutriTec.Contracts.csproj" />
     <ProjectReference Include="..\..\Infrastructure\NutriTec.Infrastructure.Sql\NutriTec.Infrastructure.Sql.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.11" />
+  </ItemGroup>
 </Project>

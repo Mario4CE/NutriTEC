@@ -5,7 +5,10 @@ using NutriTec.Contracts.Autenticacion;
 
 namespace NutriTec.Application.Autenticacion;
 
-public sealed class AuthService(IAuthRepository authRepository, IPasswordHasher passwordHasher) : IAuthService
+public sealed class AuthService(
+    IAuthRepository authRepository,
+    IPasswordHasher passwordHasher,
+    ITokenService tokenService) : IAuthService
 {
     public async Task<LoginResponse?> LoginAsync(LoginRequest request, CancellationToken cancellationToken)
     {
@@ -88,9 +91,20 @@ public sealed class AuthService(IAuthRepository authRepository, IPasswordHasher 
         }
     }
 
-    private static LoginResponse MapearLoginResponse(CredencialAutenticacion credencial) => new(
-        credencial.IdUsuario,
-        credencial.Nombre,
-        credencial.Correo,
-        credencial.TipoUsuario);
+    private LoginResponse MapearLoginResponse(CredencialAutenticacion credencial)
+    {
+        var token = tokenService.GenerarToken(new UsuarioTokenAutenticacion(
+            credencial.IdUsuario,
+            credencial.Nombre,
+            credencial.Correo,
+            credencial.TipoUsuario));
+
+        return new LoginResponse(
+            credencial.IdUsuario,
+            credencial.Nombre,
+            credencial.Correo,
+            credencial.TipoUsuario,
+            token.Token,
+            token.ExpiraEn);
+    }
 }

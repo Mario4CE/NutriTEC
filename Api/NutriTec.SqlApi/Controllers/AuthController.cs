@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NutriTec.Application.Abstractions.Services;
 using NutriTec.Contracts.Autenticacion;
@@ -5,6 +6,7 @@ using NutriTec.Contracts.Autenticacion;
 namespace NutriTec.SqlApi.Controllers;
 
 [ApiController]
+[AllowAnonymous]
 [Route("api/[controller]")]
 public sealed class AuthController(IAuthService authService) : ControllerBase
 {
@@ -21,7 +23,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     200 OK con LoginResponse si las credenciales son válidas; 401 Unauthorized con mensaje genérico si fallan.
 
     Restricciones:
-    No accede a DbContext, no expone entidades SQL, no devuelve contraseñas, no devuelve password_hash y no emite JWT todavía.
+    No accede a DbContext, no expone entidades SQL, no devuelve contraseñas ni password_hash; el JWT lo genera Application mediante la abstracción de tokens.
     */
     [HttpPost("login")]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
