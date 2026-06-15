@@ -6,6 +6,7 @@ using NutriTec.Contracts.Common;
 using NutriTec.Application;
 using NutriTec.Infrastructure.Sql;
 using NutriTec.SqlApi.Middleware;
+using NutriTec.Contracts.Common;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,34 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Cliente", policy => policy.RequireRole("Cliente"));
     options.AddPolicy("Nutricionista", policy => policy.RequireRole("Nutricionista"));
     options.AddPolicy("Administrador", policy => policy.RequireRole("Administrador"));
+});
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+            }));
+
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        context.HttpContext.Response.ContentType = "application/json";
+
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+        {
+            context.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString();
+        }
+
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new ErrorResponse("rate_limit", "Demasiados intentos. Intente nuevamente más tarde."),
+            cancellationToken);
+    };
 });
 
 builder.Services.AddRateLimiter(options =>

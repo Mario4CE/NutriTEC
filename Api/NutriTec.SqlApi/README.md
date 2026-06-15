@@ -67,6 +67,17 @@ Credenciales inválidas `401 Unauthorized`:
 }
 ```
 
+Límite de intentos excedido `429 Too Many Requests`:
+
+```json
+{
+  "codigo": "rate_limit",
+  "mensaje": "Demasiados intentos. Intente nuevamente más tarde."
+}
+```
+
+El login aplica rate limiting por IP remota: máximo 5 intentos por minuto, sin cola. Cuando el runtime puede calcularlo, la respuesta incluye el encabezado `Retry-After`.
+
 ### Registrar cliente
 
 ```http
@@ -160,31 +171,6 @@ Claims incluidos inicialmente:
 
 La configuración base vive en `Jwt`. El valor de `Jwt:Secret` no debe ser un secreto real dentro del repositorio; para ambientes reales debe venir de variables de entorno, user-secrets o un gestor de secretos.
 
-## Rate limiting
-
-El endpoint de login tiene rate limiting para reducir intentos de fuerza bruta:
-
-```http
-POST /api/auth/login
-```
-
-Política inicial:
-
-- 5 intentos por minuto.
-- Partición por dirección IP remota.
-- Sin cola de espera.
-
-Cuando se supera el límite, el API responde `429 Too Many Requests`:
-
-```json
-{
-  "codigo": "rate_limit",
-  "mensaje": "Demasiados intentos. Intente nuevamente más tarde."
-}
-```
-
-El API puede incluir el header `Retry-After` cuando el runtime provee el tiempo de espera.
-
 ## Verificación básica
 
 1. Confirmar que la base `NutriTec` existe en LocalDB y que las tablas SQL requeridas ya fueron creadas.
@@ -193,7 +179,7 @@ El API puede incluir el header `Retry-After` cuando el runtime provee el tiempo 
 4. Hacer login con el correo y contraseña registrados.
 5. Intentar registrar el mismo correo nuevamente y confirmar respuesta `409 Conflict`.
 6. Intentar login con contraseña incorrecta y confirmar respuesta `401 Unauthorized` con mensaje genérico.
-7. Repetir login más de 5 veces en un minuto desde la misma IP y confirmar respuesta `429 Too Many Requests`.
+7. Repetir intentos de login hasta exceder el límite y confirmar respuesta `429 Too Many Requests` con código `rate_limit`.
 
 ## Límites arquitectónicos
 
@@ -202,4 +188,5 @@ El API puede incluir el header `Retry-After` cuando el runtime provee el tiempo 
 - Las entidades SQL viven en `Infrastructure` y no deben exponerse al frontend.
 - No se devuelve `password_hash` ni contraseña desde el API.
 - JWT está habilitado para emitir tokens en login y registro.
+- El endpoint de login aplica rate limiting para reducir intentos abusivos de autenticación.
 - No usar secretos reales en `appsettings.json`; usar variables de entorno o user-secrets para `Jwt:Secret` cuando aplique.
