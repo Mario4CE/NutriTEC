@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using NutriTec.Application.Abstractions.Services;
 using NutriTec.Contracts.Autenticacion;
 
@@ -26,9 +27,11 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     No accede a DbContext, no expone entidades SQL, no devuelve contraseñas ni password_hash; el JWT lo genera Application mediante la abstracción de tokens.
     */
     [HttpPost("login")]
+    [EnableRateLimiting("login")]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
         var response = await authService.LoginAsync(request, cancellationToken);
@@ -52,7 +55,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     201 Created con LoginResponse del cliente registrado.
 
     Restricciones:
-    No accede a DbContext, no expone UsuarioSql, no devuelve contraseñas, no devuelve password_hash y no crea JWT.
+    No accede a DbContext, no expone UsuarioSql y no devuelve contraseñas ni password_hash.
     */
     [HttpPost("registrar-cliente")]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status201Created)]
@@ -76,7 +79,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     201 Created con LoginResponse del nutricionista registrado.
 
     Restricciones:
-    No accede a DbContext, no expone NutricionistaSql, no devuelve contraseñas, no devuelve password_hash y no crea JWT.
+    No accede a DbContext, no expone NutricionistaSql y no devuelve contraseñas ni password_hash.
     */
     [HttpPost("registrar-nutricionista")]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status201Created)]
