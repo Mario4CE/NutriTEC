@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using NutriTec.Application.Abstractions.Services;
-using NutriTec.Application.Common;
 using NutriTec.Contracts.Autenticacion;
 
 namespace NutriTec.SqlApi.Controllers;
@@ -59,16 +58,9 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<LoginResponse>> RegistrarCliente([FromBody] RegistrarClienteRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var response = await authService.RegistrarClienteAsync(request, cancellationToken);
+        var response = await authService.RegistrarClienteAsync(request, cancellationToken);
 
-            return CreatedAtAction(nameof(Login), new { correo = response.Correo }, response);
-        }
-        catch (ConflictoException exception)
-        {
-            return Conflict(new { mensaje = exception.Message });
-        }
+        return CreatedAtAction(nameof(Login), new { correo = response.Correo }, response);
     }
 
     /*
@@ -90,15 +82,8 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<LoginResponse>> RegistrarNutricionista([FromBody] RegistrarNutricionistaRequest request, CancellationToken cancellationToken)
     {
-        try
-        {
-            var response = await authService.RegistrarNutricionistaAsync(request, cancellationToken);
+        var response = await authService.RegistrarNutricionistaAsync(request, cancellationToken);
 
-            return CreatedAtAction(nameof(Login), new { correo = response.Correo }, response);
-        }
-        catch (ConflictoException exception)
-        {
-            return Conflict(new { mensaje = exception.Message });
-        }
+        return CreatedAtAction(nameof(Login), new { correo = response.Correo }, response);
     }
 }

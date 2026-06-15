@@ -1,5 +1,6 @@
 using NutriTec.Application;
 using NutriTec.Infrastructure.Sql;
+using NutriTec.SqlApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,7 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseAuthorization();
 app.MapControllers();
 
