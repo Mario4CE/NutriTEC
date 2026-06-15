@@ -1,82 +1,160 @@
-# NutriTec.SqlApi
+# NutriTec SQL API
 
-Proyecto ASP.NET Core encargado de exponer los módulos respaldados por SQL Server.
+API HTTP para los casos de uso que persisten en SQL Server. En esta etapa incluye los endpoints de autenticación para login y registro de clientes/nutricionistas.
 
-Responsabilidades principales:
+## Ejecución local
 
-- Configurar controllers para recursos relacionales.
-- Registrar la capa `Application` y la infraestructura SQL mediante Dependency Injection.
-- Publicar endpoints para productos y administración inicial.
-- Aplicar middleware de errores de aplicación.
+La configuración de desarrollo usa LocalDB con Windows Authentication:
 
-Restricciones:
+```text
+Server=(localdb)\MSSQLLocalDB;Database=NutriTec;Trusted_Connection=True;TrustServerCertificate=True
+```
 
-- No debe depender de la infraestructura Mongo.
-- No debe acceder a `DbContext` desde controllers.
-- No debe implementar lógica de negocio dentro de endpoints.
-
-## Configuración local y puertos
-
-Esta API se ejecuta de forma local con `dotnet run` y usa los perfiles definidos en `Properties/launchSettings.json` cuando se inicia desde el proyecto.
-
-Puertos configurados actualmente:
-
-- Perfil `http`: `http://localhost:5255`.
-- Perfil `https`: `https://localhost:7281` y `http://localhost:5255`.
-
-Comando recomendado desde la raíz del repositorio:
+Ejecutar la API SQL:
 
 ```bash
 dotnet run --project Api/NutriTec.SqlApi/NutriTec.SqlApi.csproj
 ```
 
-Si otro desarrollador necesita cambiar los puertos locales, puede hacerlo en `Api/NutriTec.SqlApi/Properties/launchSettings.json`, modificando la propiedad `applicationUrl` del perfil correspondiente.
-
-También puede sobrescribir temporalmente la URL sin editar archivos versionados usando `ASPNETCORE_URLS`:
+Si se requiere fijar puertos locales:
 
 ```bash
-ASPNETCORE_URLS=http://localhost:5001 dotnet run --project Api/NutriTec.SqlApi/NutriTec.SqlApi.csproj
+ASPNETCORE_URLS="http://localhost:5255;https://localhost:7281" dotnet run --project Api/NutriTec.SqlApi/NutriTec.SqlApi.csproj
 ```
 
-## Configuración que puede cambiar cada desarrollador
+## Endpoints de autenticación
 
-Cada desarrollador puede ajustar localmente:
-
-- Puertos de ejecución local.
-- Perfil de ejecución (`http` o `https`).
-- Variable `ASPNETCORE_ENVIRONMENT`, normalmente `Development` para trabajo local.
-- Cadenas de conexión locales usando configuración segura o variables de entorno.
-
-No se deben quemar secretos reales en archivos versionados. Si una configuración contiene contraseñas, tokens o credenciales, debe manejarse con variables de entorno, secretos de usuario de .NET o el mecanismo seguro definido por el equipo.
-
-## Límites de cambio para esta API
-
-Al modificar este proyecto se debe mantener el flujo:
+Base URL local sugerida:
 
 ```text
-Controller → Service → Repository → Database
+http://localhost:5255
 ```
 
-Por lo tanto:
+### Login
 
-- Los controllers no deben consultar directamente la base de datos.
-- Los controllers no deben exponer entidades de infraestructura ni entidades con datos sensibles.
-- Los contratos públicos deben mantenerse como DTOs separados.
-- La API SQL no debe depender de MongoDB ni mezclar modelos documentales.
-- No se debe agregar autenticación JWT sin un incremento explícito para ese objetivo.
-- No se debe agregar `UseAuthentication()` si antes no existe una configuración completa de autenticación.
+```http
+POST /api/auth/login
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "correo": "cliente@example.com",
+  "contrasena": "Password123!"
+}
+```
+
+Respuesta exitosa `200 OK`:
+
+```json
+{
+  "idUsuario": "1",
+  "nombre": "Cliente Demo",
+  "correo": "cliente@example.com",
+  "tipoUsuario": "Cliente"
+}
+```
+
+Credenciales inválidas `401 Unauthorized`:
+
+```json
+{
+  "mensaje": "Correo o contraseña inválidos."
+}
+```
+
+### Registrar cliente
+
+```http
+POST /api/auth/registrar-cliente
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "nombre": "Cliente",
+  "apellidos": "Demo",
+  "edad": 30,
+  "fechaNacimiento": "1994-01-20",
+  "peso": 72.5,
+  "imc": 24.1,
+  "pais": "Costa Rica",
+  "cintura": 82.0,
+  "cuello": 38.0,
+  "caderas": 95.0,
+  "pctMusculo": 42.0,
+  "pctGrasa": 18.5,
+  "caloriasDiariasMax": 2200,
+  "correo": "cliente@example.com",
+  "contrasena": "Password123!"
+}
+```
+
+Respuesta exitosa `201 Created` devuelve `LoginResponse` sin contraseña ni `password_hash`.
+
+Correo duplicado `409 Conflict`:
+
+```json
+{
+  "codigo": "conflicto",
+  "mensaje": "El correo ya está registrado."
+}
+```
+
+### Registrar nutricionista
+
+```http
+POST /api/auth/registrar-nutricionista
+Content-Type: application/json
+```
+
+Body:
+
+```json
+{
+  "cedula": "1-1111-1111",
+  "nombre": "Nutricionista",
+  "apellidos": "Demo",
+  "codigoNutricionista": "NUT-001",
+  "edad": 35,
+  "fechaNacimiento": "1989-05-10",
+  "peso": 68.0,
+  "imc": 23.0,
+  "direccion": "San José, Costa Rica",
+  "fotoUrl": null,
+  "tarjetaCredito": "411111******1111",
+  "tipoCobro": "mensual",
+  "correo": "nutricionista@example.com",
+  "contrasena": "Password123!"
+}
+```
+
+`tipoCobro` debe ser uno de:
+
+- `semanal`
+- `mensual`
+- `anual`
+
+Respuesta exitosa `201 Created` devuelve `LoginResponse` sin contraseña ni `password_hash`.
 
 ## Verificación básica
 
-Para validar que la API inicia correctamente:
+1. Confirmar que la base `NutriTec` existe en LocalDB y que las tablas SQL requeridas ya fueron creadas.
+2. Ejecutar la API SQL.
+3. Registrar un cliente.
+4. Hacer login con el correo y contraseña registrados.
+5. Intentar registrar el mismo correo nuevamente y confirmar respuesta `409 Conflict`.
+6. Intentar login con contraseña incorrecta y confirmar respuesta `401 Unauthorized` con mensaje genérico.
 
-```bash
-dotnet build
-dotnet run --project Api/NutriTec.SqlApi/NutriTec.SqlApi.csproj
-```
+## Límites arquitectónicos
 
-En ambiente `Development`, la especificación OpenAPI se publica con `MapOpenApi()` y puede consultarse en una ruta como:
-
-```text
-http://localhost:5255/openapi/v1.json
-```
+- Los controllers dependen de servicios de Application, no de `DbContext`.
+- Los DTOs públicos viven en `Core/NutriTec.Contracts`.
+- Las entidades SQL viven en `Infrastructure` y no deben exponerse al frontend.
+- No se devuelve `password_hash` ni contraseña desde el API.
+- JWT todavía no está habilitado; se agregará después de validar login/registro contra SQL.
+- No usar secretos reales en `appsettings.json`; usar variables de entorno o user-secrets cuando aplique.
