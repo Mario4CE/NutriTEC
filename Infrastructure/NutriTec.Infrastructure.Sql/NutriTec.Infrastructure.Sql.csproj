@@ -14,5 +14,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Core\NutriTec.Application\NutriTec.Application.csproj" />
+    <ProjectReference Include="..\..\Core\NutriTec.Domain\NutriTec.Domain.csproj" />
   </ItemGroup>
 </Project>
