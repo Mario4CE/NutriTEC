@@ -7,6 +7,7 @@ Responsabilidades principales:
 - Definir contratos de entrada y salida serializables.
 - Mantener los modelos expuestos al frontend separados del dominio.
 - Incluir validaciones declarativas básicas cuando corresponda.
+- Exponer DTOs de autenticación seguros, sin contraseñas, `password_hash` ni secretos.
 
 Restricciones:
 

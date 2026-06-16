@@ -163,6 +163,26 @@ Body:
 
 Respuesta exitosa `201 Created` devuelve `LoginResponse` con JWT, sin contraseña ni `password_hash`.
 
+### Usuario autenticado
+
+```http
+GET /api/auth/me
+Authorization: Bearer <jwt>
+```
+
+Respuesta exitosa `200 OK`:
+
+```json
+{
+  "idUsuario": "1",
+  "nombre": "Cliente Demo",
+  "correo": "cliente@example.com",
+  "tipoUsuario": "Cliente"
+}
+```
+
+Este endpoint está protegido con JWT y devuelve únicamente claims de identidad ya validados. No consulta base de datos, no devuelve contraseña, no devuelve `password_hash` y no emite tokens nuevos.
+
 ## Autenticación JWT
 
 El login y los registros devuelven un JWT firmado. Para consumir endpoints protegidos en futuros módulos, enviar el token así:
@@ -264,6 +284,7 @@ Toda cache debe tener un tiempo de vida definido. Como guía inicial: catálogos
 5. Intentar registrar el mismo correo nuevamente y confirmar respuesta `409 Conflict`.
 6. Intentar login con contraseña incorrecta y confirmar respuesta `401 Unauthorized` con mensaje genérico.
 7. Repetir intentos de login hasta exceder el límite y confirmar respuesta `429 Too Many Requests` con código `rate_limit`.
+8. Consumir `GET /api/auth/me` con `Authorization: Bearer <jwt>` y confirmar que devuelve la identidad del usuario autenticado.
 
 ## Límites arquitectónicos
 
@@ -272,6 +293,7 @@ Toda cache debe tener un tiempo de vida definido. Como guía inicial: catálogos
 - Las entidades SQL viven en `Infrastructure` y no deben exponerse al frontend.
 - No se devuelve `password_hash` ni contraseña desde el API.
 - JWT está habilitado para emitir tokens en login y registro.
+- `GET /api/auth/me` es un endpoint protegido para validar JWT y exponer solo claims seguros.
 - El endpoint de login aplica rate limiting para reducir intentos abusivos de autenticación.
 - Las respuestas de autenticación usan headers `no-store` para evitar cache accidental de tokens.
 - CORS usa una política restringida por configuración y no permite cualquier origen.

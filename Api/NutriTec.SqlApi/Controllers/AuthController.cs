@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -8,7 +9,6 @@ using NutriTec.Contracts.Common;
 namespace NutriTec.SqlApi.Controllers;
 
 [ApiController]
-[AllowAnonymous]
 [Route("api/[controller]")]
 public sealed class AuthController(IAuthService authService) : ControllerBase
 {
@@ -28,11 +28,11 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     No accede a DbContext, no expone entidades SQL, no devuelve contraseñas ni password_hash; el JWT lo genera Application mediante la abstracción de tokens.
     */
     [HttpPost("login")]
+    [AllowAnonymous]
     [EnableRateLimiting("login")]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
         var response = await authService.LoginAsync(request, cancellationToken);
@@ -56,9 +56,10 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     201 Created con LoginResponse del cliente registrado.
 
     Restricciones:
-    No accede a DbContext, no expone UsuarioSql y no devuelve contraseñas ni password_hash.
+    No accede a DbContext, no expone UsuarioSql, no devuelve contraseñas, no devuelve password_hash y no crea JWT.
     */
     [HttpPost("registrar-cliente")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -80,9 +81,10 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     201 Created con LoginResponse del nutricionista registrado.
 
     Restricciones:
-    No accede a DbContext, no expone NutricionistaSql y no devuelve contraseñas ni password_hash.
+    No accede a DbContext, no expone NutricionistaSql, no devuelve contraseñas, no devuelve password_hash y no crea JWT.
     */
     [HttpPost("registrar-nutricionista")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
@@ -92,4 +94,40 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
 
         return CreatedAtAction(nameof(Login), new { correo = response.Correo }, response);
     }
+
+    /*
+    Descripción:
+    Devuelve la identidad del usuario autenticado a partir de los claims del JWT validado.
+
+    Entradas:
+    Token JWT enviado en el encabezado Authorization como Bearer token.
+
+    Salidas:
+    200 OK con UsuarioActualResponse si el token es válido; 401 Unauthorized si faltan claims obligatorios.
+
+    Restricciones:
+    No consulta base de datos, no expone entidades SQL, no devuelve contraseñas ni password_hash y no emite nuevos tokens.
+    */
+    [HttpGet("me")]
+    [Authorize]
+    [ProducesResponseType(typeof(UsuarioActualResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
+    public ActionResult<UsuarioActualResponse> ObtenerUsuarioActual()
+    {
+        var idUsuario = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        var nombre = User.FindFirstValue(ClaimTypes.Name) ?? User.FindFirstValue("name");
+        var correo = User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue("email");
+        var tipoUsuario = User.FindFirstValue(ClaimTypes.Role) ?? User.FindFirstValue("role");
+
+        if (string.IsNullOrWhiteSpace(idUsuario)
+            || string.IsNullOrWhiteSpace(nombre)
+            || string.IsNullOrWhiteSpace(correo)
+            || string.IsNullOrWhiteSpace(tipoUsuario))
+        {
+            return Unauthorized(new ErrorResponse("token_invalido", "El token de autenticación no es válido."));
+        }
+
+        return Ok(new UsuarioActualResponse(idUsuario, nombre, correo, tipoUsuario));
+    }
+
 }
