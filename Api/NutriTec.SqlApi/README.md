@@ -161,6 +161,8 @@ Body:
 - `mensual`
 - `anual`
 
+Estos valores corresponden al catálogo SQL `TIPO_COBRO` y deben existir antes de registrar nutricionistas.
+
 Respuesta exitosa `201 Created` devuelve `LoginResponse` con JWT, sin contraseña ni `password_hash`.
 
 ### Usuario autenticado

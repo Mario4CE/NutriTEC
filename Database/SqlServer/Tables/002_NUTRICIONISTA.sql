@@ -6,13 +6,13 @@
         No recibe parámetros. Este script se ejecuta directamente sobre SQL Server.
 
     Salidas:
-        Tabla NUTRICIONISTA con clave primaria cedula y restricción UNIQUE sobre codigo_nutricionista y email.
+        Tabla NUTRICIONISTA con clave primaria cedula, restricción UNIQUE sobre codigo_nutricionista y email, y FK hacia TIPO_COBRO.
 
     Restricciones:
         - Ejecutar en una base de datos SQL Server seleccionada previamente.
         - No almacenar contraseñas en texto plano; password_hash debe contener un hash seguro.
-        - tipo_cobro solo permite los valores semanal, mensual o anual.
-        - Ejecutar antes de tablas que referencian nutricionistas.
+        - tipo_cobro debe existir previamente en el catálogo TIPO_COBRO.
+        - Ejecutar después de TIPO_COBRO y antes de tablas que referencian nutricionistas.
 */
 CREATE TABLE NUTRICIONISTA (
     cedula                  VARCHAR(20)     PRIMARY KEY,
@@ -26,7 +26,11 @@ CREATE TABLE NUTRICIONISTA (
     direccion               VARCHAR(255)    NOT NULL,
     foto_url                VARCHAR(500),
     tarjeta_credito         VARCHAR(20)     NOT NULL,
-    tipo_cobro              VARCHAR(10)     NOT NULL CHECK (tipo_cobro IN ('semanal', 'mensual', 'anual')),
+    tipo_cobro              VARCHAR(10)     NOT NULL,
     email                   VARCHAR(100)    NOT NULL UNIQUE,
-    password_hash           VARCHAR(255)    NOT NULL
+    password_hash           VARCHAR(255)    NOT NULL,
+
+    CONSTRAINT FK_NUTRICIONISTA_TIPO_COBRO
+        FOREIGN KEY (tipo_cobro)
+        REFERENCES TIPO_COBRO(codigo_tipo_cobro)
 );

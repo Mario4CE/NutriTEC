@@ -12,7 +12,7 @@ namespace NutriTec.Infrastructure.Sql.Persistence.Configurations;
  * Recibe el constructor de entidad proporcionado por Entity Framework Core.
  *
  * Salidas:
- * Define tabla, clave primaria, columnas, longitudes, precisiones e índices únicos de código profesional y email.
+ * Define tabla, clave primaria, columnas, longitudes, precisiones, índices únicos y FK al catálogo TIPO_COBRO.
  *
  * Restricciones:
  * Debe mantenerse alineado con Database/SqlServer/Tables/002_NUTRICIONISTA.sql.
@@ -25,7 +25,7 @@ public sealed class NutricionistaSqlConfiguration : IEntityTypeConfiguration<Nut
      * Entradas:
      * Recibe el constructor relacional de la entidad.
      * Salidas:
-     * Configura tabla, propiedades e índices únicos.
+     * Configura tabla, propiedades, índices únicos y relación con TIPO_COBRO.
      * Restricciones:
      * No debe mapear ni exponer contraseñas en texto plano.
      */
@@ -53,5 +53,11 @@ public sealed class NutricionistaSqlConfiguration : IEntityTypeConfiguration<Nut
             .IsUnique();
         builder.HasIndex(nutricionista => nutricionista.Email)
             .IsUnique();
+
+        builder.HasOne<TipoCobroSql>()
+            .WithMany()
+            .HasForeignKey(nutricionista => nutricionista.TipoCobro)
+            .HasPrincipalKey(tipoCobro => tipoCobro.CodigoTipoCobro)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

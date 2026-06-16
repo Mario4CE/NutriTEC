@@ -9,6 +9,16 @@ Responsabilidades principales:
 - Registrar `DbContext` y repositorios SQL mediante Dependency Injection.
 - Traducir errores esperados de SQL Server a excepciones de Application sin exponer detalles internos.
 
+## Catálogos SQL
+
+`TIPO_COBRO` es un catálogo relacional estable para los valores permitidos de cobro de nutricionistas:
+
+- `semanal`
+- `mensual`
+- `anual`
+
+Infrastructure.Sql lo mapea como entidad de persistencia y `NUTRICIONISTA.tipo_cobro` lo referencia mediante llave foránea. Estos valores se versionan como seed porque son datos técnicos requeridos para validar registros de nutricionistas y no corresponden a datos personales ni datos creados por clientes.
+
 ## Manejo de conflictos UNIQUE
 
 Los repositorios SQL deben validar duplicados antes de persistir cuando sea posible y, además, traducir violaciones UNIQUE reales de SQL Server en condiciones de carrera a `ConflictoException`.
