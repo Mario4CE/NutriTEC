@@ -200,6 +200,40 @@ Claims incluidos inicialmente:
 
 La configuración base vive en `Jwt`. El valor de `Jwt:Secret` no debe ser un secreto real dentro del repositorio; para ambientes reales debe venir de variables de entorno, user-secrets o un gestor de secretos.
 
+En producción, la API falla al iniciar si `Jwt:Secret` está vacío o no está configurado. El valor placeholder solo existe para evitar configuraciones rotas en escenarios locales controlados y no debe usarse en despliegues reales.
+
+## Bootstrap de administrador inicial
+
+La API puede crear de forma controlada el primer administrador al iniciar, pero esta opción está deshabilitada por defecto y debe usarse únicamente para preparar un ambiente donde todavía no existe una cuenta administrativa.
+
+Configuración base versionada:
+
+```json
+{
+  "BootstrapAdmin": {
+    "Enabled": false,
+    "Email": ""
+  }
+}
+```
+
+Para habilitarlo en un ambiente real o local controlado, usar variables de entorno, user-secrets o gestor de secretos:
+
+```bash
+BootstrapAdmin__Enabled=true
+BootstrapAdmin__Email="admin@nutritec.example"
+BootstrapAdmin__Password="<contraseña-temporal-segura>"
+```
+
+Reglas de seguridad:
+
+- `BootstrapAdmin:Password` no debe guardarse en `appsettings.json`.
+- El bootstrap solo crea un administrador si no existe ningún registro en `ADMINISTRADOR`.
+- La contraseña temporal se procesa con `PasswordHasher` y solo se almacena `password_hash`.
+- Después de crear el primer administrador, deshabilitar `BootstrapAdmin:Enabled`.
+- No crea clientes, nutricionistas, productos ni datos de negocio.
+- No reemplaza un módulo futuro de administración de usuarios.
+
 ## CORS restringido
 
 La API SQL registra una política CORS restringida llamada `RestrictedCors`. Los orígenes permitidos se leen desde:
@@ -294,6 +328,7 @@ Toda cache debe tener un tiempo de vida definido. Como guía inicial: catálogos
 - No se devuelve `password_hash` ni contraseña desde el API.
 - JWT está habilitado para emitir tokens en login y registro.
 - `GET /api/auth/me` es un endpoint protegido para validar JWT y exponer solo claims seguros.
+- El bootstrap de administrador inicial está deshabilitado por defecto y solo debe activarse con secretos externos al repositorio.
 - El endpoint de login aplica rate limiting para reducir intentos abusivos de autenticación.
 - Las respuestas de autenticación usan headers `no-store` para evitar cache accidental de tokens.
 - CORS usa una política restringida por configuración y no permite cualquier origen.

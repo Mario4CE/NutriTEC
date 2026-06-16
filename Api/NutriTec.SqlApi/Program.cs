@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using NutriTec.Application;
 using NutriTec.Infrastructure.Sql;
+using NutriTec.Infrastructure.Sql.Bootstrap;
 using NutriTec.SqlApi.Middleware;
 using NutriTec.Contracts.Common;
 
@@ -14,6 +15,12 @@ var builder = WebApplication.CreateBuilder(args);
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
 var jwtSecret = builder.Configuration["Jwt:Secret"];
+
+if (builder.Environment.IsProduction() && string.IsNullOrWhiteSpace(jwtSecret))
+{
+    throw new InvalidOperationException("Jwt:Secret es obligatorio en producción.");
+}
+
 var jwtSigningKey = string.IsNullOrWhiteSpace(jwtSecret)
     ? "ConfigurationPlaceholderJwtSecretDoNotUseInProduction12345"
     : jwtSecret;
@@ -100,6 +107,12 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
+
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var adminBootstrapService = scope.ServiceProvider.GetRequiredService<AdminBootstrapService>();
+    await adminBootstrapService.InicializarAsync();
+}
 
 app.UseForwardedHeaders();
 app.UseMiddleware<ErrorHandlingMiddleware>();
