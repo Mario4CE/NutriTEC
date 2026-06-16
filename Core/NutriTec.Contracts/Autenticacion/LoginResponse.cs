@@ -7,3 +7,9 @@ public sealed record LoginResponse(
     string TipoUsuario,
     string Token,
     DateTimeOffset ExpiraEn);
+
+public sealed record UsuarioActualResponse(
+    string IdUsuario,
+    string Nombre,
+    string Correo,
+    string TipoUsuario);
