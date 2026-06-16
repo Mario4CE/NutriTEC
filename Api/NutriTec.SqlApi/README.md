@@ -320,6 +320,20 @@ Toda cache debe tener un tiempo de vida definido. Como guía inicial: catálogos
 7. Repetir intentos de login hasta exceder el límite y confirmar respuesta `429 Too Many Requests` con código `rate_limit`.
 8. Consumir `GET /api/auth/me` con `Authorization: Bearer <jwt>` y confirmar que devuelve la identidad del usuario autenticado.
 
+## Verificación opcional del bootstrap de administrador
+
+El bootstrap de administrador debe probarse solo en ambientes locales/controlados y con credenciales temporales no reutilizadas.
+
+1. Confirmar que la tabla `ADMINISTRADOR` está vacía.
+2. Configurar `BootstrapAdmin__Enabled=true`, `BootstrapAdmin__Email` y `BootstrapAdmin__Password` fuera de `appsettings`.
+3. Iniciar la API SQL.
+4. Confirmar que se creó un único administrador.
+5. Confirmar que la columna `password_hash` no contiene la contraseña temporal en texto plano.
+6. Hacer login con el correo y contraseña temporal del administrador.
+7. Confirmar que el JWT contiene rol `Administrador`.
+8. Deshabilitar `BootstrapAdmin__Enabled` después de crear la cuenta inicial.
+9. Reiniciar la API y confirmar que no se crea un segundo administrador.
+
 ## Límites arquitectónicos
 
 - Los controllers dependen de servicios de Application, no de `DbContext`.
