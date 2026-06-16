@@ -79,6 +79,14 @@ Límite de intentos excedido `429 Too Many Requests`:
 
 El login aplica rate limiting por IP remota: máximo 5 intentos por minuto, sin cola. Cuando el runtime puede calcularlo, la respuesta incluye el encabezado `Retry-After`.
 
+Las respuestas de autenticación bajo `/api/auth` agregan headers anti-cache para evitar almacenar JWT o datos sensibles:
+
+```http
+Cache-Control: no-store
+Pragma: no-cache
+Expires: 0
+```
+
 ### Registrar cliente
 
 ```http
@@ -210,5 +218,6 @@ Cors__AllowedOrigins__0="https://app.nutritec.example"
 - No se devuelve `password_hash` ni contraseña desde el API.
 - JWT está habilitado para emitir tokens en login y registro.
 - El endpoint de login aplica rate limiting para reducir intentos abusivos de autenticación.
+- Las respuestas de autenticación usan headers `no-store` para evitar cache accidental de tokens.
 - CORS usa una política restringida por configuración y no permite cualquier origen.
 - No usar secretos reales en `appsettings.json`; usar variables de entorno o user-secrets para `Jwt:Secret` cuando aplique.

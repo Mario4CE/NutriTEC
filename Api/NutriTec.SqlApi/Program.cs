@@ -2,7 +2,6 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using NutriTec.Contracts.Common;
 using NutriTec.Application;
 using NutriTec.Infrastructure.Sql;
 using NutriTec.SqlApi.Middleware;
@@ -16,10 +15,23 @@ var jwtSecret = builder.Configuration["Jwt:Secret"];
 var jwtSigningKey = string.IsNullOrWhiteSpace(jwtSecret)
     ? "ConfigurationPlaceholderJwtSecretDoNotUseInProduction12345"
     : jwtSecret;
+var corsAllowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
+const string CorsPolicyName = "RestrictedCors";
 
 builder.Services.AddNutriTecApplication();
 builder.Services.AddNutriTecSqlInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsPolicyName, policy =>
+    {
+        policy
+            .WithOrigins(corsAllowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -71,40 +83,12 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
-builder.Services.AddRateLimiter(options =>
-{
-    options.OnRejected = async (context, cancellationToken) =>
-    {
-        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-
-        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
-        {
-            context.HttpContext.Response.Headers.RetryAfter = ((int)retryAfter.TotalSeconds).ToString();
-        }
-
-        await context.HttpContext.Response.WriteAsJsonAsync(
-            new ErrorResponse("rate_limit", "Demasiados intentos. Intente nuevamente más tarde."),
-            cancellationToken);
-    };
-
-    options.AddPolicy("login", httpContext =>
-    {
-        var partitionKey = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-
-        return RateLimitPartition.GetFixedWindowLimiter(partitionKey, _ => new FixedWindowRateLimiterOptions
-        {
-            PermitLimit = 5,
-            Window = TimeSpan.FromMinutes(1),
-            QueueLimit = 0,
-            AutoReplenishment = true
-        });
-    });
-});
-
 var app = builder.Build();
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseMiddleware<NoStoreAuthResponseMiddleware>();
 app.UseRouting();
+app.UseCors(CorsPolicyName);
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
