@@ -222,6 +222,39 @@ ForwardedHeaders__KnownProxies__0="10.0.0.10"
 
 Esta configuración permite que funcionalidades como rate limiting por IP usen la IP real del cliente cuando la solicitud pasa por un proxy confiable.
 
+## Estrategia de cache
+
+La API debe aplicar cache solo cuando el endpoint sea seguro para reutilización y no contenga datos sensibles ni personalizados.
+
+### No cachear
+
+No se deben cachear respuestas que contengan o dependan de:
+
+- JWT, login o registro.
+- Contraseñas, `password_hash` o secretos.
+- Datos personales o de salud.
+- Datos de tarjeta o información de pago.
+- Respuestas específicas de un usuario autenticado, salvo que exista una regla explícita y segura.
+
+Los endpoints bajo `/api/auth` ya agregan headers `no-store` para evitar cache accidental de tokens y datos sensibles.
+
+### Cache futuro permitido
+
+Cuando existan endpoints adecuados, se puede evaluar cache para:
+
+- Catálogos públicos o de baja variación.
+- Productos aprobados de consulta pública.
+- Configuración pública no sensible.
+- Reportes agregados que no expongan información personal.
+
+### Tipos de cache recomendados
+
+- **Cliente/HTTP cache:** útil para recursos públicos y de baja sensibilidad usando headers como `Cache-Control` con `max-age` controlado.
+- **`IMemoryCache`:** útil solo en despliegues de una instancia o para datos recreables.
+- **Cache distribuido/Redis:** preferible cuando la API escale a múltiples instancias.
+
+Toda cache debe tener un tiempo de vida definido. Como guía inicial: catálogos de baja variación pueden usar minutos u horas; datos sensibles deben usar `no-store`.
+
 ## Verificación básica
 
 1. Confirmar que la base `NutriTec` existe en LocalDB y que las tablas SQL requeridas ya fueron creadas.
@@ -243,4 +276,5 @@ Esta configuración permite que funcionalidades como rate limiting por IP usen l
 - Las respuestas de autenticación usan headers `no-store` para evitar cache accidental de tokens.
 - CORS usa una política restringida por configuración y no permite cualquier origen.
 - Forwarded headers solo debe confiar en proxies conocidos configurados por ambiente.
+- La cache solo debe aplicarse a endpoints seguros, públicos o agregados, nunca a autenticación ni datos sensibles.
 - No usar secretos reales en `appsettings.json`; usar variables de entorno o user-secrets para `Jwt:Secret` cuando aplique.
