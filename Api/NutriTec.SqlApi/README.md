@@ -200,6 +200,28 @@ No se usa `AllowAnyOrigin`. Si `Cors:AllowedOrigins` queda vacío, las solicitud
 Cors__AllowedOrigins__0="https://app.nutritec.example"
 ```
 
+## Forwarded headers
+
+La API SQL procesa `X-Forwarded-For` y `X-Forwarded-Proto` para escenarios detrás de proxy o load balancer, pero solo debe confiar en proxies conocidos. Las IPs permitidas se leen desde:
+
+```json
+{
+  "ForwardedHeaders": {
+    "KnownProxies": [
+      "10.0.0.10"
+    ]
+  }
+}
+```
+
+Si `ForwardedHeaders:KnownProxies` queda vacío, se mantienen los valores seguros por defecto del runtime y no se abre confianza global a cualquier cliente. Para ambientes reales, configurar únicamente IPs de proxies administrados mediante variables de entorno o configuración del despliegue, por ejemplo:
+
+```bash
+ForwardedHeaders__KnownProxies__0="10.0.0.10"
+```
+
+Esta configuración permite que funcionalidades como rate limiting por IP usen la IP real del cliente cuando la solicitud pasa por un proxy confiable.
+
 ## Verificación básica
 
 1. Confirmar que la base `NutriTec` existe en LocalDB y que las tablas SQL requeridas ya fueron creadas.
@@ -220,4 +242,5 @@ Cors__AllowedOrigins__0="https://app.nutritec.example"
 - El endpoint de login aplica rate limiting para reducir intentos abusivos de autenticación.
 - Las respuestas de autenticación usan headers `no-store` para evitar cache accidental de tokens.
 - CORS usa una política restringida por configuración y no permite cualquier origen.
+- Forwarded headers solo debe confiar en proxies conocidos configurados por ambiente.
 - No usar secretos reales en `appsettings.json`; usar variables de entorno o user-secrets para `Jwt:Secret` cuando aplique.

@@ -1,6 +1,8 @@
+using System.Net;
 using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using NutriTec.Application;
 using NutriTec.Infrastructure.Sql;
@@ -16,12 +18,26 @@ var jwtSigningKey = string.IsNullOrWhiteSpace(jwtSecret)
     ? "ConfigurationPlaceholderJwtSecretDoNotUseInProduction12345"
     : jwtSecret;
 var corsAllowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+var forwardedKnownProxies = builder.Configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? [];
 
 const string CorsPolicyName = "RestrictedCors";
 
 builder.Services.AddNutriTecApplication();
 builder.Services.AddNutriTecSqlInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = 1;
+
+    foreach (var knownProxy in forwardedKnownProxies)
+    {
+        if (IPAddress.TryParse(knownProxy, out var ipAddress))
+        {
+            options.KnownProxies.Add(ipAddress);
+        }
+    }
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(CorsPolicyName, policy =>
@@ -85,6 +101,7 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 app.UseMiddleware<ErrorHandlingMiddleware>();
 app.UseMiddleware<NoStoreAuthResponseMiddleware>();
 app.UseRouting();
