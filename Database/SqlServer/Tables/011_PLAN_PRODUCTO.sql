@@ -11,15 +11,15 @@
     Restricciones:
         - Ejecutar después de crear las tablas TIEMPO_COMIDA_PLAN y PRODUCTO.
         - id_tiempo debe existir previamente en TIEMPO_COMIDA_PLAN.
-        - codigo_barras debe existir previamente en PRODUCTO.
+        - id_producto debe existir previamente en PRODUCTO.
 */
 CREATE TABLE PLAN_PRODUCTO (
     id_tiempo           INT             NOT NULL,
-    codigo_barras       VARCHAR(50)     NOT NULL,
+    id_producto         UNIQUEIDENTIFIER NOT NULL,
     cantidad_porciones  DECIMAL(5,2)    NOT NULL,
-    CONSTRAINT PK_PLAN_PRODUCTO PRIMARY KEY (id_tiempo, codigo_barras),
+    CONSTRAINT PK_PLAN_PRODUCTO PRIMARY KEY (id_tiempo, id_producto),
     CONSTRAINT FK_PP_TIEMPO FOREIGN KEY (id_tiempo)
         REFERENCES TIEMPO_COMIDA_PLAN(id_tiempo),
-    CONSTRAINT FK_PP_PRODUCTO FOREIGN KEY (codigo_barras)
-        REFERENCES PRODUCTO(codigo_barras)
+    CONSTRAINT FK_PP_PRODUCTO FOREIGN KEY (id_producto)
+        REFERENCES PRODUCTO(id_producto)
 );

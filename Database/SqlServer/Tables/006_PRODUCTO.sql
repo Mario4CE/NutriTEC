@@ -6,30 +6,21 @@
         No recibe parámetros. Este script se ejecuta directamente sobre SQL Server.
 
     Salidas:
-        Tabla PRODUCTO con clave primaria codigo_barras y llaves foráneas opcionales hacia USUARIO y NUTRICIONISTA.
+        Tabla PRODUCTO con clave primaria id_producto e índice único sobre codigo_barras.
 
     Restricciones:
-        - Ejecutar después de crear las tablas USUARIO y NUTRICIONISTA.
-        - creado_por_usuario debe existir en USUARIO cuando tenga valor.
-        - creado_por_nutricionista debe existir en NUTRICIONISTA cuando tenga valor.
+        - id_producto lo genera la API como UNIQUEIDENTIFIER.
+        - codigo_barras se mantiene como valor único para búsqueda, pero no como clave primaria.
+        - Los productos nuevos quedan pendientes de aprobación por defecto.
 */
 CREATE TABLE PRODUCTO (
-    codigo_barras               VARCHAR(50)     PRIMARY KEY,
-    descripcion                 VARCHAR(255)    NOT NULL,
-    porcion_g_ml                DECIMAL(7,2)    NOT NULL,
-    energia_kcal                DECIMAL(7,2)    NOT NULL,
-    grasa_g                     DECIMAL(7,2)    NOT NULL,
-    sodio_mg                    DECIMAL(7,2)    NOT NULL,
-    carbohidratos_g             DECIMAL(7,2)    NOT NULL,
-    proteina_g                  DECIMAL(7,2)    NOT NULL,
-    vitaminas                   VARCHAR(255),
-    calcio_mg                   DECIMAL(7,2),
-    hierro_mg                   DECIMAL(7,2),
-    aprobado                    BIT             NOT NULL DEFAULT 0,
-    creado_por_usuario          INT             NULL,
-    creado_por_nutricionista    VARCHAR(20)     NULL,
-    CONSTRAINT FK_PROD_USUARIO FOREIGN KEY (creado_por_usuario)
-        REFERENCES USUARIO(id_usuario),
-    CONSTRAINT FK_PROD_NUTRICIONISTA FOREIGN KEY (creado_por_nutricionista)
-        REFERENCES NUTRICIONISTA(cedula)
+    id_producto         UNIQUEIDENTIFIER    PRIMARY KEY,
+    nombre              VARCHAR(150)        NOT NULL,
+    codigo_barras       VARCHAR(64)         NOT NULL UNIQUE,
+    calorias            DECIMAL(10,2)       NOT NULL,
+    proteinas           DECIMAL(10,2)       NOT NULL,
+    carbohidratos       DECIMAL(10,2)       NOT NULL,
+    grasas              DECIMAL(10,2)       NOT NULL,
+    aprobado            BIT                 NOT NULL DEFAULT 0,
+    fecha_creacion_utc  DATETIME2           NOT NULL
 );
