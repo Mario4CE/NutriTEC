@@ -17,3 +17,10 @@ public sealed class NutricionistaSql
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
 }
+
+public sealed class TipoCobroSql
+{
+    public string CodigoTipoCobro { get; set; } = string.Empty;
+    public string Nombre { get; set; } = string.Empty;
+    public bool Activo { get; set; } = true;
+}
