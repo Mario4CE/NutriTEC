@@ -9,6 +9,16 @@ Proyectos de pruebas automatizadas de NutriTEC.
 
 ## Ejecución
 
+En Linux/macOS o Git Bash:
+
+```bash
+./Tests/run-tests.sh
+```
+
+El script restaura paquetes, compila la solución en `Release` y ejecuta las pruebas de Application, Infrastructure.Sql y la solución completa.
+
+Comandos manuales equivalentes:
+
 ```bash
 dotnet test Tests/NutriTec.Application.Tests
 dotnet test Tests/NutriTec.Infrastructure.Sql.Tests
