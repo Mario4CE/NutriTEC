@@ -1,5 +1,7 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using NutriTec.Application.Abstractions.Persistence;
+using NutriTec.Application.Common;
 using NutriTec.Infrastructure.Sql.Persistence;
 using NutriTec.Infrastructure.Sql.Persistence.Entities;
 
@@ -17,7 +19,7 @@ Salidas:
 Devuelve CredencialAutenticacion para que Application pueda construir DTOs públicos sin password_hash.
 
 Restricciones:
-No genera hashes, no usa SQL crudo, no registra administradores y no implementa JWT ni lógica de controllers.
+No genera hashes, no usa SQL crudo, no registra administradores, no implementa JWT ni lógica de controllers y no expone detalles SQL al cliente.
 */
 public sealed class AuthSqlRepository(NutriTecDbContext dbContext) : IAuthRepository
 {
@@ -95,7 +97,7 @@ public sealed class AuthSqlRepository(NutriTecDbContext dbContext) : IAuthReposi
         };
 
         dbContext.Usuarios.Add(entidad);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await GuardarCambiosTraduciendoConflictosAsync(cancellationToken);
 
         return MapearUsuario(entidad);
     }
@@ -121,9 +123,34 @@ public sealed class AuthSqlRepository(NutriTecDbContext dbContext) : IAuthReposi
         };
 
         dbContext.Nutricionistas.Add(entidad);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await GuardarCambiosTraduciendoConflictosAsync(cancellationToken);
 
         return MapearNutricionista(entidad);
+    }
+
+    /*
+    Descripción:
+    Persiste cambios de registro y traduce violaciones UNIQUE de SQL Server a una excepción de Application segura.
+
+    Entradas:
+    Token de cancelación recibido desde el caso de uso.
+
+    Salidas:
+    Confirma la persistencia o lanza ConflictoException cuando SQL Server rechaza un duplicado.
+
+    Restricciones:
+    No filtra nombres de constraints, mensajes SQL, tablas ni detalles internos hacia capas superiores.
+    */
+    private async Task GuardarCambiosTraduciendoConflictosAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception) when (EsViolacionUniqueSqlServer(exception))
+        {
+            throw new ConflictoException("El correo ya está registrado.");
+        }
     }
 
     private static CredencialAutenticacion MapearUsuario(UsuarioSql usuario) => new(
@@ -148,4 +175,20 @@ public sealed class AuthSqlRepository(NutriTecDbContext dbContext) : IAuthReposi
         TipoAdministrador);
 
     private static string NormalizarCorreo(string correo) => correo.Trim();
+
+    private static bool EsViolacionUniqueSqlServer(DbUpdateException exception)
+    {
+        if (exception.GetBaseException() is SqlException sqlException)
+        {
+            foreach (SqlError error in sqlException.Errors)
+            {
+                if (error.Number is 2601 or 2627)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }

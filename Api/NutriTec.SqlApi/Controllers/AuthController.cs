@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using NutriTec.Application.Abstractions.Services;
 using NutriTec.Contracts.Autenticacion;
+using NutriTec.Contracts.Common;
 
 namespace NutriTec.SqlApi.Controllers;
 
@@ -29,7 +30,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
     [HttpPost("login")]
     [EnableRateLimiting("login")]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
@@ -38,7 +39,7 @@ public sealed class AuthController(IAuthService authService) : ControllerBase
 
         if (response is null)
         {
-            return Unauthorized(new { mensaje = CredencialesInvalidas });
+            return Unauthorized(new ErrorResponse("credenciales_invalidas", CredencialesInvalidas));
         }
 
         return Ok(response);

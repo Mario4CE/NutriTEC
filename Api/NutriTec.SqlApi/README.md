@@ -63,6 +63,7 @@ Credenciales inválidas `401 Unauthorized`:
 
 ```json
 {
+  "codigo": "credenciales_invalidas",
   "mensaje": "Correo o contraseña inválidos."
 }
 ```
@@ -171,6 +172,26 @@ Claims incluidos inicialmente:
 
 La configuración base vive en `Jwt`. El valor de `Jwt:Secret` no debe ser un secreto real dentro del repositorio; para ambientes reales debe venir de variables de entorno, user-secrets o un gestor de secretos.
 
+## CORS restringido
+
+La API SQL registra una política CORS restringida llamada `RestrictedCors`. Los orígenes permitidos se leen desde:
+
+```json
+{
+  "Cors": {
+    "AllowedOrigins": [
+      "https://frontend.example.com"
+    ]
+  }
+}
+```
+
+No se usa `AllowAnyOrigin`. Si `Cors:AllowedOrigins` queda vacío, las solicitudes cross-origin no quedan habilitadas para ningún dominio. Para ambientes reales, configurar los dominios mediante variables de entorno, user-secrets o el gestor de configuración del despliegue, por ejemplo:
+
+```bash
+Cors__AllowedOrigins__0="https://app.nutritec.example"
+```
+
 ## Verificación básica
 
 1. Confirmar que la base `NutriTec` existe en LocalDB y que las tablas SQL requeridas ya fueron creadas.
@@ -189,4 +210,5 @@ La configuración base vive en `Jwt`. El valor de `Jwt:Secret` no debe ser un se
 - No se devuelve `password_hash` ni contraseña desde el API.
 - JWT está habilitado para emitir tokens en login y registro.
 - El endpoint de login aplica rate limiting para reducir intentos abusivos de autenticación.
+- CORS usa una política restringida por configuración y no permite cualquier origen.
 - No usar secretos reales en `appsettings.json`; usar variables de entorno o user-secrets para `Jwt:Secret` cuando aplique.
