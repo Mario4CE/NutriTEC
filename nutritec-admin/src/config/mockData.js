@@ -7,7 +7,7 @@
 
 export const MOCK_ADMIN = {
   email: "admin@nutritec.com",
-  password: "Admin2026!",
+  password: "admin123",
 };
 
 export const MOCK_PRODUCTOS_PENDIENTES = [
