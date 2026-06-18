@@ -1,16 +1,8 @@
 import { useState } from "react";
 import { ShieldCheck, PackageSearch, Receipt, LogOut } from "lucide-react";
+import AprobacionProductos from "./AprobacionProductos.jsx";
 
-// Placeholders temporales — se reemplazan cuando armemos cada sección
-function AprobacionProductos() {
-  return (
-    <div style={styles.placeholder}>
-      <PackageSearch size={36} color="#7FB892" strokeWidth={1.5} />
-      <p style={styles.placeholderText}>Aprobación de productos — próximamente</p>
-    </div>
-  );
-}
-
+// Placeholder temporal para Reporte de Cobro — se reemplaza en el siguiente paso
 function ReporteCobro() {
   return (
     <div style={styles.placeholder}>
