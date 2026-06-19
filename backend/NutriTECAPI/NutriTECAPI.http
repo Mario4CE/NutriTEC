@@ -1,0 +1,6 @@
+@NutriTECAPI_HostAddress = http://localhost:5078
+
+GET {{NutriTECAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
