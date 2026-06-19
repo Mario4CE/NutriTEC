@@ -1,7 +1,10 @@
+
 using Microsoft.Extensions.DependencyInjection;
 using NutriTec.Application.Abstractions.Services;
 using NutriTec.Application.Administracion;
 using NutriTec.Application.Autenticacion;
+using NutriTec.Application.Pacientes;
+using NutriTec.Application.Planes;
 using NutriTec.Application.Productos;
 using NutriTec.Application.Retroalimentaciones;
 
@@ -15,6 +18,9 @@ public static class DependencyInjection
         services.AddScoped<IProductoService, ProductoService>();
         services.AddScoped<IAdministracionService, AdministracionService>();
         services.AddScoped<IRetroalimentacionService, RetroalimentacionService>();
+        services.AddScoped<IPacienteService, PacienteService>();
+        services.AddScoped<IPlanService, PlanService>();
+        services.AddScoped<IAsignacionPlanService, AsignacionPlanService>();
 
         return services;
     }
