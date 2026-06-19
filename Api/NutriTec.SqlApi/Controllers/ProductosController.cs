@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NutriTec.Application.Abstractions.Services;
 using NutriTec.Contracts.Productos;
@@ -39,6 +40,7 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
      */
 
     [HttpPost]
+    [Authorize]
     public async Task<ActionResult<ApiResponse<ProductoResponse>>> CrearAsync(
         [FromBody] CrearProductoRequest request,
         CancellationToken cancellationToken)
@@ -149,6 +151,7 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
      */
 
     [HttpPut("{idProducto:guid}")]
+    [Authorize(Policy = "Administrador")]
     public async Task<IActionResult> ActualizarAsync(
         Guid idProducto,
         [FromBody] ActualizarProductoRequest request,
@@ -173,6 +176,7 @@ public sealed class ProductosController(IProductoService service) : ControllerBa
      */
 
     [HttpDelete("{idProducto:guid}")]
+    [Authorize(Policy = "Administrador")]
     public async Task<IActionResult> EliminarAsync(Guid idProducto, CancellationToken cancellationToken)
     {
         return await service.EliminarAsync(idProducto, cancellationToken)

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NutriTec.Application.Abstractions.Services;
 using NutriTec.Contracts.Productos;
@@ -23,6 +24,7 @@ namespace NutriTec.SqlApi.Controllers;
 
 [ApiController]
 [Route("api/administracion")]
+[Authorize(Policy = "Administrador")]
 public sealed class AdministracionController(IAdministracionService service) : ControllerBase
 {
 
