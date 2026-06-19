@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NutriTec.Application.Abstractions.Services;
 using NutriTec.Contracts.Responses;
@@ -24,6 +25,7 @@ namespace NutriTec.MongoApi.Controllers;
 
 [ApiController]
 [Route("api/retroalimentaciones")]
+[Authorize]
 public sealed class RetroalimentacionesController(IRetroalimentacionService service) : ControllerBase
 {
     /*
