@@ -1,0 +1,25 @@
+namespace NutriTec.Application.Abstractions.Persistence;
+
+public sealed record NuevoUsuarioAutenticacion(
+    string TipoUsuario,
+    string Nombre,
+    string Apellidos,
+    int Edad,
+    DateOnly FechaNacimiento,
+    decimal Peso,
+    decimal Imc,
+    string Correo,
+    string ContrasenaHash,
+    string? Pais = null,
+    decimal? Cintura = null,
+    decimal? Cuello = null,
+    decimal? Caderas = null,
+    decimal? PctMusculo = null,
+    decimal? PctGrasa = null,
+    int? CaloriasDiariasMax = null,
+    string? Cedula = null,
+    string? CodigoNutricionista = null,
+    string? Direccion = null,
+    string? FotoUrl = null,
+    string? TarjetaCredito = null,
+    string? TipoCobro = null);
