@@ -148,12 +148,14 @@ Body:
   "imc": 23.0,
   "direccion": "San José, Costa Rica",
   "fotoUrl": null,
-  "tarjetaCredito": "411111******1111",
+  "tarjetaCredito": "4111111111111111",
   "tipoCobro": "mensual",
   "correo": "nutricionista@example.com",
   "contrasena": "Password123!"
 }
 ```
+
+La API no almacena la tarjeta completa: antes de persistirla la convierte a un valor enmascarado como `****-****-****-1111`. No se debe enviar CVV ni usar tarjetas reales.
 
 `tipoCobro` debe ser uno de:
 

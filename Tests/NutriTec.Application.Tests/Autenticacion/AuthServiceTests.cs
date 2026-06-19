@@ -92,6 +92,8 @@ public sealed class AuthServiceTests
         Assert.Equal("nutricionista@example.com", repository.UltimoUsuarioRegistrado?.Correo);
         Assert.Equal("Nutricionista", response.TipoUsuario);
         Assert.Equal("nutricionista@example.com", response.Correo);
+        Assert.Equal("****-****-****-1111", repository.UltimoUsuarioRegistrado?.TarjetaCredito);
+        Assert.DoesNotContain("411111", repository.UltimoUsuarioRegistrado?.TarjetaCredito);
         Assert.NotEqual(request.Contrasena, repository.UltimoUsuarioRegistrado?.ContrasenaHash);
     }
 

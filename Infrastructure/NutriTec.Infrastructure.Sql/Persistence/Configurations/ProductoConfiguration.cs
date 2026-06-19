@@ -52,6 +52,11 @@ public sealed class ProductoConfiguration : IEntityTypeConfiguration<Producto>
 
         builder.HasIndex(producto => producto.CodigoBarras).IsUnique();
 
+        builder.Property(producto => producto.PorcionGramosMililitros)
+            .HasColumnName("porcion_g_ml")
+            .HasPrecision(10, 2)
+            .IsRequired();
+
         builder.Property(producto => producto.Calorias)
             .HasColumnName("calorias")
             .HasPrecision(10, 2)
@@ -71,6 +76,24 @@ public sealed class ProductoConfiguration : IEntityTypeConfiguration<Producto>
             .HasColumnName("grasas")
             .HasPrecision(10, 2)
             .IsRequired();
+
+        builder.Property(producto => producto.SodioMiligramos)
+            .HasColumnName("sodio_mg")
+            .HasPrecision(10, 2)
+            .IsRequired();
+
+        builder.Property(producto => producto.Vitaminas)
+            .HasColumnName("vitaminas")
+            .HasMaxLength(255)
+            .IsUnicode(false);
+
+        builder.Property(producto => producto.CalcioMiligramos)
+            .HasColumnName("calcio_mg")
+            .HasPrecision(10, 2);
+
+        builder.Property(producto => producto.HierroMiligramos)
+            .HasColumnName("hierro_mg")
+            .HasPrecision(10, 2);
 
         builder.Property(producto => producto.EstaAprobado)
             .HasColumnName("aprobado")

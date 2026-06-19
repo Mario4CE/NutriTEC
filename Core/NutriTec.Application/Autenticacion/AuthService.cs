@@ -1,3 +1,4 @@
+using System.Text;
 using NutriTec.Application.Abstractions.Persistence;
 using NutriTec.Application.Abstractions.Services;
 using NutriTec.Application.Common;
@@ -75,12 +76,37 @@ public sealed class AuthService(
             CodigoNutricionista: request.CodigoNutricionista.Trim(),
             Direccion: request.Direccion.Trim(),
             FotoUrl: string.IsNullOrWhiteSpace(request.FotoUrl) ? null : request.FotoUrl.Trim(),
-            TarjetaCredito: request.TarjetaCredito.Trim(),
+            TarjetaCredito: EnmascararTarjetaCredito(request.TarjetaCredito),
             TipoCobro: request.TipoCobro.Trim());
 
         var credencial = await authRepository.RegistrarUsuarioAsync(nuevoUsuario, cancellationToken);
 
         return MapearLoginResponse(credencial);
+    }
+
+    private static string EnmascararTarjetaCredito(string tarjetaCredito)
+    {
+        if (string.IsNullOrWhiteSpace(tarjetaCredito))
+        {
+            throw new ArgumentException("La tarjeta de crédito es obligatoria.", nameof(tarjetaCredito));
+        }
+
+        var digitos = new StringBuilder(capacity: tarjetaCredito.Length);
+        foreach (var caracter in tarjetaCredito)
+        {
+            if (char.IsDigit(caracter))
+            {
+                digitos.Append(caracter);
+            }
+        }
+
+        if (digitos.Length < 4)
+        {
+            throw new ArgumentException("La tarjeta de crédito debe incluir al menos los últimos 4 dígitos.", nameof(tarjetaCredito));
+        }
+
+        var ultimosCuatroDigitos = digitos.ToString(digitos.Length - 4, 4);
+        return $"****-****-****-{ultimosCuatroDigitos}";
     }
 
     private async Task ValidarCorreoDisponibleAsync(string correo, CancellationToken cancellationToken)
