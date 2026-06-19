@@ -26,19 +26,12 @@ public sealed class PlanService(
     IPlanRepository repository,
     IProductoRepository productoRepository) : IPlanService
 {
-    /*
-     * Descripción: Crea un plan de alimentación para un nutricionista.
-     * Entradas: Identificador del nutricionista, DTO de creación y token de cancelación.
-     * Salidas: Devuelve el plan creado como DTO, con el total calórico calculado.
-     * Restricciones: El nombre y al menos un item son obligatorios; los productos deben existir.
-     */
-
     public async Task<PlanResponse> CrearAsync(
-        Guid idNutricionista,
+        string idNutricionista,
         CrearPlanRequest request,
         CancellationToken cancellationToken)
     {
-        ValidarIdentificador(idNutricionista, nameof(idNutricionista));
+        ValidarTexto(idNutricionista, nameof(idNutricionista));
         ValidarTexto(request.Nombre, nameof(request.Nombre));
         ValidarItems(request.Items);
 
@@ -53,7 +46,7 @@ public sealed class PlanService(
             Items = request.Items.Select(item => new ItemPlan
             {
                 Id = Guid.NewGuid(),
-                TiempoComida = item.TiempoComida,
+                TiempoComida = (Domain.Planes.TiempoComida)item.TiempoComida,
                 IdProducto = item.IdProducto,
                 Porciones = item.Porciones
             }).ToList()
@@ -62,13 +55,6 @@ public sealed class PlanService(
         var creado = await repository.CrearAsync(plan, cancellationToken);
         return Mapear(creado, productos);
     }
-
-    /*
-     * Descripción: Consulta un plan por identificador.
-     * Entradas: Identificador del plan y token de cancelación.
-     * Salidas: Devuelve el DTO encontrado o nulo.
-     * Restricciones: El identificador no puede ser vacío.
-     */
 
     public async Task<PlanResponse?> ObtenerPorIdAsync(Guid idPlan, CancellationToken cancellationToken)
     {
@@ -83,18 +69,11 @@ public sealed class PlanService(
         return Mapear(plan, productos);
     }
 
-    /*
-     * Descripción: Lista los planes creados por un nutricionista.
-     * Entradas: Identificador del nutricionista y token de cancelación.
-     * Salidas: Devuelve una colección de DTOs.
-     * Restricciones: El identificador no puede ser vacío.
-     */
-
     public async Task<IReadOnlyCollection<PlanResponse>> ListarPorNutricionistaAsync(
-        Guid idNutricionista,
+        string idNutricionista,
         CancellationToken cancellationToken)
     {
-        ValidarIdentificador(idNutricionista, nameof(idNutricionista));
+        ValidarTexto(idNutricionista, nameof(idNutricionista));
         var planes = await repository.ListarPorNutricionistaAsync(idNutricionista, cancellationToken);
 
         var respuestas = new List<PlanResponse>(planes.Count);
@@ -107,20 +86,13 @@ public sealed class PlanService(
         return respuestas;
     }
 
-    /*
-     * Descripción: Actualiza el nombre y los items de un plan existente.
-     * Entradas: Identificador del nutricionista, identificador del plan, DTO de edición y cancelación.
-     * Salidas: Devuelve verdadero cuando el plan existe, pertenece al nutricionista y fue actualizado.
-     * Restricciones: El plan debe pertenecer al nutricionista que solicita la edición.
-     */
-
     public async Task<bool> ActualizarAsync(
-        Guid idNutricionista,
+        string idNutricionista,
         Guid idPlan,
         ActualizarPlanRequest request,
         CancellationToken cancellationToken)
     {
-        ValidarIdentificador(idNutricionista, nameof(idNutricionista));
+        ValidarTexto(idNutricionista, nameof(idNutricionista));
         ValidarIdentificador(idPlan, nameof(idPlan));
         ValidarTexto(request.Nombre, nameof(request.Nombre));
         ValidarItems(request.Items);
@@ -142,7 +114,7 @@ public sealed class PlanService(
             {
                 Id = Guid.NewGuid(),
                 IdPlan = idPlan,
-                TiempoComida = item.TiempoComida,
+                TiempoComida = (Domain.Planes.TiempoComida)item.TiempoComida,
                 IdProducto = item.IdProducto,
                 Porciones = item.Porciones
             }).ToList()
@@ -151,16 +123,9 @@ public sealed class PlanService(
         return await repository.ActualizarAsync(plan, cancellationToken);
     }
 
-    /*
-     * Descripción: Elimina un plan de alimentación.
-     * Entradas: Identificador del nutricionista, identificador del plan y token de cancelación.
-     * Salidas: Devuelve verdadero cuando el plan existe, pertenece al nutricionista y fue eliminado.
-     * Restricciones: El plan debe pertenecer al nutricionista que solicita la eliminación.
-     */
-
-    public async Task<bool> EliminarAsync(Guid idNutricionista, Guid idPlan, CancellationToken cancellationToken)
+    public async Task<bool> EliminarAsync(string idNutricionista, Guid idPlan, CancellationToken cancellationToken)
     {
-        ValidarIdentificador(idNutricionista, nameof(idNutricionista));
+        ValidarTexto(idNutricionista, nameof(idNutricionista));
         ValidarIdentificador(idPlan, nameof(idPlan));
 
         if (!await repository.PertenecePlanAAsync(idPlan, idNutricionista, cancellationToken))
@@ -216,7 +181,7 @@ public sealed class PlanService(
 
             return new ItemPlanResponse(
                 item.Id,
-                item.TiempoComida,
+                (Contracts.Planes.TiempoComida)item.TiempoComida,
                 item.IdProducto,
                 producto?.Nombre ?? string.Empty,
                 item.Porciones,

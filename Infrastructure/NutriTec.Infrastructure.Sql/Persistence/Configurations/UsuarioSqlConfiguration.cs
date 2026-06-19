@@ -19,22 +19,14 @@ namespace NutriTec.Infrastructure.Sql.Persistence.Configurations;
  */
 public sealed class UsuarioSqlConfiguration : IEntityTypeConfiguration<UsuarioSql>
 {
-    /*
-     * Descripción:
-     * Aplica el mapeo de USUARIO al modelo EF Core.
-     * Entradas:
-     * Recibe el constructor relacional de la entidad.
-     * Salidas:
-     * Configura tabla, propiedades e índice único.
-     * Restricciones:
-     * No debe mapear ni exponer contraseñas en texto plano.
-     */
     public void Configure(EntityTypeBuilder<UsuarioSql> builder)
     {
         builder.ToTable("USUARIO");
         builder.HasKey(usuario => usuario.IdUsuario);
 
         builder.Property(usuario => usuario.IdUsuario).HasColumnName("id_usuario");
+        builder.Property(usuario => usuario.IdCliente).HasColumnName("id_cliente").IsRequired();
+        builder.HasIndex(usuario => usuario.IdCliente).IsUnique();
         builder.Property(usuario => usuario.Nombre).HasColumnName("nombre").HasMaxLength(100).IsUnicode(false).IsRequired();
         builder.Property(usuario => usuario.Apellidos).HasColumnName("apellidos").HasMaxLength(100).IsUnicode(false).IsRequired();
         builder.Property(usuario => usuario.Edad).HasColumnName("edad").IsRequired();

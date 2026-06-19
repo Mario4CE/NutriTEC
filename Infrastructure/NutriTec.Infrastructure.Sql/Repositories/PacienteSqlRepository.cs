@@ -6,20 +6,6 @@ using NutriTec.Infrastructure.Sql.Persistence.Entities;
 
 namespace NutriTec.Infrastructure.Sql.Repositories;
 
-/*
- * Descripción:
- * Implementa la persistencia relacional de la asociación entre nutricionistas y pacientes
- * mediante Entity Framework Core y SQL Server.
- *
- * Entradas:
- * Recibe NutriTecDbContext y criterios definidos por Application.
- *
- * Salidas:
- * Inserta, consulta y elimina asociaciones entre nutricionistas y pacientes.
- *
- * Restricciones:
- * No contiene reglas de negocio; mapea entre la entidad de dominio y la entidad SQL.
- */
 public sealed class PacienteSqlRepository(NutriTecDbContext context) : IPacienteRepository
 {
     public async Task<PacienteNutricionista> AsociarAsync(PacienteNutricionista asociacion, CancellationToken cancellationToken)

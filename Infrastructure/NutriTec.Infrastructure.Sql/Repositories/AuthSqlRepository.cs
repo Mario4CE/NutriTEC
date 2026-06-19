@@ -128,19 +128,6 @@ public sealed class AuthSqlRepository(NutriTecDbContext dbContext) : IAuthReposi
         return MapearNutricionista(entidad);
     }
 
-    /*
-    Descripción:
-    Persiste cambios de registro y traduce violaciones UNIQUE de SQL Server a una excepción de Application segura.
-
-    Entradas:
-    Token de cancelación recibido desde el caso de uso.
-
-    Salidas:
-    Confirma la persistencia o lanza ConflictoException cuando SQL Server rechaza un duplicado.
-
-    Restricciones:
-    No filtra nombres de constraints, mensajes SQL, tablas ni detalles internos hacia capas superiores.
-    */
     private async Task GuardarCambiosTraduciendoConflictosAsync(CancellationToken cancellationToken)
     {
         try
@@ -154,7 +141,7 @@ public sealed class AuthSqlRepository(NutriTecDbContext dbContext) : IAuthReposi
     }
 
     private static CredencialAutenticacion MapearUsuario(UsuarioSql usuario) => new(
-        usuario.IdUsuario.ToString(),
+        usuario.IdCliente.ToString(),
         usuario.Nombre,
         usuario.Email,
         usuario.PasswordHash,

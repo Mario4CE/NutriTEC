@@ -34,7 +34,7 @@ public sealed class UsuarioConsultaSqlRepository(NutriTecDbContext context) : IU
 
         return usuarios.Select(usuario => new ClienteResumen
         {
-            Id = usuario.IdUsuario,
+            Id = usuario.IdCliente,
             Nombre = usuario.Nombre,
             Apellidos = usuario.Apellidos,
             Correo = usuario.Email
@@ -43,6 +43,6 @@ public sealed class UsuarioConsultaSqlRepository(NutriTecDbContext context) : IU
 
     public Task<bool> EsClienteAsync(Guid idUsuario, CancellationToken cancellationToken)
     {
-        return context.Usuarios.AnyAsync(usuario => usuario.IdUsuario == idUsuario, cancellationToken);
+        return context.Usuarios.AnyAsync(usuario => usuario.IdCliente == idUsuario, cancellationToken);
     }
 }

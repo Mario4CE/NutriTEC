@@ -31,7 +31,7 @@ public sealed record AsociarPacienteRequest(
  */
 public sealed record PacienteNutricionistaResponse(
     Guid Id,
-    Guid IdNutricionista,
+    string IdNutricionista,
     Guid IdPaciente,
     DateTime FechaAsociacionUtc);
 

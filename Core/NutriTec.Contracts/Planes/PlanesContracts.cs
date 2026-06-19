@@ -1,6 +1,18 @@
-using NutriTec.Domain.Planes;
-
 namespace NutriTec.Contracts.Planes;
+
+/*
+ * Descripción:
+ * Enumera los cinco tiempos de comida expuestos por la API, replicando el enum de Domain
+ * sin crear una dependencia de Contracts hacia Domain.
+ */
+public enum TiempoComida
+{
+    Desayuno = 1,
+    MeriendaManana = 2,
+    Almuerzo = 3,
+    MeriendaTarde = 4,
+    Cena = 5
+}
 
 /*
  * Descripción:
@@ -90,12 +102,13 @@ public sealed record ItemPlanResponse(
  */
 public sealed record PlanResponse(
     Guid Id,
-    Guid IdNutricionista,
+    string IdNutricionista,
     string Nombre,
     DateTime FechaCreacionUtc,
     IReadOnlyCollection<ItemPlanResponse> Items,
     decimal CaloriasTotales);
-    /*
+
+/*
  * Descripción:
  * DTO de solicitud para asignar un plan de alimentación a un paciente.
  *
@@ -131,7 +144,7 @@ public sealed record AsignacionPlanResponse(
     Guid Id,
     Guid IdPaciente,
     Guid IdPlan,
-    Guid IdNutricionista,
+    string IdNutricionista,
     DateOnly FechaInicio,
     DateOnly FechaFin,
     DateTime FechaAsignacionUtc);
