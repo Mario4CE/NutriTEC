@@ -7,17 +7,18 @@ Los scripts están separados por tipo de objeto para facilitar la revisión del 
 1. `Tables/000_TIPO_COBRO.sql`
 2. `Seed/001_TIPO_COBRO.sql`
 3. Resto de scripts de `Tables/` en orden numérico.
-4. `Functions/001_fn_CalcularImc.sql`
-5. `Functions/002_fn_TotalCaloriasPlan.sql`
-6. `Views/001_vw_PacientesPorNutricionista.sql`
-7. `Views/002_vw_DetallePlanAlimentacion.sql`
-8. `Views/003_vw_ResumenRegistroDiario.sql`
-9. `StoredProcedures/001_sp_ReporteCobroNutricionistas.sql`
-10. `StoredProcedures/002_sp_AprobarProducto.sql`
-11. `StoredProcedures/003_sp_AsignarPlanPaciente.sql`
-12. `StoredProcedures/004_sp_RegistrarMedidaUsuario.sql`
-13. `Triggers/001_trg_RecalcularTotalesReceta.sql`
-14. `Triggers/002_trg_RecalcularTotalPlan.sql`
+4. Para bases existentes, aplicar `Migrations/001_Ampliar_PRODUCTO_nutricion.sql` si PRODUCTO fue creado antes de agregar la ficha nutricional completa.
+5. `Functions/001_fn_CalcularImc.sql`
+6. `Functions/002_fn_TotalCaloriasPlan.sql`
+7. `Views/001_vw_PacientesPorNutricionista.sql`
+8. `Views/002_vw_DetallePlanAlimentacion.sql`
+9. `Views/003_vw_ResumenRegistroDiario.sql`
+10. `StoredProcedures/001_sp_ReporteCobroNutricionistas.sql`
+11. `StoredProcedures/002_sp_AprobarProducto.sql`
+12. `StoredProcedures/003_sp_AsignarPlanPaciente.sql`
+13. `StoredProcedures/004_sp_RegistrarMedidaUsuario.sql`
+14. `Triggers/001_trg_RecalcularTotalesReceta.sql`
+15. `Triggers/002_trg_RecalcularTotalPlan.sql`
 
 ## Objetos programables agregados
 

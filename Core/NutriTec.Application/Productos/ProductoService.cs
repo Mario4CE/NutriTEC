@@ -36,7 +36,17 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
 
     public async Task<ProductoResponse> CrearAsync(CrearProductoRequest request, CancellationToken cancellationToken)
     {
-        Validar(request.Nombre, request.CodigoBarras, request.Calorias, request.Proteinas, request.Carbohidratos, request.Grasas);
+        Validar(
+            request.Nombre,
+            request.CodigoBarras,
+            request.PorcionGramosMililitros,
+            request.Calorias,
+            request.Proteinas,
+            request.Carbohidratos,
+            request.Grasas,
+            request.SodioMiligramos,
+            request.CalcioMiligramos,
+            request.HierroMiligramos);
         var codigoBarras = request.CodigoBarras.Trim();
         await ValidarCodigoBarrasUnicoAsync(codigoBarras, null, cancellationToken);
 
@@ -45,10 +55,15 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
             Id = Guid.NewGuid(),
             Nombre = request.Nombre.Trim(),
             CodigoBarras = codigoBarras,
+            PorcionGramosMililitros = request.PorcionGramosMililitros,
             Calorias = request.Calorias,
             Proteinas = request.Proteinas,
             Carbohidratos = request.Carbohidratos,
             Grasas = request.Grasas,
+            SodioMiligramos = request.SodioMiligramos,
+            Vitaminas = string.IsNullOrWhiteSpace(request.Vitaminas) ? null : request.Vitaminas.Trim(),
+            CalcioMiligramos = request.CalcioMiligramos,
+            HierroMiligramos = request.HierroMiligramos,
             EstaAprobado = false,
             FechaCreacionUtc = DateTime.UtcNow
         };
@@ -148,7 +163,17 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
         CancellationToken cancellationToken)
     {
         ValidarIdentificador(idProducto);
-        Validar(request.Nombre, request.CodigoBarras, request.Calorias, request.Proteinas, request.Carbohidratos, request.Grasas);
+        Validar(
+            request.Nombre,
+            request.CodigoBarras,
+            request.PorcionGramosMililitros,
+            request.Calorias,
+            request.Proteinas,
+            request.Carbohidratos,
+            request.Grasas,
+            request.SodioMiligramos,
+            request.CalcioMiligramos,
+            request.HierroMiligramos);
         var producto = await repository.ObtenerPorIdAsync(idProducto, cancellationToken);
         if (producto is null)
         {
@@ -159,10 +184,15 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
         await ValidarCodigoBarrasUnicoAsync(codigoBarras, idProducto, cancellationToken);
         producto.Nombre = request.Nombre.Trim();
         producto.CodigoBarras = codigoBarras;
+        producto.PorcionGramosMililitros = request.PorcionGramosMililitros;
         producto.Calorias = request.Calorias;
         producto.Proteinas = request.Proteinas;
         producto.Carbohidratos = request.Carbohidratos;
         producto.Grasas = request.Grasas;
+        producto.SodioMiligramos = request.SodioMiligramos;
+        producto.Vitaminas = string.IsNullOrWhiteSpace(request.Vitaminas) ? null : request.Vitaminas.Trim();
+        producto.CalcioMiligramos = request.CalcioMiligramos;
+        producto.HierroMiligramos = request.HierroMiligramos;
 
         return await repository.ActualizarAsync(producto, cancellationToken);
     }
@@ -215,7 +245,7 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
     * Descripción:
     * Valida los datos principales y nutricionales de un producto.
     * Entradas:
-    * Recibe nombre, código de barras, calorías, proteínas, carbohidratos y grasas.
+    * Recibe nombre, código de barras, porción, calorías, proteínas, carbohidratos, grasas, sodio, calcio y hierro.
     * Salidas:
     * No devuelve valor. Si los datos son válidos, permite continuar la ejecución.
     * Restricciones:
@@ -225,15 +255,30 @@ public sealed class ProductoService(IProductoRepository repository) : IProductoS
     private static void Validar(
     string nombre,
     string codigoBarras,
+    decimal porcionGramosMililitros,
     decimal calorias,
     decimal proteinas,
     decimal carbohidratos,
-    decimal grasas)
+    decimal grasas,
+    decimal sodioMiligramos,
+    decimal? calcioMiligramos,
+    decimal? hierroMiligramos)
     {
         ValidarTexto(nombre, nameof(nombre));
         ValidarTexto(codigoBarras, nameof(codigoBarras));
 
-        if (calorias < 0 || proteinas < 0 || carbohidratos < 0 || grasas < 0)
+        if (porcionGramosMililitros <= 0)
+        {
+            throw new ArgumentException("La porción debe ser mayor que cero.");
+        }
+
+        if (calorias < 0
+            || proteinas < 0
+            || carbohidratos < 0
+            || grasas < 0
+            || sodioMiligramos < 0
+            || (calcioMiligramos.HasValue && calcioMiligramos.Value < 0)
+            || (hierroMiligramos.HasValue && hierroMiligramos.Value < 0))
         {
             throw new ArgumentException("Los valores nutricionales no pueden ser negativos.");
         }
