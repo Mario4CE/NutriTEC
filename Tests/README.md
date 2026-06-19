@@ -7,6 +7,11 @@ Proyectos de pruebas automatizadas de NutriTEC.
 - `Tests/NutriTec.Application.Tests`: pruebas unitarias de casos de uso y servicios de Application, incluyendo autenticación, productos, administración y retroalimentaciones.
 - `Tests/NutriTec.Infrastructure.Sql.Tests`: pruebas unitarias de servicios concretos de Infrastructure.Sql, como hashing, JWT y bootstrap de administrador.
 
+
+## Documentación de casos de prueba
+
+La explicación de cada prueba está en [`Tests/TEST_CASES.md`](TEST_CASES.md).
+
 ## Ejecución
 
 En Linux/macOS o Git Bash:
