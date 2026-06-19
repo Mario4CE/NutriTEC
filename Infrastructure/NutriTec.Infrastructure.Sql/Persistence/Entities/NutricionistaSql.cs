@@ -3,6 +3,7 @@ namespace NutriTec.Infrastructure.Sql.Persistence.Entities;
 public sealed class NutricionistaSql
 {
     public string Cedula { get; set; } = string.Empty;
+    public Guid IdNutricionista { get; set; } = Guid.NewGuid();
     public string Nombre { get; set; } = string.Empty;
     public string Apellidos { get; set; } = string.Empty;
     public string CodigoNutricionista { get; set; } = string.Empty;

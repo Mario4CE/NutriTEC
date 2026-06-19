@@ -161,7 +161,7 @@ public sealed class AuthSqlRepository(NutriTecDbContext dbContext) : IAuthReposi
         TipoCliente);
 
     private static CredencialAutenticacion MapearNutricionista(NutricionistaSql nutricionista) => new(
-        nutricionista.Cedula,
+        nutricionista.IdNutricionista.ToString(),
         nutricionista.Nombre,
         nutricionista.Email,
         nutricionista.PasswordHash,
