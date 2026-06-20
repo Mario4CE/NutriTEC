@@ -1,3 +1,5 @@
+using System.Data;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using NutriTec.Application.Abstractions.Persistence;
 using NutriTec.Domain.Productos;
@@ -18,7 +20,7 @@ namespace NutriTec.Infrastructure.Sql.Repositories;
  * Restricciones:
  * No contiene reglas de negocio; utiliza consultas sin seguimiento cuando no modificará entidades.
  */
-public sealed class ProductoSqlRepository(NutriTecDbContext context) : IProductoRepository
+public sealed class ProductoSqlRepository(NutriTecDbContext context) : IProductoRepository, IAdministracionRepository
 {
     /*
      * Descripción:
@@ -153,6 +155,11 @@ public sealed class ProductoSqlRepository(NutriTecDbContext context) : IProducto
             .ToListAsync(cancellationToken);
     }
 
+    public Task<IReadOnlyCollection<Producto>> ListarProductosPendientesAsync(CancellationToken cancellationToken)
+    {
+        return ListarPendientesAsync(cancellationToken);
+    }
+
     /*
      * Descripción:
      * Cambia atómicamente un producto pendiente al estado aprobado.
@@ -165,13 +172,46 @@ public sealed class ProductoSqlRepository(NutriTecDbContext context) : IProducto
      */
     public async Task<bool> AprobarAsync(Guid idProducto, CancellationToken cancellationToken)
     {
-        var productosActualizados = await context.Productos
-            .Where(producto => producto.Id == idProducto && !producto.EstaAprobado)
-            .ExecuteUpdateAsync(
-                setters => setters.SetProperty(producto => producto.EstaAprobado, true),
-                cancellationToken);
+        var estaPendiente = await context.Productos
+            .AsNoTracking()
+            .AnyAsync(producto => producto.Id == idProducto && !producto.EstaAprobado, cancellationToken);
 
-        return productosActualizados == 1;
+        if (!estaPendiente)
+        {
+            return false;
+        }
+
+        var connection = context.Database.GetDbConnection();
+        if (connection.State != ConnectionState.Open)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        using var command = connection.CreateCommand();
+        command.CommandText = "dbo.sp_AprobarProducto";
+        command.CommandType = CommandType.StoredProcedure;
+        command.Parameters.Add(new SqlParameter("@idProducto", SqlDbType.UniqueIdentifier)
+        {
+            Value = idProducto
+        });
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        return await reader.ReadAsync(cancellationToken);
+    }
+
+    public Task<bool> AprobarProductoAsync(Guid idProducto, CancellationToken cancellationToken)
+    {
+        return AprobarAsync(idProducto, cancellationToken);
+    }
+
+    public Task<bool> AprobarProductoAsync(Guid idProducto, CancellationToken cancellationToken)
+    {
+        return AprobarAsync(idProducto, cancellationToken);
+    }
+
+    public Task<bool> AprobarProductoAsync(Guid idProducto, CancellationToken cancellationToken)
+    {
+        return AprobarAsync(idProducto, cancellationToken);
     }
 
     /*
