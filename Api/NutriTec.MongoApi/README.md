@@ -8,6 +8,7 @@ Responsabilidades principales:
 - Registrar la capa `Application` y la infraestructura Mongo mediante Dependency Injection.
 - Publicar endpoints de retroalimentaciones.
 - Aplicar middleware de validación y errores esperados.
+- Validar JWT en endpoints documentales protegidos.
 
 Restricciones:
 
@@ -63,8 +64,29 @@ Por lo tanto:
 - Los controllers no deben exponer entidades de infraestructura ni documentos internos con datos sensibles.
 - Los contratos públicos deben mantenerse como DTOs separados.
 - La API Mongo no debe depender de SQL Server ni mezclar modelos relacionales.
-- No se debe agregar autenticación JWT sin un incremento explícito para ese objetivo.
-- No se debe agregar `UseAuthentication()` si antes no existe una configuración completa de autenticación.
+- La autenticación JWT ya está configurada para proteger retroalimentaciones.
+- Cualquier nuevo endpoint protegido debe usar `Authorization: Bearer <jwt>` y mantener las validaciones de issuer, audience, signing key y lifetime.
+- No se deben guardar secretos reales de JWT en archivos versionados; usar variables de entorno, user-secrets o gestor de secretos.
+
+
+## Autenticación y endpoints de retroalimentaciones
+
+Los endpoints de retroalimentaciones requieren JWT porque pueden contener comunicación entre pacientes y nutricionistas. El token se envía así:
+
+```http
+Authorization: Bearer <jwt>
+```
+
+Flujo básico de uso:
+
+```http
+POST /api/retroalimentaciones
+GET /api/retroalimentaciones/paciente/{idPaciente}
+GET /api/retroalimentaciones/nutricionista/{idNutricionista}
+POST /api/retroalimentaciones/{idRetroalimentacion}/mensajes
+```
+
+La autenticación se comparte conceptualmente con la API SQL: el token debe estar firmado con la configuración `Jwt` compatible entre APIs.
 
 ## Verificación básica
 
