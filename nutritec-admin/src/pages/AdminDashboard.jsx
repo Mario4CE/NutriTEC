@@ -1,16 +1,7 @@
 import { useState } from "react";
 import { ShieldCheck, PackageSearch, Receipt, LogOut } from "lucide-react";
 import AprobacionProductos from "./AprobacionProductos.jsx";
-
-// Placeholder temporal para Reporte de Cobro — se reemplaza en el siguiente paso
-function ReporteCobro() {
-  return (
-    <div style={styles.placeholder}>
-      <Receipt size={36} color="#7FB892" strokeWidth={1.5} />
-      <p style={styles.placeholderText}>Reporte de cobro — próximamente</p>
-    </div>
-  );
-}
+import ReporteCobro from "./ReporteCobro.jsx";
 
 const SECCIONES = [
   { id: "productos", label: "Aprobación de productos", icon: PackageSearch, component: AprobacionProductos },
