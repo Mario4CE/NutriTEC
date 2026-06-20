@@ -1,6 +1,6 @@
 # NutriTec SQL API
 
-API HTTP para los casos de uso que persisten en SQL Server. En esta etapa incluye los endpoints de autenticación para login y registro de clientes/nutricionistas.
+API HTTP para los casos de uso que persisten en SQL Server. Incluye autenticación, registro de usuarios, productos, administración, aprobación de productos y reportes respaldados por objetos programables de SQL Server.
 
 ## Ejecución local
 
@@ -186,6 +186,105 @@ Respuesta exitosa `200 OK`:
 ```
 
 Este endpoint está protegido con JWT y devuelve únicamente claims de identidad ya validados. No consulta base de datos, no devuelve contraseña, no devuelve `password_hash` y no emite tokens nuevos.
+
+## Endpoints de productos
+
+Los productos registrados quedan pendientes de aprobación administrativa. El controller no aprueba productos ni accede directamente a Entity Framework Core; delega en Application.
+
+### Crear producto pendiente
+
+Requiere JWT de cualquier usuario autenticado.
+
+```http
+POST /api/productos
+Authorization: Bearer <jwt>
+Content-Type: application/json
+```
+
+Body de ejemplo:
+
+```json
+{
+  "nombre": "Yogurt natural",
+  "codigoBarras": "7891234567890",
+  "porcionGramosMililitros": 125,
+  "calorias": 95,
+  "proteinas": 5,
+  "carbohidratos": 12,
+  "grasas": 2,
+  "sodioMiligramos": 60,
+  "vitaminas": "A, D",
+  "calcioMiligramos": 180,
+  "hierroMiligramos": 0.1
+}
+```
+
+### Consultar productos
+
+```http
+GET /api/productos
+GET /api/productos/{idProducto}
+GET /api/productos/buscar?nombre=yogurt
+GET /api/productos/codigo-barras/{codigoBarras}
+```
+
+### Editar o eliminar producto
+
+Requiere JWT con rol/política `Administrador`.
+
+```http
+PUT /api/productos/{idProducto}
+DELETE /api/productos/{idProducto}
+Authorization: Bearer <jwt-admin>
+```
+
+## Endpoints administrativos
+
+Todos los endpoints bajo `/api/administracion` requieren JWT con rol/política `Administrador`.
+
+### Productos pendientes
+
+```http
+GET /api/administracion/productos/pendientes
+Authorization: Bearer <jwt-admin>
+```
+
+### Aprobar producto
+
+```http
+PUT /api/administracion/productos/{idProducto}/aprobacion
+Authorization: Bearer <jwt-admin>
+```
+
+Internamente este caso de uso ejecuta el procedimiento almacenado `dbo.sp_AprobarProducto`, que valida el producto y realiza la aprobación en una transacción.
+
+### Reporte de cobro para administrador
+
+```http
+GET /api/administracion/reporte-cobro?montoBasePorPaciente=1500&incluirSinPacientes=true
+Authorization: Bearer <jwt-admin>
+```
+
+Internamente este endpoint ejecuta `dbo.sp_ReporteCobroNutricionistas`, el procedimiento obligatorio del enunciado. El reporte calcula subtotal, descuento y total a cobrar según tipo de cobro y cantidad de pacientes asociados.
+
+### Cálculo de IMC
+
+```http
+GET /api/administracion/imc?pesoKg=70&estaturaCm=170
+Authorization: Bearer <jwt-admin>
+```
+
+Internamente este endpoint consulta la función SQL `dbo.fn_CalcularImc`.
+
+## Relación entre API SQL y objetos programables
+
+| Objeto SQL | Uso desde API |
+| --- | --- |
+| `dbo.sp_ReporteCobroNutricionistas` | `GET /api/administracion/reporte-cobro` |
+| `dbo.fn_CalcularImc` | `GET /api/administracion/imc` |
+| `dbo.sp_AprobarProducto` | `PUT /api/administracion/productos/{idProducto}/aprobacion` |
+| Triggers de recetas/planes | Se ejecutan automáticamente en SQL Server cuando cambian sus tablas detalle; no se llaman directamente desde HTTP. |
+| Vistas SQL | Disponibles para reportes/lecturas en base de datos; no exponen credenciales ni tarjetas. |
 
 ## Autenticación JWT
 
