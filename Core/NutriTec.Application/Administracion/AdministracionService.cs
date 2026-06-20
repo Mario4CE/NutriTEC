@@ -1,7 +1,7 @@
 using NutriTec.Application.Abstractions.Persistence;
 using NutriTec.Application.Abstractions.Services;
 using NutriTec.Application.Productos;
-using NutriTec.Contracts.Administracion;
+using NutriTec.Contracts.ObjetosSql;
 using NutriTec.Contracts.Productos;
 
 namespace NutriTec.Application.Administracion;
@@ -21,7 +21,9 @@ namespace NutriTec.Application.Administracion;
  * No permite desaprobar productos ni mezcla operaciones administrativas con controllers de CRUD.
  */
 
-public sealed class AdministracionService(IAdministracionRepository administracionRepository) : IAdministracionService
+public sealed class AdministracionService(
+    IAdministracionRepository administracionRepository,
+    IObjetosSqlService objetosSqlService) : IAdministracionService
 {
 
     /*
@@ -55,5 +57,18 @@ public sealed class AdministracionService(IAdministracionRepository administraci
         }
 
         return administracionRepository.AprobarProductoAsync(idProducto, cancellationToken);
+    }
+
+    public Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> GenerarReporteCobroAsync(
+        decimal montoBasePorPaciente,
+        bool incluirSinPacientes,
+        CancellationToken cancellationToken)
+    {
+        return objetosSqlService.ObtenerReporteCobroNutricionistasAsync(montoBasePorPaciente, incluirSinPacientes, cancellationToken);
+    }
+
+    public Task<CalcularImcResponse> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken)
+    {
+        return objetosSqlService.CalcularImcAsync(pesoKg, estaturaCm, cancellationToken);
     }
 }

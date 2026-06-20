@@ -1,6 +1,7 @@
 using NutriTec.Application.Abstractions.Persistence;
+using NutriTec.Application.Abstractions.Services;
 using NutriTec.Application.Administracion;
-using NutriTec.Contracts.Administracion;
+using NutriTec.Contracts.ObjetosSql;
 using NutriTec.Domain.Productos;
 using Xunit;
 
@@ -26,7 +27,7 @@ public sealed class AdministracionServiceTests
             FechaCreacionUtc = DateTime.UtcNow
         };
         var repository = new FakeAdministracionRepository { ProductosPendientes = new[] { producto } };
-        var service = new AdministracionService(repository);
+        var service = new AdministracionService(repository, new FakeObjetosSqlService());
 
         var pendientes = await service.ListarProductosPendientesAsync(CancellationToken.None);
 
@@ -41,7 +42,7 @@ public sealed class AdministracionServiceTests
     {
         var idProducto = Guid.NewGuid();
         var repository = new FakeAdministracionRepository { ResultadoAprobacion = true };
-        var service = new AdministracionService(repository);
+        var service = new AdministracionService(repository, new FakeObjetosSqlService());
 
         var aprobado = await service.AprobarProductoAsync(idProducto, CancellationToken.None);
 
@@ -52,10 +53,41 @@ public sealed class AdministracionServiceTests
     [Fact]
     public async Task AprobarProductoAsync_CuandoIdentificadorEstaVacio_LanzaArgumentException()
     {
-        var service = new AdministracionService(new FakeAdministracionRepository());
+        var service = new AdministracionService(new FakeAdministracionRepository(), new FakeObjetosSqlService());
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
             service.AprobarProductoAsync(Guid.Empty, CancellationToken.None));
+    }
+
+    private sealed class FakeObjetosSqlService : IObjetosSqlService
+    {
+        public Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> ObtenerReporteCobroNutricionistasAsync(
+            decimal montoBasePorPaciente,
+            bool incluirSinPacientes,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyCollection<ReporteCobroNutricionistaResponse>>(Array.Empty<ReporteCobroNutricionistaResponse>());
+
+        public Task<ProductoAprobadoSqlResponse?> AprobarProductoConProcedimientoAsync(Guid idProducto, CancellationToken cancellationToken) =>
+            Task.FromResult<ProductoAprobadoSqlResponse?>(null);
+
+        public Task<AsignarPlanPacienteResponse> AsignarPlanPacienteAsync(
+            int idPlan,
+            int idUsuario,
+            AsignarPlanPacienteRequest request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new AsignarPlanPacienteResponse(1));
+
+        public Task<RegistrarMedidaUsuarioResponse> RegistrarMedidaUsuarioAsync(
+            int idUsuario,
+            RegistrarMedidaUsuarioRequest request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new RegistrarMedidaUsuarioResponse(1, idUsuario, request.Fecha, request.PesoKg, 22.5m));
+
+        public Task<CalcularImcResponse> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken) =>
+            Task.FromResult(new CalcularImcResponse(pesoKg, estaturaCm, 22.86m));
+
+        public Task<TotalCaloriasPlanResponse> ObtenerTotalCaloriasPlanAsync(int idPlan, CancellationToken cancellationToken) =>
+            Task.FromResult(new TotalCaloriasPlanResponse(idPlan, 0m));
     }
 
     private sealed class FakeAdministracionRepository : IAdministracionRepository
