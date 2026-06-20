@@ -80,4 +80,5 @@ public sealed class AdministracionController(IAdministracionService service) : C
             ? NoContent()
             : NotFound(ApiResponse<object>.ErrorResponse("No se encontró un producto pendiente con el identificador indicado."));
     }
+
 }

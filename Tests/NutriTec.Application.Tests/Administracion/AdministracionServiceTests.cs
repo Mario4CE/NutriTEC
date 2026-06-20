@@ -1,6 +1,7 @@
 using NutriTec.Application.Abstractions.Persistence;
+using NutriTec.Application.Abstractions.Services;
 using NutriTec.Application.Administracion;
-using NutriTec.Contracts.Administracion;
+using NutriTec.Contracts.ObjetosSql;
 using NutriTec.Domain.Productos;
 using Xunit;
 
@@ -25,8 +26,8 @@ public sealed class AdministracionServiceTests
             EstaAprobado = false,
             FechaCreacionUtc = DateTime.UtcNow
         };
-        var repository = new FakeProductoRepository { ProductosPendientes = new[] { producto } };
-        var service = new AdministracionService(repository, new FakeAdministracionRepository());
+        var repository = new FakeAdministracionRepository { ProductosPendientes = new[] { producto } };
+        var service = new AdministracionService(repository, new FakeObjetosSqlService());
 
         var pendientes = await service.ListarProductosPendientesAsync(CancellationToken.None);
 
@@ -40,8 +41,8 @@ public sealed class AdministracionServiceTests
     public async Task AprobarProductoAsync_CuandoIdentificadorEsValido_DelegaAlRepositorio()
     {
         var idProducto = Guid.NewGuid();
-        var repository = new FakeProductoRepository { ResultadoAprobacion = true };
-        var service = new AdministracionService(repository, new FakeAdministracionRepository());
+        var repository = new FakeAdministracionRepository { ResultadoAprobacion = true };
+        var service = new AdministracionService(repository, new FakeObjetosSqlService());
 
         var aprobado = await service.AprobarProductoAsync(idProducto, CancellationToken.None);
 
@@ -52,85 +53,56 @@ public sealed class AdministracionServiceTests
     [Fact]
     public async Task AprobarProductoAsync_CuandoIdentificadorEstaVacio_LanzaArgumentException()
     {
-        var service = new AdministracionService(new FakeProductoRepository(), new FakeAdministracionRepository());
+        var service = new AdministracionService(new FakeAdministracionRepository(), new FakeObjetosSqlService());
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
             service.AprobarProductoAsync(Guid.Empty, CancellationToken.None));
     }
 
-
-    [Fact]
-    public async Task GenerarReporteCobroAsync_CuandoMontoEsValido_DelegaAlRepositorio()
+    private sealed class FakeObjetosSqlService : IObjetosSqlService
     {
-        var administracionRepository = new FakeAdministracionRepository();
-        var service = new AdministracionService(new FakeProductoRepository(), administracionRepository);
+        public Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> ObtenerReporteCobroNutricionistasAsync(
+            decimal montoBasePorPaciente,
+            bool incluirSinPacientes,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyCollection<ReporteCobroNutricionistaResponse>>(Array.Empty<ReporteCobroNutricionistaResponse>());
 
-        await service.GenerarReporteCobroAsync(1500m, incluirSinPacientes: false, CancellationToken.None);
+        public Task<ProductoAprobadoSqlResponse?> AprobarProductoConProcedimientoAsync(Guid idProducto, CancellationToken cancellationToken) =>
+            Task.FromResult<ProductoAprobadoSqlResponse?>(null);
 
-        Assert.Equal(1500m, administracionRepository.UltimoMontoBasePorPaciente);
-        Assert.False(administracionRepository.UltimoIncluirSinPacientes);
+        public Task<AsignarPlanPacienteResponse> AsignarPlanPacienteAsync(
+            int idPlan,
+            int idUsuario,
+            AsignarPlanPacienteRequest request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new AsignarPlanPacienteResponse(1));
+
+        public Task<RegistrarMedidaUsuarioResponse> RegistrarMedidaUsuarioAsync(
+            int idUsuario,
+            RegistrarMedidaUsuarioRequest request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new RegistrarMedidaUsuarioResponse(1, idUsuario, request.Fecha, request.PesoKg, 22.5m));
+
+        public Task<CalcularImcResponse> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken) =>
+            Task.FromResult(new CalcularImcResponse(pesoKg, estaturaCm, 22.86m));
+
+        public Task<TotalCaloriasPlanResponse> ObtenerTotalCaloriasPlanAsync(int idPlan, CancellationToken cancellationToken) =>
+            Task.FromResult(new TotalCaloriasPlanResponse(idPlan, 0m));
     }
 
-    [Fact]
-    public async Task CalcularImcAsync_CuandoDatosSonValidos_DelegaAlRepositorio()
-    {
-        var administracionRepository = new FakeAdministracionRepository { ResultadoImc = 24.22m };
-        var service = new AdministracionService(new FakeProductoRepository(), administracionRepository);
-
-        var imc = await service.CalcularImcAsync(70m, 170m, CancellationToken.None);
-
-        Assert.Equal(24.22m, imc);
-        Assert.Equal(70m, administracionRepository.UltimoPesoKg);
-        Assert.Equal(170m, administracionRepository.UltimaEstaturaCm);
-    }
-
-    private sealed class FakeProductoRepository : IProductoRepository
+    private sealed class FakeAdministracionRepository : IAdministracionRepository
     {
         public IReadOnlyCollection<Producto> ProductosPendientes { get; init; } = Array.Empty<Producto>();
         public bool ResultadoAprobacion { get; init; }
         public Guid? UltimoProductoAprobado { get; private set; }
 
-        public Task<Producto> CrearAsync(Producto producto, CancellationToken cancellationToken) => Task.FromResult(producto);
-        public Task<Producto?> ObtenerPorIdAsync(Guid idProducto, CancellationToken cancellationToken) => Task.FromResult<Producto?>(null);
-        public Task<IReadOnlyCollection<Producto>> ListarAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyCollection<Producto>>(Array.Empty<Producto>());
-        public Task<IReadOnlyCollection<Producto>> BuscarPorNombreAsync(string nombre, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyCollection<Producto>>(Array.Empty<Producto>());
-        public Task<Producto?> ObtenerPorCodigoBarrasAsync(string codigoBarras, CancellationToken cancellationToken) => Task.FromResult<Producto?>(null);
-        public Task<bool> ExisteCodigoBarrasAsync(string codigoBarras, Guid? idProductoExcluido, CancellationToken cancellationToken) => Task.FromResult(false);
-        public Task<bool> ActualizarAsync(Producto producto, CancellationToken cancellationToken) => Task.FromResult(true);
-        public Task<IReadOnlyCollection<Producto>> ListarPendientesAsync(CancellationToken cancellationToken) => Task.FromResult(ProductosPendientes);
+        public Task<IReadOnlyCollection<Producto>> ListarProductosPendientesAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(ProductosPendientes);
 
-        public Task<bool> AprobarAsync(Guid idProducto, CancellationToken cancellationToken)
+        public Task<bool> AprobarProductoAsync(Guid idProducto, CancellationToken cancellationToken)
         {
             UltimoProductoAprobado = idProducto;
             return Task.FromResult(ResultadoAprobacion);
-        }
-
-        public Task<bool> EliminarAsync(Guid idProducto, CancellationToken cancellationToken) => Task.FromResult(true);
-    }
-
-    private sealed class FakeAdministracionRepository : IAdministracionRepository
-    {
-        public decimal UltimoMontoBasePorPaciente { get; private set; }
-        public bool UltimoIncluirSinPacientes { get; private set; }
-        public decimal UltimoPesoKg { get; private set; }
-        public decimal UltimaEstaturaCm { get; private set; }
-        public decimal? ResultadoImc { get; init; }
-
-        public Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> GenerarReporteCobroAsync(
-            decimal montoBasePorPaciente,
-            bool incluirSinPacientes,
-            CancellationToken cancellationToken)
-        {
-            UltimoMontoBasePorPaciente = montoBasePorPaciente;
-            UltimoIncluirSinPacientes = incluirSinPacientes;
-            return Task.FromResult<IReadOnlyCollection<ReporteCobroNutricionistaResponse>>(Array.Empty<ReporteCobroNutricionistaResponse>());
-        }
-
-        public Task<decimal?> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken)
-        {
-            UltimoPesoKg = pesoKg;
-            UltimaEstaturaCm = estaturaCm;
-            return Task.FromResult(ResultadoImc);
         }
     }
 }

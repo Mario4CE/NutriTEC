@@ -4,6 +4,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using NutriTec.Application;
 using NutriTec.Infrastructure.Sql;
 using NutriTec.Infrastructure.Sql.Bootstrap;
@@ -29,9 +30,43 @@ var forwardedKnownProxies = builder.Configuration.GetSection("ForwardedHeaders:K
 
 const string CorsPolicyName = "RestrictedCors";
 
-builder.Services.AddNutriTecApplication();
+builder.Services.AddNutriTecSqlApplication();
 builder.Services.AddNutriTecSqlInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.CustomSchemaIds(type => type.FullName?.Replace("+", ".") ?? type.Name);
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "NutriTEC SQL API",
+        Version = "v1",
+        Description = "Endpoints SQL de NutriTEC, incluyendo productos, autenticación, administración y objetos programables."
+    });
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Pegue el JWT sin escribir la palabra Bearer. Ejemplo: eyJhbGciOi..."
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -112,6 +147,12 @@ await using (var scope = app.Services.CreateAsyncScope())
 {
     var adminBootstrapService = scope.ServiceProvider.GetRequiredService<AdminBootstrapService>();
     await adminBootstrapService.InicializarAsync();
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseForwardedHeaders();
