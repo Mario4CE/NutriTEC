@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NutriTec.Application.Abstractions.Services;
+using NutriTec.Contracts.Administracion;
 using NutriTec.Contracts.Productos;
 using NutriTec.Contracts.Responses;
 
@@ -59,4 +60,25 @@ public sealed class AdministracionController(IAdministracionService service) : C
             ? NoContent()
             : NotFound(ApiResponse<object>.ErrorResponse("No se encontró un producto pendiente con el identificador indicado."));
     }
+
+    [HttpGet("reporte-cobro-nutricionistas")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyCollection<ReporteCobroNutricionistaResponse>>>> GenerarReporteCobroAsync(
+        [FromQuery] decimal montoBasePorPaciente,
+        [FromQuery] bool incluirSinPacientes = false,
+        CancellationToken cancellationToken = default)
+    {
+        var reporte = await service.GenerarReporteCobroAsync(montoBasePorPaciente, incluirSinPacientes, cancellationToken);
+        return Ok(ApiResponse<IReadOnlyCollection<ReporteCobroNutricionistaResponse>>.SuccessResponse(reporte));
+    }
+
+    [HttpGet("calcular-imc")]
+    public async Task<ActionResult<ApiResponse<decimal?>>> CalcularImcAsync(
+        [FromQuery] decimal pesoKg,
+        [FromQuery] decimal estaturaCm,
+        CancellationToken cancellationToken)
+    {
+        var imc = await service.CalcularImcAsync(pesoKg, estaturaCm, cancellationToken);
+        return Ok(ApiResponse<decimal?>.SuccessResponse(imc));
+    }
+
 }

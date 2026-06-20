@@ -1,0 +1,131 @@
+# NutriTEC - Pruebas rápidas de SQL Server y MongoDB
+#
+# Requisitos antes de ejecutar este archivo:
+# 1) SQL Server debe tener la base NutriTec creada y los scripts de Database/SqlServer ejecutados en el orden del README.
+# 2) MongoDB debe estar corriendo y debe haberse ejecutado Database/MongoDB/Collections/001_Retroalimentaciones.mongodb.js.
+# 3) Levantar ambas APIs:
+#    dotnet run --project Api/NutriTec.SqlApi/NutriTec.SqlApi.csproj
+#    dotnet run --project Api/NutriTec.MongoApi/NutriTec.MongoApi.csproj
+# 4) Hacer login en la API SQL y copiar el token JWT en AdminToken/UserToken.
+#
+# Variables que normalmente se cambian para cada ambiente.
+@SqlApi = http://localhost:5255
+@MongoApi = http://localhost:5272
+@AdminToken = PEGAR_TOKEN_ADMIN_AQUI
+@UserToken = PEGAR_TOKEN_USUARIO_AQUI
+@AdminCorreo = admin@nutritec.local
+@AdminPassword = Cambiar123!
+@PacienteId = 11111111-1111-1111-1111-111111111111
+@NutricionistaId = 22222222-2222-2222-2222-222222222222
+@RetroalimentacionId = 33333333-3333-3333-3333-333333333333
+@ProductoId = 11111111-1111-1111-1111-111111111111
+@PlanId = 1
+@UsuarioId = 1
+
+### 1. SQL API - Login para obtener JWT
+# Copiar el token de esta respuesta y pegarlo arriba en AdminToken o UserToken.
+POST {{SqlApi}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "correo": "{{AdminCorreo}}",
+  "contrasena": "{{AdminPassword}}"
+}
+
+###
+
+### 2. SQL API - Probar función dbo.fn_CalcularImc
+# Esperado: 200 OK con un valor IMC cercano a 22.86.
+GET {{SqlApi}}/api/sql-programable/functions/imc?pesoKg=70&estaturaCm=175
+Authorization: Bearer {{AdminToken}}
+Accept: application/json
+
+###
+
+### 3. SQL API - Probar función dbo.fn_TotalCaloriasPlan
+# Esperado: 200 OK. Si el plan no tiene productos o no existe, puede devolver 0.
+GET {{SqlApi}}/api/sql-programable/functions/planes/{{PlanId}}/total-calorias
+Authorization: Bearer {{AdminToken}}
+Accept: application/json
+
+###
+
+### 4. SQL API - Probar stored procedure dbo.sp_ReporteCobroNutricionistas
+# Esperado: 200 OK con arreglo de nutricionistas y montos. Puede venir vacío si no hay nutricionistas.
+GET {{SqlApi}}/api/sql-programable/stored-procedures/reporte-cobro-nutricionistas?montoBasePorPaciente=10000&incluirSinPacientes=true
+Authorization: Bearer {{AdminToken}}
+Accept: application/json
+
+###
+
+### 5. SQL API - Probar stored procedure dbo.sp_AprobarProducto
+# Requiere que ProductoId exista en PRODUCTO.
+PUT {{SqlApi}}/api/sql-programable/stored-procedures/productos/{{ProductoId}}/aprobacion
+Authorization: Bearer {{AdminToken}}
+Accept: application/json
+
+###
+
+### 6. SQL API - Probar stored procedure dbo.sp_RegistrarMedidaUsuario
+# Requiere que UsuarioId exista en USUARIO.
+POST {{SqlApi}}/api/sql-programable/stored-procedures/usuarios/{{UsuarioId}}/medidas
+Authorization: Bearer {{AdminToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "fecha": "2026-06-20",
+  "pesoKg": 70.5,
+  "estaturaCm": 175,
+  "cintura": 80,
+  "cuello": 38,
+  "caderas": 95,
+  "pctMusculo": 42,
+  "pctGrasa": 18
+}
+
+###
+
+### 7. Mongo API - Crear retroalimentación
+# Esperado: 201 Created. Verificar luego en Mongo con:
+# use("nutritec_feedback"); db.Retroalimentaciones.find().pretty();
+POST {{MongoApi}}/api/retroalimentaciones
+Authorization: Bearer {{UserToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "idPaciente": "{{PacienteId}}",
+  "idNutricionista": "{{NutricionistaId}}",
+  "autor": "Paciente",
+  "mensaje": "Prueba de conexión Mongo desde archivo DatabaseSmokeTests.http."
+}
+
+###
+
+### 8. Mongo API - Consultar retroalimentaciones por paciente
+# Esperado: 200 OK y debe incluir la retroalimentación creada en la prueba anterior.
+GET {{MongoApi}}/api/retroalimentaciones/pacientes/{{PacienteId}}
+Authorization: Bearer {{UserToken}}
+Accept: application/json
+
+###
+
+### 9. Mongo API - Consultar retroalimentaciones por nutricionista
+# Esperado: 200 OK y debe incluir la retroalimentación creada si coincide NutricionistaId.
+GET {{MongoApi}}/api/retroalimentaciones/nutricionistas/{{NutricionistaId}}
+Authorization: Bearer {{UserToken}}
+Accept: application/json
+
+###
+
+### 10. Mongo API - Responder una retroalimentación
+# Requiere pegar en RetroalimentacionId el id devuelto por la prueba 7.
+POST {{MongoApi}}/api/retroalimentaciones/{{RetroalimentacionId}}/mensajes
+Authorization: Bearer {{UserToken}}
+Content-Type: application/json
+
+{
+  "autor": "Nutricionista",
+  "mensaje": "Respuesta de prueba desde DatabaseSmokeTests.http."
+}
