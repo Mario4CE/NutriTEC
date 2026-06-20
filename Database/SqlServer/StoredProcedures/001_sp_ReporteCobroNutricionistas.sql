@@ -51,14 +51,22 @@ BEGIN
 
     DECLARE nutricionistas_cursor CURSOR LOCAL FAST_FORWARD FOR
         SELECT
-            n.cedula,
-            CONCAT(n.nombre, ' ', n.apellidos),
-            n.tipo_cobro,
-            COUNT(pn.id_usuario) AS cantidad_pacientes
-        FROM NUTRICIONISTA n
-        LEFT JOIN PACIENTE_NUTRICIONISTA pn ON pn.cedula_nutricionista = n.cedula
-        GROUP BY n.cedula, n.nombre, n.apellidos, n.tipo_cobro
-        HAVING @incluirSinPacientes = 1 OR COUNT(pn.id_usuario) > 0;
+            reporte.cedula,
+            reporte.nombre_completo,
+            reporte.tipo_cobro,
+            reporte.cantidad_pacientes
+        FROM
+        (
+            SELECT
+                n.cedula,
+                CONCAT(n.nombre, ' ', n.apellidos) AS nombre_completo,
+                n.tipo_cobro,
+                COUNT(pn.id_usuario) AS cantidad_pacientes
+            FROM NUTRICIONISTA n
+            LEFT JOIN PACIENTE_NUTRICIONISTA pn ON pn.cedula_nutricionista = n.cedula
+            GROUP BY n.cedula, n.nombre, n.apellidos, n.tipo_cobro
+        ) AS reporte
+        WHERE @incluirSinPacientes = 1 OR reporte.cantidad_pacientes > 0;
 
     OPEN nutricionistas_cursor;
     FETCH NEXT FROM nutricionistas_cursor INTO @cedula, @nombreCompleto, @tipoCobro, @cantidadPacientes;
