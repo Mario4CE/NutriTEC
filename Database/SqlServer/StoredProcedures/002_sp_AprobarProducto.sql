@@ -36,7 +36,14 @@ BEGIN
         SELECT 1
         FROM PRODUCTO
         WHERE id_producto = @idProducto
-          AND (calorias < 0 OR proteinas < 0 OR carbohidratos < 0 OR grasas < 0)
+          AND (porcion_g_ml <= 0
+               OR calorias < 0
+               OR proteinas < 0
+               OR carbohidratos < 0
+               OR grasas < 0
+               OR sodio_mg < 0
+               OR calcio_mg < 0
+               OR hierro_mg < 0)
     )
     BEGIN
         ROLLBACK TRANSACTION;
@@ -49,7 +56,7 @@ BEGIN
 
     COMMIT TRANSACTION;
 
-    SELECT id_producto, nombre, codigo_barras, calorias, proteinas, carbohidratos, grasas, aprobado, fecha_creacion_utc
+    SELECT id_producto, nombre, codigo_barras, porcion_g_ml, calorias, proteinas, carbohidratos, grasas, sodio_mg, vitaminas, calcio_mg, hierro_mg, aprobado, fecha_creacion_utc
     FROM PRODUCTO
     WHERE id_producto = @idProducto;
 END;
