@@ -1,3 +1,4 @@
+using NutriTec.Contracts.ObjetosSql;
 using NutriTec.Contracts.Productos;
 
 namespace NutriTec.Application.Abstractions.Services;
@@ -37,4 +38,11 @@ public interface IAdministracionService
      */
 
     Task<bool> AprobarProductoAsync(Guid idProducto, CancellationToken cancellationToken);
+
+    Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> GenerarReporteCobroAsync(
+        decimal montoBasePorPaciente,
+        bool incluirSinPacientes,
+        CancellationToken cancellationToken);
+
+    Task<CalcularImcResponse> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken);
 }
