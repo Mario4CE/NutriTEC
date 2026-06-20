@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using Nutri_TEC.Services;
+using Nutri_TEC.Views;
 
 namespace Nutri_TEC
 {
@@ -15,11 +17,35 @@ namespace Nutri_TEC
                     fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
                 });
 
+            // Registrar servicios
+            builder.Services.AddSingleton<IDataService, DataService>();
+
+            // Registrar páginas y view models
+            builder.Services.AddSingleton<LoginPage>();
+            builder.Services.AddSingleton<RegistroPage>();
+            builder.Services.AddSingleton<RegistroConsumoPage>();
+            builder.Services.AddSingleton<CrearRecetaPage>();
+            builder.Services.AddSingleton<MisRecetasPage>();
+            builder.Services.AddSingleton<MainPage>();
+
+            builder.Services.AddSingleton<AppShell>();
+
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
-            return builder.Build();
+            var app = builder.Build();
+
+            // Inicializar datos por defecto
+            var dataService = app.Services.GetRequiredService<IDataService>();
+            Task.Run(async () =>
+            {
+                await dataService.InicializarUsuariosDefault();
+                await dataService.InicializarProductosDefault();
+                await dataService.InicializarRecetasDefault();
+            });
+
+            return app;
         }
     }
 }
