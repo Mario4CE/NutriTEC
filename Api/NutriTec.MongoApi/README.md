@@ -75,8 +75,8 @@ dotnet build
 dotnet run --project Api/NutriTec.MongoApi/NutriTec.MongoApi.csproj
 ```
 
-En ambiente `Development`, la especificación OpenAPI se publica con `MapOpenApi()` y puede consultarse en una ruta como:
+En ambiente `Development`, Swagger UI se publica con Swashbuckle y puede consultarse en:
 
 ```text
-http://localhost:5272/openapi/v1.json
+http://localhost:5272/swagger
 ```
