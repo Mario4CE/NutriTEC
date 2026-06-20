@@ -39,3 +39,19 @@ Los scripts están separados por tipo de objeto para facilitar la revisión del 
   - `dbo.trg_RecalcularTotalPlan`: mantiene total calórico del plan al cambiar productos.
 
 Ningún procedimiento agregado es un envoltorio trivial de una sola sentencia; todos incluyen validaciones, variables, control de flujo y/o transacciones.
+
+## Uso desde la API
+
+No todos los objetos programables se llaman directamente desde HTTP. La API usa algunos mediante repositories y otros quedan como lógica automática dentro de SQL Server.
+
+| Objeto SQL | Estado de integración | Endpoint o uso |
+| --- | --- | --- |
+| `dbo.sp_ReporteCobroNutricionistas` | Usado desde API | `GET /api/administracion/reporte-cobro?montoBasePorPaciente=1500&incluirSinPacientes=true` |
+| `dbo.fn_CalcularImc` | Usado desde API | `GET /api/administracion/imc?pesoKg=70&estaturaCm=170` |
+| `dbo.sp_AprobarProducto` | Usado desde API | `PUT /api/administracion/productos/{idProducto}/aprobacion` |
+| `dbo.fn_TotalCaloriasPlan` | Usado desde base de datos | Lo usa el trigger de plan para recalcular totales. |
+| `dbo.trg_RecalcularTotalesReceta` | Automático | Se dispara al cambiar productos de una receta. |
+| `dbo.trg_RecalcularTotalPlan` | Automático | Se dispara al cambiar productos de un plan. |
+| Vistas SQL | Lectura/reportes | Pueden consultarse directamente en SQL Server para revisión o reportes. |
+
+Los triggers no tienen endpoint propio porque SQL Server los ejecuta automáticamente cuando se insertan, actualizan o eliminan filas en las tablas asociadas.
