@@ -7,7 +7,7 @@ namespace NutriTec.Infrastructure.Sql.Repositories;
 
 /*
  * Repositorio SQL dedicado a operaciones administrativas.
- * Mantiene ListarProductosPendientesAsync y AprobarProductoAsync fuera de ProductoSqlRepository
+ * Mantiene ListarProductosPendientesAsync y AprobarProductoAsync fuera de ProductoCrudSqlRepository
  * para que no existan miembros duplicados en el repositorio de productos.
  */
 public sealed class AdministracionSqlRepository(NutriTecDbContext context) : IAdministracionRepository

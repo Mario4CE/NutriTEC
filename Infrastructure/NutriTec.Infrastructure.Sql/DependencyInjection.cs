@@ -21,7 +21,7 @@ public static class DependencyInjection
         services.Configure<AdminBootstrapOptions>(configuration.GetSection(AdminBootstrapOptions.SectionName));
         services.AddScoped<AdminBootstrapService>();
         services.AddScoped<IAuthRepository, AuthSqlRepository>();
-        services.AddScoped<IProductoRepository, ProductoSqlRepository>();
+        services.AddScoped<IProductoRepository, ProductoCrudSqlRepository>();
         services.AddScoped<IAdministracionRepository, AdministracionSqlRepository>();
         services.AddScoped<IObjetosSqlRepository, ObjetosSqlRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
