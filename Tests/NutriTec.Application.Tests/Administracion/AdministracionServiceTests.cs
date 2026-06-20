@@ -1,5 +1,6 @@
 using NutriTec.Application.Abstractions.Persistence;
 using NutriTec.Application.Administracion;
+using NutriTec.Contracts.Administracion;
 using NutriTec.Domain.Productos;
 using Xunit;
 
@@ -25,7 +26,7 @@ public sealed class AdministracionServiceTests
             FechaCreacionUtc = DateTime.UtcNow
         };
         var repository = new FakeProductoRepository { ProductosPendientes = new[] { producto } };
-        var service = new AdministracionService(repository);
+        var service = new AdministracionService(repository, new FakeAdministracionRepository());
 
         var pendientes = await service.ListarProductosPendientesAsync(CancellationToken.None);
 
@@ -40,7 +41,7 @@ public sealed class AdministracionServiceTests
     {
         var idProducto = Guid.NewGuid();
         var repository = new FakeProductoRepository { ResultadoAprobacion = true };
-        var service = new AdministracionService(repository);
+        var service = new AdministracionService(repository, new FakeAdministracionRepository());
 
         var aprobado = await service.AprobarProductoAsync(idProducto, CancellationToken.None);
 
@@ -51,10 +52,36 @@ public sealed class AdministracionServiceTests
     [Fact]
     public async Task AprobarProductoAsync_CuandoIdentificadorEstaVacio_LanzaArgumentException()
     {
-        var service = new AdministracionService(new FakeProductoRepository());
+        var service = new AdministracionService(new FakeProductoRepository(), new FakeAdministracionRepository());
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
             service.AprobarProductoAsync(Guid.Empty, CancellationToken.None));
+    }
+
+
+    [Fact]
+    public async Task GenerarReporteCobroAsync_CuandoMontoEsValido_DelegaAlRepositorio()
+    {
+        var administracionRepository = new FakeAdministracionRepository();
+        var service = new AdministracionService(new FakeProductoRepository(), administracionRepository);
+
+        await service.GenerarReporteCobroAsync(1500m, incluirSinPacientes: false, CancellationToken.None);
+
+        Assert.Equal(1500m, administracionRepository.UltimoMontoBasePorPaciente);
+        Assert.False(administracionRepository.UltimoIncluirSinPacientes);
+    }
+
+    [Fact]
+    public async Task CalcularImcAsync_CuandoDatosSonValidos_DelegaAlRepositorio()
+    {
+        var administracionRepository = new FakeAdministracionRepository { ResultadoImc = 24.22m };
+        var service = new AdministracionService(new FakeProductoRepository(), administracionRepository);
+
+        var imc = await service.CalcularImcAsync(70m, 170m, CancellationToken.None);
+
+        Assert.Equal(24.22m, imc);
+        Assert.Equal(70m, administracionRepository.UltimoPesoKg);
+        Assert.Equal(170m, administracionRepository.UltimaEstaturaCm);
     }
 
     private sealed class FakeProductoRepository : IProductoRepository
@@ -79,5 +106,31 @@ public sealed class AdministracionServiceTests
         }
 
         public Task<bool> EliminarAsync(Guid idProducto, CancellationToken cancellationToken) => Task.FromResult(true);
+    }
+
+    private sealed class FakeAdministracionRepository : IAdministracionRepository
+    {
+        public decimal UltimoMontoBasePorPaciente { get; private set; }
+        public bool UltimoIncluirSinPacientes { get; private set; }
+        public decimal UltimoPesoKg { get; private set; }
+        public decimal UltimaEstaturaCm { get; private set; }
+        public decimal? ResultadoImc { get; init; }
+
+        public Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> GenerarReporteCobroAsync(
+            decimal montoBasePorPaciente,
+            bool incluirSinPacientes,
+            CancellationToken cancellationToken)
+        {
+            UltimoMontoBasePorPaciente = montoBasePorPaciente;
+            UltimoIncluirSinPacientes = incluirSinPacientes;
+            return Task.FromResult<IReadOnlyCollection<ReporteCobroNutricionistaResponse>>(Array.Empty<ReporteCobroNutricionistaResponse>());
+        }
+
+        public Task<decimal?> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken)
+        {
+            UltimoPesoKg = pesoKg;
+            UltimaEstaturaCm = estaturaCm;
+            return Task.FromResult(ResultadoImc);
+        }
     }
 }
