@@ -24,7 +24,7 @@ public sealed class AdministracionServiceTests
             EstaAprobado = false,
             FechaCreacionUtc = DateTime.UtcNow
         };
-        var repository = new FakeProductoRepository { ProductosPendientes = new[] { producto } };
+        var repository = new FakeAdministracionRepository { ProductosPendientes = new[] { producto } };
         var service = new AdministracionService(repository);
 
         var pendientes = await service.ListarProductosPendientesAsync(CancellationToken.None);
@@ -39,7 +39,7 @@ public sealed class AdministracionServiceTests
     public async Task AprobarProductoAsync_CuandoIdentificadorEsValido_DelegaAlRepositorio()
     {
         var idProducto = Guid.NewGuid();
-        var repository = new FakeProductoRepository { ResultadoAprobacion = true };
+        var repository = new FakeAdministracionRepository { ResultadoAprobacion = true };
         var service = new AdministracionService(repository);
 
         var aprobado = await service.AprobarProductoAsync(idProducto, CancellationToken.None);
@@ -51,33 +51,25 @@ public sealed class AdministracionServiceTests
     [Fact]
     public async Task AprobarProductoAsync_CuandoIdentificadorEstaVacio_LanzaArgumentException()
     {
-        var service = new AdministracionService(new FakeProductoRepository());
+        var service = new AdministracionService(new FakeAdministracionRepository());
 
         await Assert.ThrowsAsync<ArgumentException>(() =>
             service.AprobarProductoAsync(Guid.Empty, CancellationToken.None));
     }
 
-    private sealed class FakeProductoRepository : IProductoRepository
+    private sealed class FakeAdministracionRepository : IAdministracionRepository
     {
         public IReadOnlyCollection<Producto> ProductosPendientes { get; init; } = Array.Empty<Producto>();
         public bool ResultadoAprobacion { get; init; }
         public Guid? UltimoProductoAprobado { get; private set; }
 
-        public Task<Producto> CrearAsync(Producto producto, CancellationToken cancellationToken) => Task.FromResult(producto);
-        public Task<Producto?> ObtenerPorIdAsync(Guid idProducto, CancellationToken cancellationToken) => Task.FromResult<Producto?>(null);
-        public Task<IReadOnlyCollection<Producto>> ListarAsync(CancellationToken cancellationToken) => Task.FromResult<IReadOnlyCollection<Producto>>(Array.Empty<Producto>());
-        public Task<IReadOnlyCollection<Producto>> BuscarPorNombreAsync(string nombre, CancellationToken cancellationToken) => Task.FromResult<IReadOnlyCollection<Producto>>(Array.Empty<Producto>());
-        public Task<Producto?> ObtenerPorCodigoBarrasAsync(string codigoBarras, CancellationToken cancellationToken) => Task.FromResult<Producto?>(null);
-        public Task<bool> ExisteCodigoBarrasAsync(string codigoBarras, Guid? idProductoExcluido, CancellationToken cancellationToken) => Task.FromResult(false);
-        public Task<bool> ActualizarAsync(Producto producto, CancellationToken cancellationToken) => Task.FromResult(true);
-        public Task<IReadOnlyCollection<Producto>> ListarPendientesAsync(CancellationToken cancellationToken) => Task.FromResult(ProductosPendientes);
+        public Task<IReadOnlyCollection<Producto>> ListarProductosPendientesAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(ProductosPendientes);
 
-        public Task<bool> AprobarAsync(Guid idProducto, CancellationToken cancellationToken)
+        public Task<bool> AprobarProductoAsync(Guid idProducto, CancellationToken cancellationToken)
         {
             UltimoProductoAprobado = idProducto;
             return Task.FromResult(ResultadoAprobacion);
         }
-
-        public Task<bool> EliminarAsync(Guid idProducto, CancellationToken cancellationToken) => Task.FromResult(true);
     }
 }

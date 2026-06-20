@@ -20,7 +20,7 @@ namespace NutriTec.Application.Administracion;
  * No permite desaprobar productos ni mezcla operaciones administrativas con controllers de CRUD.
  */
 
-public sealed class AdministracionService(IProductoRepository repository) : IAdministracionService
+public sealed class AdministracionService(IAdministracionRepository administracionRepository) : IAdministracionService
 {
 
     /*
@@ -33,7 +33,7 @@ public sealed class AdministracionService(IProductoRepository repository) : IAdm
     public async Task<IReadOnlyCollection<ProductoResponse>> ListarProductosPendientesAsync(
         CancellationToken cancellationToken)
     {
-        var productos = await repository.ListarPendientesAsync(cancellationToken);
+        var productos = await administracionRepository.ListarProductosPendientesAsync(cancellationToken);
         return productos.Select(ProductoMapper.Mapear).ToArray();
     }
 
@@ -53,6 +53,6 @@ public sealed class AdministracionService(IProductoRepository repository) : IAdm
             throw new ArgumentException("El identificador no puede estar vacío.", nameof(idProducto));
         }
 
-        return repository.AprobarAsync(idProducto, cancellationToken);
+        return administracionRepository.AprobarProductoAsync(idProducto, cancellationToken);
     }
 }
