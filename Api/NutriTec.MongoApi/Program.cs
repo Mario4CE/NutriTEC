@@ -28,7 +28,7 @@ var jwtSigningKey = string.IsNullOrWhiteSpace(jwtSecret)
  */
 
 // La API Mongo compone únicamente la lógica compartida y el adaptador documental.
-builder.Services.AddNutriTecApplication();
+builder.Services.AddNutriTecMongoApplication();
 builder.Services.AddNutriTecMongoInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();

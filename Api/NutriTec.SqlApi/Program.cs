@@ -29,7 +29,7 @@ var forwardedKnownProxies = builder.Configuration.GetSection("ForwardedHeaders:K
 
 const string CorsPolicyName = "RestrictedCors";
 
-builder.Services.AddNutriTecApplication();
+builder.Services.AddNutriTecSqlApplication();
 builder.Services.AddNutriTecSqlInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
