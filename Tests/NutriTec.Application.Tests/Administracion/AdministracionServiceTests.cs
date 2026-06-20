@@ -1,5 +1,6 @@
 using NutriTec.Application.Abstractions.Persistence;
 using NutriTec.Application.Administracion;
+using NutriTec.Contracts.Administracion;
 using NutriTec.Domain.Productos;
 using Xunit;
 
