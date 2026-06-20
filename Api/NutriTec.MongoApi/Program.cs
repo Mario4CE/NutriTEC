@@ -20,6 +20,9 @@ if (builder.Environment.IsProduction() && string.IsNullOrWhiteSpace(jwtSecret))
 var jwtSigningKey = string.IsNullOrWhiteSpace(jwtSecret)
     ? "ConfigurationPlaceholderJwtSecretDoNotUseInProduction12345"
     : jwtSecret;
+var corsAllowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
+const string CorsPolicyName = "RestrictedCors";
 
 /*
  * En esta API se ha optado por una arquitectura hexagonal, donde la lógica de negocio y la infraestructura están desacopladas.
@@ -34,6 +37,16 @@ builder.Services.AddNutriTecMongoInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(CorsPolicyName, policy =>
+    {
+        policy
+            .WithOrigins(corsAllowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 builder.Services.AddSwaggerGen(options =>
 {
     options.CustomSchemaIds(type => type.FullName?.Replace("+", ".") ?? type.Name);
@@ -86,19 +99,18 @@ builder.Services
 builder.Services.AddAuthorization();
 builder.Services.AddExceptionHandler<ArgumentExceptionHandler>();
 builder.Services.AddProblemDetails();
-//builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    //app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
+app.UseCors(CorsPolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
