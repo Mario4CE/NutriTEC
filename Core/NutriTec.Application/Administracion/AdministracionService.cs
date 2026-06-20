@@ -1,7 +1,7 @@
 using NutriTec.Application.Abstractions.Persistence;
 using NutriTec.Application.Abstractions.Services;
 using NutriTec.Application.Productos;
-using NutriTec.Contracts.ObjetosSql;
+using NutriTec.Contracts.Administracion;
 using NutriTec.Contracts.Productos;
 
 namespace NutriTec.Application.Administracion;
@@ -59,16 +59,33 @@ public sealed class AdministracionService(
         return administracionRepository.AprobarProductoAsync(idProducto, cancellationToken);
     }
 
-    public Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> GenerarReporteCobroAsync(
+    public async Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> GenerarReporteCobroAsync(
         decimal montoBasePorPaciente,
         bool incluirSinPacientes,
         CancellationToken cancellationToken)
     {
-        return objetosSqlService.ObtenerReporteCobroNutricionistasAsync(montoBasePorPaciente, incluirSinPacientes, cancellationToken);
+        var reporte = await objetosSqlService.ObtenerReporteCobroNutricionistasAsync(
+            montoBasePorPaciente,
+            incluirSinPacientes,
+            cancellationToken);
+
+        return reporte
+            .Select(fila => new ReporteCobroNutricionistaResponse(
+                fila.CedulaNutricionista,
+                fila.NombreNutricionista,
+                fila.TipoCobro,
+                fila.CantidadPacientes,
+                fila.MontoBasePorPaciente,
+                fila.Subtotal,
+                fila.PorcentajeDescuento,
+                fila.MontoDescuento,
+                fila.TotalCobrar))
+            .ToArray();
     }
 
-    public Task<CalcularImcResponse> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken)
+    public async Task<decimal?> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken)
     {
-        return objetosSqlService.CalcularImcAsync(pesoKg, estaturaCm, cancellationToken);
+        var resultado = await objetosSqlService.CalcularImcAsync(pesoKg, estaturaCm, cancellationToken);
+        return resultado.Imc;
     }
 }

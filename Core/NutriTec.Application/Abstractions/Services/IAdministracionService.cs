@@ -1,4 +1,4 @@
-using NutriTec.Contracts.ObjetosSql;
+using NutriTec.Contracts.Administracion;
 using NutriTec.Contracts.Productos;
 
 namespace NutriTec.Application.Abstractions.Services;
@@ -44,5 +44,5 @@ public interface IAdministracionService
         bool incluirSinPacientes,
         CancellationToken cancellationToken);
 
-    Task<CalcularImcResponse> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken);
+    Task<decimal?> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken);
 }
