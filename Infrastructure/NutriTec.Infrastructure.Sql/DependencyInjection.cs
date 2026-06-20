@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<AdminBootstrapService>();
         services.AddScoped<IAuthRepository, AuthSqlRepository>();
         services.AddScoped<IProductoRepository, ProductoSqlRepository>();
+        services.AddScoped<IAdministracionRepository, ProductoSqlRepository>();
         services.AddScoped<IObjetosSqlRepository, ObjetosSqlRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();

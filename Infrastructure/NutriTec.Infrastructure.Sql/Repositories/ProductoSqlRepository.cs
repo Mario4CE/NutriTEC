@@ -20,7 +20,7 @@ namespace NutriTec.Infrastructure.Sql.Repositories;
  * Restricciones:
  * No contiene reglas de negocio; utiliza consultas sin seguimiento cuando no modificará entidades.
  */
-public sealed class ProductoSqlRepository(NutriTecDbContext context) : IProductoRepository
+public sealed class ProductoSqlRepository(NutriTecDbContext context) : IProductoRepository, IAdministracionRepository
 {
     /*
      * Descripción:
@@ -155,6 +155,11 @@ public sealed class ProductoSqlRepository(NutriTecDbContext context) : IProducto
             .ToListAsync(cancellationToken);
     }
 
+    public Task<IReadOnlyCollection<Producto>> ListarProductosPendientesAsync(CancellationToken cancellationToken)
+    {
+        return ListarPendientesAsync(cancellationToken);
+    }
+
     /*
      * Descripción:
      * Cambia atómicamente un producto pendiente al estado aprobado.
@@ -192,6 +197,11 @@ public sealed class ProductoSqlRepository(NutriTecDbContext context) : IProducto
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         return await reader.ReadAsync(cancellationToken);
+    }
+
+    public Task<bool> AprobarProductoAsync(Guid idProducto, CancellationToken cancellationToken)
+    {
+        return AprobarAsync(idProducto, cancellationToken);
     }
 
     /*
