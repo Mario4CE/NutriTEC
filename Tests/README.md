@@ -10,7 +10,7 @@ Proyectos de pruebas automatizadas de NutriTEC.
 
 ## Documentación de casos de prueba
 
-La explicación de cada prueba está en [`Tests/TEST_CASES.md`](TEST_CASES.md).
+La explicación de cada prueba está en [`Tests/TEST_CASES.md`](TEST_CASES.md). Para pruebas manuales desde navegador con Swagger UI, consulte [`Tests/SwaggerExamples.md`](SwaggerExamples.md).
 
 ## Ejecución
 
@@ -28,6 +28,23 @@ Comandos manuales equivalentes:
 dotnet test Tests/NutriTec.Application.Tests
 dotnet test Tests/NutriTec.Infrastructure.Sql.Tests
 dotnet test NutriTEC.sln
+```
+
+
+## Smoke check de bases de datos
+
+Para verificar rápido que SQL Server y MongoDB tienen la estructura esperada, ejecute:
+
+```powershell
+pwsh Tests/check-databases.ps1
+```
+
+El script valida conexión SQL, tablas base, funciones, vistas, stored procedures, triggers, conexión Mongo, colección `Retroalimentaciones` e índices principales. Requiere `sqlcmd` y `mongosh` disponibles en `PATH`.
+
+Si usa otra instancia o nombres distintos:
+
+```powershell
+pwsh Tests/check-databases.ps1 -SqlServer ".\SQLEXPRESS" -SqlDatabase "NutriTec" -MongoConnectionString "mongodb://localhost:27017" -MongoDatabase "nutritec_feedback"
 ```
 
 ## Reglas

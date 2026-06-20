@@ -48,7 +48,7 @@ Cada API registra únicamente su adaptador de persistencia:
 
 - `NutriTec.SqlApi` registra `AddNutriTecSqlInfrastructure()`.
 - `NutriTec.MongoApi` registra `AddNutriTecMongoInfrastructure()`.
-- Ambas APIs reutilizan `AddNutriTecApplication()`.
+- `NutriTec.SqlApi` registra `AddNutriTecSqlApplication()` y `NutriTec.MongoApi` registra `AddNutriTecMongoApplication()` para cargar solo los servicios que tienen repositorios disponibles en cada API.
 
 
 ## Documentación interna por carpeta
