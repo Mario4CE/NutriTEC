@@ -5,6 +5,11 @@ using NutriTec.Infrastructure.Sql.Persistence;
 
 namespace NutriTec.Infrastructure.Sql.Repositories;
 
+/*
+ * Repositorio SQL dedicado a operaciones administrativas.
+ * Mantiene ListarProductosPendientesAsync y AprobarProductoAsync fuera de ProductoSqlRepository
+ * para que no existan miembros duplicados en el repositorio de productos.
+ */
 public sealed class AdministracionSqlRepository(NutriTecDbContext context) : IAdministracionRepository
 {
     public async Task<IReadOnlyCollection<Producto>> ListarProductosPendientesAsync(CancellationToken cancellationToken)

@@ -19,6 +19,7 @@ namespace NutriTec.Infrastructure.Sql.Repositories;
  *
  * Restricciones:
  * No contiene reglas de negocio; utiliza consultas sin seguimiento cuando no modificará entidades.
+ * Las operaciones administrativas se implementan en AdministracionSqlRepository para evitar duplicar métodos de aprobación.
  */
 public sealed class ProductoSqlRepository(NutriTecDbContext context) : IProductoRepository, IAdministracionRepository
 {
