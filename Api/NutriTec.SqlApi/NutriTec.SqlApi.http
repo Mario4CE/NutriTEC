@@ -1,0 +1,62 @@
+@NutriTec.SqlApi_HostAddress = http://localhost:5255
+@ProductoId = 11111111-1111-1111-1111-111111111111
+@CodigoBarras = 7441000000012
+
+POST {{NutriTec.SqlApi_HostAddress}}/api/productos
+Content-Type: application/json
+
+{
+  "nombre": "Yogur natural",
+  "codigoBarras": "{{CodigoBarras}}",
+  "calorias": 62.00,
+  "proteinas": 3.50,
+  "carbohidratos": 4.70,
+  "grasas": 3.30
+}
+
+###
+
+GET {{NutriTec.SqlApi_HostAddress}}/api/productos
+Accept: application/json
+
+###
+
+GET {{NutriTec.SqlApi_HostAddress}}/api/productos/{{ProductoId}}
+Accept: application/json
+
+###
+
+GET {{NutriTec.SqlApi_HostAddress}}/api/productos/buscar?nombre=yogur
+Accept: application/json
+
+###
+
+GET {{NutriTec.SqlApi_HostAddress}}/api/productos/codigo-barras/{{CodigoBarras}}
+Accept: application/json
+
+###
+
+PUT {{NutriTec.SqlApi_HostAddress}}/api/productos/{{ProductoId}}
+Content-Type: application/json
+
+{
+  "nombre": "Yogur natural sin azúcar",
+  "codigoBarras": "{{CodigoBarras}}",
+  "calorias": 58.00,
+  "proteinas": 3.50,
+  "carbohidratos": 3.80,
+  "grasas": 3.30
+}
+
+###
+
+DELETE {{NutriTec.SqlApi_HostAddress}}/api/productos/{{ProductoId}}
+
+###
+
+GET {{NutriTec.SqlApi_HostAddress}}/api/administracion/productos/pendientes
+Accept: application/json
+
+###
+
+PUT {{NutriTec.SqlApi_HostAddress}}/api/administracion/productos/{{ProductoId}}/aprobacion
