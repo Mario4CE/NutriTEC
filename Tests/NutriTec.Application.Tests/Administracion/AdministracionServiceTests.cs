@@ -73,30 +73,4 @@ public sealed class AdministracionServiceTests
             return Task.FromResult(ResultadoAprobacion);
         }
     }
-
-    private sealed class FakeAdministracionRepository : IAdministracionRepository
-    {
-        public decimal UltimoMontoBasePorPaciente { get; private set; }
-        public bool UltimoIncluirSinPacientes { get; private set; }
-        public decimal UltimoPesoKg { get; private set; }
-        public decimal UltimaEstaturaCm { get; private set; }
-        public decimal? ResultadoImc { get; init; }
-
-        public Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> GenerarReporteCobroAsync(
-            decimal montoBasePorPaciente,
-            bool incluirSinPacientes,
-            CancellationToken cancellationToken)
-        {
-            UltimoMontoBasePorPaciente = montoBasePorPaciente;
-            UltimoIncluirSinPacientes = incluirSinPacientes;
-            return Task.FromResult<IReadOnlyCollection<ReporteCobroNutricionistaResponse>>(Array.Empty<ReporteCobroNutricionistaResponse>());
-        }
-
-        public Task<decimal?> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken)
-        {
-            UltimoPesoKg = pesoKg;
-            UltimaEstaturaCm = estaturaCm;
-            return Task.FromResult(ResultadoImc);
-        }
-    }
 }

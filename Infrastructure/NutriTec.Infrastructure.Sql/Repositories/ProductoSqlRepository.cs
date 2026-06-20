@@ -204,6 +204,11 @@ public sealed class ProductoSqlRepository(NutriTecDbContext context) : IProducto
         return AprobarAsync(idProducto, cancellationToken);
     }
 
+    public Task<bool> AprobarProductoAsync(Guid idProducto, CancellationToken cancellationToken)
+    {
+        return AprobarAsync(idProducto, cancellationToken);
+    }
+
     /*
      * Descripción:
      * Elimina un producto por identificador.

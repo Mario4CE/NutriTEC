@@ -21,7 +21,7 @@ namespace NutriTec.Application.Administracion;
  * No permite desaprobar productos ni mezcla operaciones administrativas con controllers de CRUD.
  */
 
-public sealed class AdministracionService(IAdministracionRepository repository) : IAdministracionService
+public sealed class AdministracionService(IAdministracionRepository administracionRepository) : IAdministracionService
 {
 
     /*
@@ -34,7 +34,7 @@ public sealed class AdministracionService(IAdministracionRepository repository) 
     public async Task<IReadOnlyCollection<ProductoResponse>> ListarProductosPendientesAsync(
         CancellationToken cancellationToken)
     {
-        var productos = await repository.ListarProductosPendientesAsync(cancellationToken);
+        var productos = await administracionRepository.ListarProductosPendientesAsync(cancellationToken);
         return productos.Select(ProductoMapper.Mapear).ToArray();
     }
 
@@ -54,34 +54,6 @@ public sealed class AdministracionService(IAdministracionRepository repository) 
             throw new ArgumentException("El identificador no puede estar vacío.", nameof(idProducto));
         }
 
-        return repository.AprobarProductoAsync(idProducto, cancellationToken);
-    }
-
-    public Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> GenerarReporteCobroAsync(
-        decimal montoBasePorPaciente,
-        bool incluirSinPacientes,
-        CancellationToken cancellationToken)
-    {
-        if (montoBasePorPaciente <= 0)
-        {
-            throw new ArgumentException("El monto base por paciente debe ser mayor que cero.", nameof(montoBasePorPaciente));
-        }
-
-        return administracionRepository.GenerarReporteCobroAsync(montoBasePorPaciente, incluirSinPacientes, cancellationToken);
-    }
-
-    public Task<decimal?> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken)
-    {
-        if (pesoKg <= 0)
-        {
-            throw new ArgumentException("El peso debe ser mayor que cero.", nameof(pesoKg));
-        }
-
-        if (estaturaCm <= 0)
-        {
-            throw new ArgumentException("La estatura debe ser mayor que cero.", nameof(estaturaCm));
-        }
-
-        return administracionRepository.CalcularImcAsync(pesoKg, estaturaCm, cancellationToken);
+        return administracionRepository.AprobarProductoAsync(idProducto, cancellationToken);
     }
 }
