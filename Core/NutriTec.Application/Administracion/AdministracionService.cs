@@ -1,6 +1,7 @@
 using NutriTec.Application.Abstractions.Persistence;
 using NutriTec.Application.Abstractions.Services;
 using NutriTec.Application.Productos;
+using NutriTec.Contracts.Administracion;
 using NutriTec.Contracts.Productos;
 
 namespace NutriTec.Application.Administracion;
@@ -20,7 +21,7 @@ namespace NutriTec.Application.Administracion;
  * No permite desaprobar productos ni mezcla operaciones administrativas con controllers de CRUD.
  */
 
-public sealed class AdministracionService(IProductoRepository repository) : IAdministracionService
+public sealed class AdministracionService(IProductoRepository repository, IAdministracionRepository administracionRepository) : IAdministracionService
 {
 
     /*
@@ -54,5 +55,33 @@ public sealed class AdministracionService(IProductoRepository repository) : IAdm
         }
 
         return repository.AprobarAsync(idProducto, cancellationToken);
+    }
+
+    public Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> GenerarReporteCobroAsync(
+        decimal montoBasePorPaciente,
+        bool incluirSinPacientes,
+        CancellationToken cancellationToken)
+    {
+        if (montoBasePorPaciente <= 0)
+        {
+            throw new ArgumentException("El monto base por paciente debe ser mayor que cero.", nameof(montoBasePorPaciente));
+        }
+
+        return administracionRepository.GenerarReporteCobroAsync(montoBasePorPaciente, incluirSinPacientes, cancellationToken);
+    }
+
+    public Task<decimal?> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken)
+    {
+        if (pesoKg <= 0)
+        {
+            throw new ArgumentException("El peso debe ser mayor que cero.", nameof(pesoKg));
+        }
+
+        if (estaturaCm <= 0)
+        {
+            throw new ArgumentException("La estatura debe ser mayor que cero.", nameof(estaturaCm));
+        }
+
+        return administracionRepository.CalcularImcAsync(pesoKg, estaturaCm, cancellationToken);
     }
 }

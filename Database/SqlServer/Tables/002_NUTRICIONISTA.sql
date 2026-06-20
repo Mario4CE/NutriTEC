@@ -11,6 +11,7 @@
     Restricciones:
         - Ejecutar en una base de datos SQL Server seleccionada previamente.
         - No almacenar contraseñas en texto plano; password_hash debe contener un hash seguro.
+        - tarjeta_credito almacena únicamente un valor enmascarado/simulado; no guardar tarjeta completa ni CVV.
         - tipo_cobro debe existir previamente en el catálogo TIPO_COBRO.
         - Ejecutar después de TIPO_COBRO y antes de tablas que referencian nutricionistas.
 */
@@ -25,7 +26,7 @@ CREATE TABLE NUTRICIONISTA (
     imc                     DECIMAL(5,2)    NOT NULL,
     direccion               VARCHAR(255)    NOT NULL,
     foto_url                VARCHAR(500),
-    tarjeta_credito         VARCHAR(20)     NOT NULL,
+    tarjeta_credito         VARCHAR(20)     NOT NULL, -- Valor enmascarado/simulado, por ejemplo ****-****-****-1111
     tipo_cobro              VARCHAR(10)     NOT NULL,
     email                   VARCHAR(100)    NOT NULL UNIQUE,
     password_hash           VARCHAR(255)    NOT NULL,

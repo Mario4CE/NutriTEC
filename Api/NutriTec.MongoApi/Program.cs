@@ -1,8 +1,24 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using NutriTec.Application;
 using NutriTec.Infrastructure.Mongo;
 using NutriTec.MongoApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
+var jwtSecret = builder.Configuration["Jwt:Secret"];
+
+if (builder.Environment.IsProduction() && string.IsNullOrWhiteSpace(jwtSecret))
+{
+    throw new InvalidOperationException("Jwt:Secret es obligatorio en producción.");
+}
+
+var jwtSigningKey = string.IsNullOrWhiteSpace(jwtSecret)
+    ? "ConfigurationPlaceholderJwtSecretDoNotUseInProduction12345"
+    : jwtSecret;
 
 /*
  * En esta API se ha optado por una arquitectura hexagonal, donde la lógica de negocio y la infraestructura están desacopladas.
@@ -16,6 +32,22 @@ builder.Services.AddNutriTecApplication();
 builder.Services.AddNutriTecMongoInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtIssuer,
+            ValidateAudience = true,
+            ValidAudience = jwtAudience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSigningKey)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(2)
+        };
+    });
 builder.Services.AddAuthorization();
 builder.Services.AddExceptionHandler<ArgumentExceptionHandler>();
 builder.Services.AddProblemDetails();
@@ -30,6 +62,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

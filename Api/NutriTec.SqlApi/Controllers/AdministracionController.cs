@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NutriTec.Application.Abstractions.Services;
+using NutriTec.Contracts.Administracion;
 using NutriTec.Contracts.Productos;
 using NutriTec.Contracts.Responses;
 
@@ -23,6 +25,7 @@ namespace NutriTec.SqlApi.Controllers;
 
 [ApiController]
 [Route("api/administracion")]
+[Authorize(Policy = "Administrador")]
 public sealed class AdministracionController(IAdministracionService service) : ControllerBase
 {
 
@@ -42,6 +45,26 @@ public sealed class AdministracionController(IAdministracionService service) : C
         return Ok(ApiResponse<IReadOnlyCollection<ProductoResponse>>.SuccessResponse(productos));
     }
 
+
+    [HttpGet("reporte-cobro")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyCollection<ReporteCobroNutricionistaResponse>>>> GenerarReporteCobroAsync(
+        [FromQuery] decimal montoBasePorPaciente,
+        [FromQuery] bool incluirSinPacientes = true,
+        CancellationToken cancellationToken = default)
+    {
+        var reporte = await service.GenerarReporteCobroAsync(montoBasePorPaciente, incluirSinPacientes, cancellationToken);
+        return Ok(ApiResponse<IReadOnlyCollection<ReporteCobroNutricionistaResponse>>.SuccessResponse(reporte));
+    }
+
+    [HttpGet("imc")]
+    public async Task<ActionResult<ApiResponse<CalculoImcResponse>>> CalcularImcAsync(
+        [FromQuery] decimal pesoKg,
+        [FromQuery] decimal estaturaCm,
+        CancellationToken cancellationToken)
+    {
+        var imc = await service.CalcularImcAsync(pesoKg, estaturaCm, cancellationToken);
+        return Ok(ApiResponse<CalculoImcResponse>.SuccessResponse(new CalculoImcResponse(pesoKg, estaturaCm, imc)));
+    }
 
 
     /*

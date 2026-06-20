@@ -32,10 +32,15 @@ internal static class ProductoMapper
             producto.Id,
             producto.Nombre,
             producto.CodigoBarras,
+            producto.PorcionGramosMililitros,
             producto.Calorias,
             producto.Proteinas,
             producto.Carbohidratos,
             producto.Grasas,
+            producto.SodioMiligramos,
+            producto.Vitaminas,
+            producto.CalcioMiligramos,
+            producto.HierroMiligramos,
             producto.EstaAprobado,
             producto.FechaCreacionUtc);
     }
