@@ -1,6 +1,7 @@
 using NutriTec.Application.Abstractions.Persistence;
 using NutriTec.Application.Abstractions.Services;
 using NutriTec.Application.Productos;
+using NutriTec.Contracts.Administracion;
 using NutriTec.Contracts.Productos;
 
 namespace NutriTec.Application.Administracion;
@@ -20,7 +21,9 @@ namespace NutriTec.Application.Administracion;
  * No permite desaprobar productos ni mezcla operaciones administrativas con controllers de CRUD.
  */
 
-public sealed class AdministracionService(IProductoRepository repository) : IAdministracionService
+public sealed class AdministracionService(
+    IAdministracionRepository administracionRepository,
+    IObjetosSqlService objetosSqlService) : IAdministracionService
 {
 
     /*
@@ -33,7 +36,7 @@ public sealed class AdministracionService(IProductoRepository repository) : IAdm
     public async Task<IReadOnlyCollection<ProductoResponse>> ListarProductosPendientesAsync(
         CancellationToken cancellationToken)
     {
-        var productos = await repository.ListarPendientesAsync(cancellationToken);
+        var productos = await administracionRepository.ListarProductosPendientesAsync(cancellationToken);
         return productos.Select(ProductoMapper.Mapear).ToArray();
     }
 
@@ -53,6 +56,36 @@ public sealed class AdministracionService(IProductoRepository repository) : IAdm
             throw new ArgumentException("El identificador no puede estar vacío.", nameof(idProducto));
         }
 
-        return repository.AprobarAsync(idProducto, cancellationToken);
+        return administracionRepository.AprobarProductoAsync(idProducto, cancellationToken);
+    }
+
+    public async Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> GenerarReporteCobroAsync(
+        decimal montoBasePorPaciente,
+        bool incluirSinPacientes,
+        CancellationToken cancellationToken)
+    {
+        var reporte = await objetosSqlService.ObtenerReporteCobroNutricionistasAsync(
+            montoBasePorPaciente,
+            incluirSinPacientes,
+            cancellationToken);
+
+        return reporte
+            .Select(fila => new ReporteCobroNutricionistaResponse(
+                fila.CedulaNutricionista,
+                fila.NombreNutricionista,
+                fila.TipoCobro,
+                fila.CantidadPacientes,
+                fila.MontoBasePorPaciente,
+                fila.Subtotal,
+                fila.PorcentajeDescuento,
+                fila.MontoDescuento,
+                fila.TotalCobrar))
+            .ToArray();
+    }
+
+    public async Task<decimal?> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken)
+    {
+        var resultado = await objetosSqlService.CalcularImcAsync(pesoKg, estaturaCm, cancellationToken);
+        return resultado.Imc;
     }
 }

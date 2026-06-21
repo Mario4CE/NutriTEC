@@ -29,6 +29,8 @@ Archivo: `Tests/NutriTec.Application.Tests/Administracion/AdministracionServiceT
 - `ListarProductosPendientesAsync_MapeaProductosPendientes`: comprueba que los productos pendientes del repositorio se transforman a DTOs públicos.
 - `AprobarProductoAsync_CuandoIdentificadorEsValido_DelegaAlRepositorio`: valida que la aprobación administrativa delega en el repositorio con el identificador correcto.
 - `AprobarProductoAsync_CuandoIdentificadorEstaVacio_LanzaArgumentException`: valida que no se acepten identificadores vacíos para aprobación.
+- `GenerarReporteCobroAsync_CuandoMontoEsValido_DelegaAlRepositorio`: valida que el caso de uso administrativo invoque el repositorio que ejecuta el procedimiento `sp_ReporteCobroNutricionistas`.
+- `CalcularImcAsync_CuandoDatosSonValidos_DelegaAlRepositorio`: valida que el caso de uso administrativo invoque el repositorio que consulta la función `fn_CalcularImc`.
 
 ## Application — Retroalimentaciones
 
