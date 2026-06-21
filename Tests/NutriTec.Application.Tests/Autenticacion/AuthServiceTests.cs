@@ -24,7 +24,7 @@ public sealed class AuthServiceTests
             "Cliente");
         var service = new AuthService(repository, passwordHasher, tokenService);
 
-        var response = await service.LoginAsync(new LoginRequest(" cliente@example.com ", "Password123!"), CancellationToken.None);
+        var response = await service.LoginAsync(new LoginRequest { Correo = " cliente@example.com ", Contrasena = "Password123!" }, CancellationToken.None);
 
         Assert.NotNull(response);
         Assert.Equal("1", response.IdUsuario);
@@ -40,7 +40,7 @@ public sealed class AuthServiceTests
     {
         var service = CrearServicio();
 
-        var response = await service.LoginAsync(new LoginRequest("nadie@example.com", "Password123!"), CancellationToken.None);
+        var response = await service.LoginAsync(new LoginRequest { Correo = "nadie@example.com", Contrasena = "Password123!" }, CancellationToken.None);
 
         Assert.Null(response);
     }
@@ -58,7 +58,7 @@ public sealed class AuthServiceTests
             "Cliente");
         var service = new AuthService(repository, passwordHasher, new FakeTokenService());
 
-        var response = await service.LoginAsync(new LoginRequest("cliente@example.com", "OtraPassword123!"), CancellationToken.None);
+        var response = await service.LoginAsync(new LoginRequest { Correo = "cliente@example.com", Contrasena = "OtraPassword123!" }, CancellationToken.None);
 
         Assert.Null(response);
     }
