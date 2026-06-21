@@ -180,7 +180,7 @@ class Views {
         const medidasRecientes = Data.getAllMedidas(user.email).slice(0, 1);
         const consumoHoy = Data.getConsumoHoy(user.email);
         const nutrientesHoy = Data.getNutrientesDia(user.email);
-        const metaDiaria = user.caloriasDiarias || 2000;
+        const metaDiaria = user.caloriasDiariasMax ?? 2000;
         const porcentajeCaloria = Math.min((nutrientesHoy.calorias / metaDiaria) * 100, 100);
 
         return `
@@ -308,7 +308,7 @@ class Views {
     static getRegistroConsumoView(user) {
         const consumoHoy = Data.getConsumoHoy(user.email);
         const nutrientes = Data.getNutrientesDia(user.email);
-        const metaDiaria = user.caloriasDiarias || 2000;
+        const metaDiaria = user.caloriasDiariasMax ?? 2000;
         const porcentajeCaloria = Math.min((nutrientes.calorias / metaDiaria) * 100, 100);
 
         return `
@@ -565,7 +565,7 @@ class Views {
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <h6 class="text-muted small">Email</h6>
-                                        <p>${user.email}</p>
+                                        <p>${user.correo ?? user.email}</p>
                                     </div>
                                     <div class="col-md-6">
                                         <h6 class="text-muted small">Edad</h6>
@@ -587,7 +587,7 @@ class Views {
                                 <div class="row mb-3">
                                     <div class="col-md-6">
                                         <h6 class="text-muted small">Meta Diaria de Calorías</h6>
-                                        <p>${user.caloriasDiarias} kcal</p>
+                                        <p>${user.caloriasDiariasMax ?? 2000} kcal</p>
                                     </div>
                                     <div class="col-md-6">
                                         <h6 class="text-muted small">País</h6>
@@ -642,7 +642,7 @@ class Views {
      * Vista de Recetas
      */
     static getRecetasView(user) {
-        const recetas = Data.getRecetas(user.email);
+        const recetas = Data.getRecetas(user.correo ?? user.email);
 
         return `
             <div class="container mt-4">

@@ -1,159 +1,109 @@
 /**
- * auth.js - Gestión de autenticación
- * Funciones para login, register y logout
+ * auth.js — Autenticación de la Vista Cliente
+ *
+ * Reemplaza la versión anterior que usaba localStorage con contraseñas
+ * en texto plano. Ahora llama a la SQL API real.
+ *
+ * La sesión se guarda en sessionStorage (se borra al cerrar el navegador).
+ *
+ * Campos que devuelve LoginResponse (camelCase desde ASP.NET):
+ *   idUsuario, nombre, correo, tipoUsuario, token, expiraEn
  */
 
 class Auth {
-    /**
-     * Login de usuario
-     * @param {string} email - Email del usuario
-     * @param {string} password - Contraseña
-     * @returns {boolean} - True si el login fue exitoso
-     */
-    static login(email, password) {
-        const users = this.getAllUsers();
-        
-        // Buscar usuario por email
-        const user = users.find(u => u.email === email);
+  /**
+   * Login del usuario contra la API real.
+   * @param {string} email
+   * @param {string} password
+   * @returns {Promise<boolean>}
+   */
+  static async login(email, password) {
+    try {
+      const res = await apiFetch(ENDPOINTS.auth.login(), {
+        method: "POST",
+        body: JSON.stringify({ Correo: email, Contrasena: password }),
+      });
 
-        if (!user) {
-            console.log('Usuario no encontrado');
-            return false;
-        }
+      // La API devuelve directamente un LoginResponse
+      const session = res?.data ?? res;
 
-        // Validar contraseña (en producción usar hashing)
-        if (user.password !== password) {
-            console.log('Contraseña inválida');
-            return false;
-        }
+      if (!session?.token) {
+        console.error("Login: respuesta inesperada", res);
+        return false;
+      }
 
-        // Guardar usuario actual (sin contraseña)
-        const loggedInUser = { ...user };
-        delete loggedInUser.password;
-        
-        localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
-        localStorage.setItem('authToken', this.generateToken());
+      // Guardamos la sesión completa (incluye token y datos del usuario)
+      setSession(session);
 
-        // Disparar evento
-        document.dispatchEvent(new CustomEvent('user-login', { 
-            detail: loggedInUser 
-        }));
-
-        console.log('Login exitoso para:', email);
-        return true;
+      document.dispatchEvent(new CustomEvent("user-login", { detail: session }));
+      return true;
+    } catch (err) {
+      console.error("Login error:", err.message);
+      return false;
     }
+  }
 
-    /**
-     * Registro de nuevo usuario
-     * @param {object} userData - Datos del usuario
-     * @returns {boolean} - True si el registro fue exitoso
-     */
-    static register(userData) {
-        const users = this.getAllUsers();
+  /**
+   * Registro de nuevo cliente.
+   * Campos requeridos por RegistrarClienteRequest:
+   *   Nombre, Apellidos, Edad, FechaNacimiento, Peso, Imc, Pais,
+   *   Cintura, Cuello, Caderas, PctMusculo, PctGrasa,
+   *   CaloriasDiariasMax (int), Correo, Contrasena
+   * @param {object} userData
+   * @returns {Promise<boolean>}
+   */
+  static async register(userData) {
+    try {
+      const body = {
+        Nombre:             userData.nombre,
+        Apellidos:          userData.apellidos,
+        Edad:               parseInt(userData.edad),
+        FechaNacimiento:    userData.fechaNacimiento,  // "YYYY-MM-DD"
+        Peso:               parseFloat(userData.peso),
+        Imc:                parseFloat(userData.imc),
+        Pais:               userData.pais,
+        Cintura:            parseFloat(userData.cintura)          || null,
+        Cuello:             parseFloat(userData.cuello)           || null,
+        Caderas:            parseFloat(userData.caderas)          || null,
+        PctMusculo:         parseFloat(userData.porcentajeMusculo) || null,
+        PctGrasa:           parseFloat(userData.porcentajeGrasa)  || null,
+        CaloriasDiariasMax: parseInt(userData.caloriasDiarias),
+        Correo:             userData.email,
+        Contrasena:         userData.password,
+      };
 
-        // Verificar si el email ya existe
-        if (users.some(u => u.email === userData.email)) {
-            console.log('Email ya registrado');
-            return false;
-        }
+      await apiFetch(ENDPOINTS.auth.registrarCliente(), {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
 
-        // Crear nuevo usuario
-        const newUser = {
-            id: Date.now().toString(),
-            nombre: userData.nombre,
-            apellidos: userData.apellidos,
-            email: userData.email,
-            password: userData.password, // En producción encriptar
-            edad: userData.edad,
-            fechaNacimiento: userData.fechaNacimiento,
-            peso: userData.peso,
-            imc: userData.imc,
-            pais: userData.pais,
-            cintura: userData.cintura,
-            cuello: userData.cuello,
-            caderas: userData.caderas,
-            porcentajeMusculo: userData.porcentajeMusculo,
-            porcentajeGrasa: userData.porcentajeGrasa,
-            caloriasDiarias: userData.caloriasDiarias,
-            foto: null,
-            fechaRegistro: new Date().toISOString(),
-            medidas: [],
-            consumos: [],
-            recetas: [],
-            nutricionista: null
-        };
-
-        // Guardar usuario
-        users.push(newUser);
-        localStorage.setItem('users', JSON.stringify(users));
-
-        console.log('Nuevo usuario registrado:', userData.email);
-        return true;
+      return true;
+    } catch (err) {
+      console.error("Register error:", err.message);
+      return false;
     }
+  }
 
-    /**
-     * Logout del usuario
-     */
-    static logout() {
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('authToken');
-        
-        document.dispatchEvent(new Event('user-logout'));
-        
-        console.log('Logout exitoso');
-    }
+  /**
+   * Logout — limpia la sesión.
+   */
+  static logout() {
+    clearSession();
+    document.dispatchEvent(new Event("user-logout"));
+  }
 
-    /**
-     * Obtener todos los usuarios registrados
-     * @returns {array} - Array de usuarios
-     */
-    static getAllUsers() {
-        const users = localStorage.getItem('users');
-        return users ? JSON.parse(users) : [];
-    }
+  /**
+   * Devuelve el usuario actual desde sessionStorage.
+   * Equivalente al currentUser del app.js original.
+   */
+  static getCurrentUser() {
+    return getSession();
+  }
 
-    /**
-     * Obtener usuario actual
-     * @returns {object} - Usuario actual o null
-     */
-    static getCurrentUser() {
-        const user = localStorage.getItem('currentUser');
-        return user ? JSON.parse(user) : null;
-    }
-
-    /**
-     * Generar token de autenticación (mock)
-     * @returns {string} - Token
-     */
-    static generateToken() {
-        return 'token_' + Math.random().toString(36).substr(2, 9);
-    }
-
-    /**
-     * Verificar si el usuario está autenticado
-     * @returns {boolean}
-     */
-    static isAuthenticated() {
-        return !!localStorage.getItem('authToken');
-    }
-
-    /**
-     * Actualizar contraseña
-     * @param {string} email - Email del usuario
-     * @param {string} oldPassword - Contraseña anterior
-     * @param {string} newPassword - Nueva contraseña
-     * @returns {boolean}
-     */
-    static changePassword(email, oldPassword, newPassword) {
-        const users = this.getAllUsers();
-        const userIndex = users.findIndex(u => u.email === email);
-
-        if (userIndex === -1 || users[userIndex].password !== oldPassword) {
-            return false;
-        }
-
-        users[userIndex].password = newPassword;
-        localStorage.setItem('users', JSON.stringify(users));
-        return true;
-    }
+  /**
+   * Verifica si hay sesión activa.
+   */
+  static isAuthenticated() {
+    return !!getSession()?.token;
+  }
 }

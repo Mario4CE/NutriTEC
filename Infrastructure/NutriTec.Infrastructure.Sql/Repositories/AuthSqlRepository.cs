@@ -158,21 +158,39 @@ public sealed class AuthSqlRepository(NutriTecDbContext dbContext) : IAuthReposi
         usuario.Nombre,
         usuario.Email,
         usuario.PasswordHash,
-        TipoCliente);
+        TipoCliente,
+        usuario.Peso,
+        usuario.Imc,
+        (int?)usuario.CaloriasDiariasMax,
+        usuario.Apellidos,
+        usuario.Edad,
+        usuario.Pais);
 
     private static CredencialAutenticacion MapearNutricionista(NutricionistaSql nutricionista) => new(
         nutricionista.Cedula,
         nutricionista.Nombre,
         nutricionista.Email,
         nutricionista.PasswordHash,
-        TipoNutricionista);
+        TipoNutricionista,
+        nutricionista.Peso,
+        nutricionista.Imc,
+        null,
+        nutricionista.Apellidos,
+        nutricionista.Edad,
+        null);
 
     private static CredencialAutenticacion MapearAdministrador(AdministradorSql administrador) => new(
         administrador.IdAdmin.ToString(),
         "Administrador",
         administrador.Email,
         administrador.PasswordHash,
-        TipoAdministrador);
+        TipoAdministrador,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null);
 
     private static string NormalizarCorreo(string correo) => correo.Trim();
 
