@@ -23,17 +23,17 @@ public interface IUsuarioConsultaRepository
      * Descripción: Busca clientes cuyo nombre, apellidos o correo contienen el criterio indicado.
      * Entradas: Criterio de búsqueda y cancelación.
      * Salidas: Colección de clientes coincidentes.
-     * Restricciones: Solo devuelve usuarios con TipoUsuario "Cliente".
+     * Restricciones: Solo devuelve usuarios de la tabla USUARIO.
      */
 
     Task<IReadOnlyCollection<ClienteResumen>> BuscarClientesAsync(string criterio, CancellationToken cancellationToken);
 
     /*
-     * Descripción: Verifica que un identificador corresponda a un usuario de tipo Cliente.
-     * Entradas: Identificador de usuario y cancelación.
-     * Salidas: Verdadero si el usuario existe y es Cliente.
+     * Descripción: Verifica que un identificador corresponda a un usuario existente.
+     * Entradas: Identificador del usuario y cancelación.
+     * Salidas: Verdadero si el usuario existe.
      * Restricciones: No modifica datos.
      */
 
-    Task<bool> EsClienteAsync(Guid idUsuario, CancellationToken cancellationToken);
+    Task<bool> EsClienteAsync(int idUsuario, CancellationToken cancellationToken);
 }

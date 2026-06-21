@@ -12,8 +12,6 @@ public sealed class NutricionistaSqlConfiguration : IEntityTypeConfiguration<Nut
         builder.HasKey(nutricionista => nutricionista.Cedula);
 
         builder.Property(nutricionista => nutricionista.Cedula).HasColumnName("cedula").HasMaxLength(20).IsUnicode(false).IsRequired();
-        builder.Property(nutricionista => nutricionista.IdNutricionista).HasColumnName("id_nutricionista").IsRequired();
-        builder.HasIndex(nutricionista => nutricionista.IdNutricionista).IsUnique();
         builder.Property(nutricionista => nutricionista.Nombre).HasColumnName("nombre").HasMaxLength(100).IsUnicode(false).IsRequired();
         builder.Property(nutricionista => nutricionista.Apellidos).HasColumnName("apellidos").HasMaxLength(100).IsUnicode(false).IsRequired();
         builder.Property(nutricionista => nutricionista.CodigoNutricionista).HasColumnName("codigo_nutricionista").HasMaxLength(50).IsUnicode(false).IsRequired();
@@ -28,10 +26,8 @@ public sealed class NutricionistaSqlConfiguration : IEntityTypeConfiguration<Nut
         builder.Property(nutricionista => nutricionista.Email).HasColumnName("email").HasMaxLength(100).IsUnicode(false).IsRequired();
         builder.Property(nutricionista => nutricionista.PasswordHash).HasColumnName("password_hash").HasMaxLength(255).IsUnicode(false).IsRequired();
 
-        builder.HasIndex(nutricionista => nutricionista.CodigoNutricionista)
-            .IsUnique();
-        builder.HasIndex(nutricionista => nutricionista.Email)
-            .IsUnique();
+        builder.HasIndex(nutricionista => nutricionista.CodigoNutricionista).IsUnique();
+        builder.HasIndex(nutricionista => nutricionista.Email).IsUnique();
 
         builder.HasOne<TipoCobroSql>()
             .WithMany()

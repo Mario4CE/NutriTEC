@@ -7,20 +7,6 @@ using NutriTec.Infrastructure.Sql.Persistence.Entities;
 
 namespace NutriTec.Infrastructure.Sql.Repositories;
 
-/*
-Descripción:
-Repositorio SQL de autenticación que adapta las tablas USUARIO, NUTRICIONISTA y ADMINISTRADOR
-al contrato de persistencia definido en Application, sin exponer entidades de infraestructura.
-
-Entradas:
-Recibe correos normalizados o usuarios nuevos con contraseña previamente hasheada por Application.
-
-Salidas:
-Devuelve CredencialAutenticacion para que Application pueda construir DTOs públicos sin password_hash.
-
-Restricciones:
-No genera hashes, no usa SQL crudo, no registra administradores, no implementa JWT ni lógica de controllers y no expone detalles SQL al cliente.
-*/
 public sealed class AuthSqlRepository(NutriTecDbContext dbContext) : IAuthRepository
 {
     private const string TipoCliente = "Cliente";
@@ -141,14 +127,14 @@ public sealed class AuthSqlRepository(NutriTecDbContext dbContext) : IAuthReposi
     }
 
     private static CredencialAutenticacion MapearUsuario(UsuarioSql usuario) => new(
-        usuario.IdCliente.ToString(),
+        usuario.IdUsuario.ToString(),
         usuario.Nombre,
         usuario.Email,
         usuario.PasswordHash,
         TipoCliente);
 
     private static CredencialAutenticacion MapearNutricionista(NutricionistaSql nutricionista) => new(
-        nutricionista.IdNutricionista.ToString(),
+        nutricionista.Cedula,
         nutricionista.Nombre,
         nutricionista.Email,
         nutricionista.PasswordHash,

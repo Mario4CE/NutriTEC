@@ -12,8 +12,9 @@ public sealed class NutriTecDbContext(DbContextOptions<NutriTecDbContext> option
     public DbSet<UsuarioSql> Usuarios => Set<UsuarioSql>();
     public DbSet<NutricionistaSql> Nutricionistas => Set<NutricionistaSql>();
     public DbSet<PacienteNutricionistaSql> PacientesNutricionista => Set<PacienteNutricionistaSql>();
-    public DbSet<PlanSql> Planes => Set<PlanSql>();
-    public DbSet<ItemPlanSql> ItemsPlan => Set<ItemPlanSql>();
+    public DbSet<PlanAlimentacionSql> PlanesAlimentacion => Set<PlanAlimentacionSql>();
+    public DbSet<TiempoComidaPlanSql> TiemposComidaPlan => Set<TiempoComidaPlanSql>();
+    public DbSet<PlanProductoSql> PlanesProducto => Set<PlanProductoSql>();
     public DbSet<AsignacionPlanSql> AsignacionesPlan => Set<AsignacionPlanSql>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

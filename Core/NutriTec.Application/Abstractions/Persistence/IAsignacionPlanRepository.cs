@@ -35,7 +35,7 @@ public interface IAsignacionPlanRepository
      * Restricciones: No modifica datos.
      */
 
-    Task<AsignacionPlan?> ObtenerVigentePorPacienteAsync(Guid idPaciente, CancellationToken cancellationToken);
+    Task<AsignacionPlan?> ObtenerVigentePorPacienteAsync(int idPaciente, CancellationToken cancellationToken);
 
     /*
      * Descripción: Lista el historial de asignaciones de un paciente.
@@ -44,5 +44,5 @@ public interface IAsignacionPlanRepository
      * Restricciones: No modifica datos.
      */
 
-    Task<IReadOnlyCollection<AsignacionPlan>> ListarPorPacienteAsync(Guid idPaciente, CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<AsignacionPlan>> ListarPorPacienteAsync(int idPaciente, CancellationToken cancellationToken);
 }

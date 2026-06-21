@@ -9,54 +9,103 @@ namespace NutriTec.Infrastructure.Sql.Repositories;
 /*
  * Descripción:
  * Implementa la persistencia relacional de planes de alimentación mediante Entity
- * Framework Core y SQL Server.
+ * Framework Core y SQL Server, combinando las tablas PLAN_ALIMENTACION,
+ * TIEMPO_COMIDA_PLAN y PLAN_PRODUCTO.
  *
  * Entradas:
  * Recibe NutriTecDbContext y criterios definidos por Application.
  *
  * Salidas:
- * Inserta, consulta, actualiza y elimina planes junto con sus items.
+ * Inserta, consulta, actualiza y elimina planes junto con sus tiempos de comida e items.
  *
  * Restricciones:
- * No contiene reglas de negocio; mapea entre la entidad de dominio y la entidad SQL.
+ * No contiene reglas de negocio; total_calorias se recalcula automáticamente mediante el
+ * trigger trg_RecalcularTotalPlan, por lo que esta capa no lo escribe manualmente.
  */
 public sealed class PlanSqlRepository(NutriTecDbContext context) : IPlanRepository
 {
+    private static readonly string[] NombresTiempoComida =
+    [
+        "Desayuno",
+        "Merienda Mañana",
+        "Almuerzo",
+        "Merienda Tarde",
+        "Cena"
+    ];
+
+    /*
+     * Descripción: Persiste un plan con sus tiempos de comida e items.
+     * Entradas: Agregado y token de cancelación.
+     * Salidas: Agregado persistido, con el identificador generado por la base de datos.
+     * Restricciones: Recibe datos validados.
+     */
+
     public async Task<Plan> CrearAsync(Plan plan, CancellationToken cancellationToken)
     {
-        var entidad = MapearAEntidad(plan);
-        context.Planes.Add(entidad);
+        var entidad = new PlanAlimentacionSql
+        {
+            Nombre = plan.Nombre,
+            CedulaNutricionista = plan.IdNutricionista,
+            Tiempos = AgruparPorTiempo(plan.Items)
+        };
+
+        context.PlanesAlimentacion.Add(entidad);
         await context.SaveChangesAsync(cancellationToken);
-        return plan;
+
+        return MapearADominio(entidad);
     }
 
-    public async Task<Plan?> ObtenerPorIdAsync(Guid idPlan, CancellationToken cancellationToken)
+    /*
+     * Descripción: Consulta un plan por identificador, incluyendo sus tiempos e items.
+     * Entradas: Identificador y token de cancelación.
+     * Salidas: Plan o nulo.
+     * Restricciones: No modifica datos.
+     */
+
+    public async Task<Plan?> ObtenerPorIdAsync(int idPlan, CancellationToken cancellationToken)
     {
-        var entidad = await context.Planes
+        var entidad = await context.PlanesAlimentacion
             .AsNoTracking()
-            .Include(plan => plan.Items)
-            .SingleOrDefaultAsync(plan => plan.Id == idPlan, cancellationToken);
+            .Include(plan => plan.Tiempos)
+            .ThenInclude(tiempo => tiempo.Productos)
+            .SingleOrDefaultAsync(plan => plan.IdPlan == idPlan, cancellationToken);
 
         return entidad is null ? null : MapearADominio(entidad);
     }
 
+    /*
+     * Descripción: Lista los planes creados por un nutricionista.
+     * Entradas: Cédula del nutricionista y token de cancelación.
+     * Salidas: Colección de planes.
+     * Restricciones: No modifica datos.
+     */
+
     public async Task<IReadOnlyCollection<Plan>> ListarPorNutricionistaAsync(string idNutricionista, CancellationToken cancellationToken)
     {
-        var entidades = await context.Planes
+        var entidades = await context.PlanesAlimentacion
             .AsNoTracking()
-            .Include(plan => plan.Items)
-            .Where(plan => plan.IdNutricionista == idNutricionista)
+            .Include(plan => plan.Tiempos)
+            .ThenInclude(tiempo => tiempo.Productos)
+            .Where(plan => plan.CedulaNutricionista == idNutricionista)
             .OrderBy(plan => plan.Nombre)
             .ToListAsync(cancellationToken);
 
         return entidades.Select(MapearADominio).ToArray();
     }
 
+    /*
+     * Descripción: Reemplaza el nombre y los tiempos/items de un plan existente.
+     * Entradas: Agregado con los datos actualizados y token de cancelación.
+     * Salidas: Confirmación.
+     * Restricciones: Reemplaza la colección completa de tiempos e items.
+     */
+
     public async Task<bool> ActualizarAsync(Plan plan, CancellationToken cancellationToken)
     {
-        var entidad = await context.Planes
-            .Include(p => p.Items)
-            .SingleOrDefaultAsync(p => p.Id == plan.Id, cancellationToken);
+        var entidad = await context.PlanesAlimentacion
+            .Include(p => p.Tiempos)
+            .ThenInclude(t => t.Productos)
+            .SingleOrDefaultAsync(p => p.IdPlan == plan.Id, cancellationToken);
 
         if (entidad is null)
         {
@@ -64,67 +113,78 @@ public sealed class PlanSqlRepository(NutriTecDbContext context) : IPlanReposito
         }
 
         entidad.Nombre = plan.Nombre;
-        context.ItemsPlan.RemoveRange(entidad.Items);
-        entidad.Items = plan.Items.Select(item => new ItemPlanSql
-        {
-            Id = item.Id,
-            IdPlan = plan.Id,
-            TiempoComida = (int)item.TiempoComida,
-            IdProducto = item.IdProducto,
-            Porciones = item.Porciones
-        }).ToList();
+        context.TiemposComidaPlan.RemoveRange(entidad.Tiempos);
+        entidad.Tiempos = AgruparPorTiempo(plan.Items);
 
         return await context.SaveChangesAsync(cancellationToken) > 0;
     }
 
-    public async Task<bool> EliminarAsync(Guid idPlan, CancellationToken cancellationToken)
+    /*
+     * Descripción: Elimina un plan por identificador.
+     * Entradas: Identificador y token de cancelación.
+     * Salidas: Confirmación.
+     * Restricciones: Devuelve falso si no existe.
+     */
+
+    public async Task<bool> EliminarAsync(int idPlan, CancellationToken cancellationToken)
     {
-        var entidad = await context.Planes.SingleOrDefaultAsync(plan => plan.Id == idPlan, cancellationToken);
+        var entidad = await context.PlanesAlimentacion.SingleOrDefaultAsync(plan => plan.IdPlan == idPlan, cancellationToken);
         if (entidad is null)
         {
             return false;
         }
 
-        context.Planes.Remove(entidad);
+        context.PlanesAlimentacion.Remove(entidad);
         return await context.SaveChangesAsync(cancellationToken) > 0;
     }
 
-    public Task<bool> PertenecePlanAAsync(Guid idPlan, string idNutricionista, CancellationToken cancellationToken)
+    /*
+     * Descripción: Verifica que un plan pertenezca a un nutricionista específico.
+     * Entradas: Identificador del plan, cédula del nutricionista y token de cancelación.
+     * Salidas: Verdadero si el plan existe y pertenece a ese nutricionista.
+     * Restricciones: No modifica datos.
+     */
+
+    public Task<bool> PertenecePlanAAsync(int idPlan, string idNutricionista, CancellationToken cancellationToken)
     {
-        return context.Planes.AnyAsync(
-            plan => plan.Id == idPlan && plan.IdNutricionista == idNutricionista,
+        return context.PlanesAlimentacion.AnyAsync(
+            plan => plan.IdPlan == idPlan && plan.CedulaNutricionista == idNutricionista,
             cancellationToken);
     }
 
-    private static PlanSql MapearAEntidad(Plan plan) => new()
+    private static List<TiempoComidaPlanSql> AgruparPorTiempo(IReadOnlyCollection<ItemPlan> items)
     {
-        Id = plan.Id,
-        IdNutricionista = plan.IdNutricionista,
-        Nombre = plan.Nombre,
-        FechaCreacionUtc = plan.FechaCreacionUtc,
-        Items = plan.Items.Select(item => new ItemPlanSql
-        {
-            Id = item.Id,
-            IdPlan = plan.Id,
-            TiempoComida = (int)item.TiempoComida,
-            IdProducto = item.IdProducto,
-            Porciones = item.Porciones
-        }).ToList()
-    };
+        return items
+            .GroupBy(item => item.TiempoComida)
+            .Select(grupo => new TiempoComidaPlanSql
+            {
+                TipoComida = NombresTiempoComida[(int)grupo.Key - 1],
+                Productos = grupo.Select(item => new PlanProductoSql
+                {
+                    IdProducto = item.IdProducto,
+                    CantidadPorciones = item.Porciones
+                }).ToList()
+            })
+            .ToList();
+    }
 
-    private static Plan MapearADominio(PlanSql entidad) => new()
+    private static Plan MapearADominio(PlanAlimentacionSql entidad)
     {
-        Id = entidad.Id,
-        IdNutricionista = entidad.IdNutricionista,
-        Nombre = entidad.Nombre,
-        FechaCreacionUtc = entidad.FechaCreacionUtc,
-        Items = entidad.Items.Select(item => new ItemPlan
+        var items = entidad.Tiempos.SelectMany(tiempo => tiempo.Productos.Select(producto => new ItemPlan
         {
-            Id = item.Id,
-            IdPlan = item.IdPlan,
-            TiempoComida = (TiempoComida)item.TiempoComida,
-            IdProducto = item.IdProducto,
-            Porciones = item.Porciones
-        }).ToList()
-    };
+            IdPlan = entidad.IdPlan,
+            TiempoComida = (TiempoComida)(Array.IndexOf(NombresTiempoComida, tiempo.TipoComida) + 1),
+            IdProducto = producto.IdProducto,
+            Porciones = producto.CantidadPorciones
+        })).ToList();
+
+        return new Plan
+        {
+            Id = entidad.IdPlan,
+            IdNutricionista = entidad.CedulaNutricionista,
+            Nombre = entidad.Nombre,
+            FechaCreacionUtc = DateTime.UtcNow,
+            Items = items
+        };
+    }
 }

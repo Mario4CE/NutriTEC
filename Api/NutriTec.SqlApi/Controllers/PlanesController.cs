@@ -19,7 +19,7 @@ namespace NutriTec.SqlApi.Controllers;
  * Devuelve respuestas HTTP estandarizadas mediante ApiResponse<T>.
  *
  * Restricciones:
- * No accede directamente a Entity Framework Core; el identificador del nutricionista se
+ * No accede directamente a Entity Framework Core; la cédula del nutricionista se
  * obtiene del token JWT, nunca del cuerpo de la solicitud.
  */
 
@@ -29,14 +29,10 @@ namespace NutriTec.SqlApi.Controllers;
 public sealed class PlanesController(IPlanService planService, IAsignacionPlanService asignacionService) : ControllerBase
 {
     /*
-     * Descripción:
-     * Crea un plan de alimentación para el nutricionista autenticado.
-     * Entradas:
-     * Recibe DTO de creación y token de cancelación HTTP.
-     * Salidas:
-     * Devuelve HTTP 201 con el plan creado, incluyendo el total calórico calculado.
-     * Restricciones:
-     * El nutricionista se obtiene del token, no del cuerpo de la solicitud.
+     * Descripción: Crea un plan de alimentación para el nutricionista autenticado.
+     * Entradas: Recibe DTO de creación y token de cancelación HTTP.
+     * Salidas: Devuelve HTTP 201 con el plan creado, incluyendo el total calórico.
+     * Restricciones: El nutricionista se obtiene del token, no del cuerpo de la solicitud.
      */
 
     [HttpPost]
@@ -50,14 +46,10 @@ public sealed class PlanesController(IPlanService planService, IAsignacionPlanSe
     }
 
     /*
-     * Descripción:
-     * Lista los planes creados por el nutricionista autenticado.
-     * Entradas:
-     * Recibe token de cancelación HTTP.
-     * Salidas:
-     * Devuelve HTTP 200 con la lista de planes.
-     * Restricciones:
-     * El nutricionista se obtiene del token.
+     * Descripción: Lista los planes creados por el nutricionista autenticado.
+     * Entradas: Recibe token de cancelación HTTP.
+     * Salidas: Devuelve HTTP 200 con la lista de planes.
+     * Restricciones: El nutricionista se obtiene del token.
      */
 
     [HttpGet]
@@ -69,18 +61,14 @@ public sealed class PlanesController(IPlanService planService, IAsignacionPlanSe
     }
 
     /*
-     * Descripción:
-     * Consulta un plan por identificador.
-     * Entradas:
-     * Recibe identificador y token de cancelación HTTP.
-     * Salidas:
-     * Devuelve HTTP 200 o HTTP 404.
-     * Restricciones:
-     * Delega reglas al servicio.
+     * Descripción: Consulta un plan por identificador.
+     * Entradas: Recibe identificador y token de cancelación HTTP.
+     * Salidas: Devuelve HTTP 200 o HTTP 404.
+     * Restricciones: Delega reglas al servicio.
      */
 
-    [HttpGet("{idPlan:guid}")]
-    public async Task<ActionResult<ApiResponse<PlanResponse>>> ObtenerPorIdAsync(Guid idPlan, CancellationToken cancellationToken)
+    [HttpGet("{idPlan:int}")]
+    public async Task<ActionResult<ApiResponse<PlanResponse>>> ObtenerPorIdAsync(int idPlan, CancellationToken cancellationToken)
     {
         var plan = await planService.ObtenerPorIdAsync(idPlan, cancellationToken);
         return plan is null
@@ -89,19 +77,15 @@ public sealed class PlanesController(IPlanService planService, IAsignacionPlanSe
     }
 
     /*
-     * Descripción:
-     * Actualiza el nombre y los items de un plan existente del nutricionista autenticado.
-     * Entradas:
-     * Recibe identificador, DTO de edición y token de cancelación HTTP.
-     * Salidas:
-     * Devuelve HTTP 204 o HTTP 404.
-     * Restricciones:
-     * El plan debe pertenecer al nutricionista autenticado.
+     * Descripción: Actualiza el nombre y los items de un plan existente del nutricionista autenticado.
+     * Entradas: Recibe identificador, DTO de edición y token de cancelación HTTP.
+     * Salidas: Devuelve HTTP 204 o HTTP 404.
+     * Restricciones: El plan debe pertenecer al nutricionista autenticado.
      */
 
-    [HttpPut("{idPlan:guid}")]
+    [HttpPut("{idPlan:int}")]
     public async Task<IActionResult> ActualizarAsync(
-        Guid idPlan,
+        int idPlan,
         [FromBody] ActualizarPlanRequest request,
         CancellationToken cancellationToken)
     {
@@ -112,18 +96,14 @@ public sealed class PlanesController(IPlanService planService, IAsignacionPlanSe
     }
 
     /*
-     * Descripción:
-     * Elimina un plan de alimentación del nutricionista autenticado.
-     * Entradas:
-     * Recibe identificador y token de cancelación HTTP.
-     * Salidas:
-     * Devuelve HTTP 204 o HTTP 404.
-     * Restricciones:
-     * El plan debe pertenecer al nutricionista autenticado.
+     * Descripción: Elimina un plan de alimentación del nutricionista autenticado.
+     * Entradas: Recibe identificador y token de cancelación HTTP.
+     * Salidas: Devuelve HTTP 204 o HTTP 404.
+     * Restricciones: El plan debe pertenecer al nutricionista autenticado.
      */
 
-    [HttpDelete("{idPlan:guid}")]
-    public async Task<IActionResult> EliminarAsync(Guid idPlan, CancellationToken cancellationToken)
+    [HttpDelete("{idPlan:int}")]
+    public async Task<IActionResult> EliminarAsync(int idPlan, CancellationToken cancellationToken)
     {
         var idNutricionista = ObtenerIdUsuarioActual();
         return await planService.EliminarAsync(idNutricionista, idPlan, cancellationToken)
@@ -132,14 +112,10 @@ public sealed class PlanesController(IPlanService planService, IAsignacionPlanSe
     }
 
     /*
-     * Descripción:
-     * Asigna un plan a un paciente del nutricionista autenticado para un periodo de tiempo.
-     * Entradas:
-     * Recibe DTO de asignación y token de cancelación HTTP.
-     * Salidas:
-     * Devuelve HTTP 201 con la asignación creada.
-     * Restricciones:
-     * El paciente debe estar asociado al nutricionista y el plan debe pertenecerle.
+     * Descripción: Asigna un plan a un paciente del nutricionista autenticado para un periodo de tiempo.
+     * Entradas: Recibe DTO de asignación y token de cancelación HTTP.
+     * Salidas: Devuelve HTTP 201 con la asignación creada.
+     * Restricciones: El paciente debe estar asociado al nutricionista y el plan debe pertenecerle.
      */
 
     [HttpPost("asignaciones")]
@@ -153,18 +129,14 @@ public sealed class PlanesController(IPlanService planService, IAsignacionPlanSe
     }
 
     /*
-     * Descripción:
-     * Consulta la asignación de plan vigente para un paciente.
-     * Entradas:
-     * Recibe identificador del paciente y token de cancelación HTTP.
-     * Salidas:
-     * Devuelve HTTP 200 o HTTP 404.
-     * Restricciones:
-     * No modifica datos.
+     * Descripción: Consulta la asignación de plan vigente para un paciente.
+     * Entradas: Recibe identificador del paciente y token de cancelación HTTP.
+     * Salidas: Devuelve HTTP 200 o HTTP 404.
+     * Restricciones: No modifica datos.
      */
 
-    [HttpGet("asignaciones/vigente/{idPaciente:guid}")]
-    public async Task<ActionResult<ApiResponse<AsignacionPlanResponse>>> ObtenerVigenteAsync(Guid idPaciente, CancellationToken cancellationToken)
+    [HttpGet("asignaciones/vigente/{idPaciente:int}")]
+    public async Task<ActionResult<ApiResponse<AsignacionPlanResponse>>> ObtenerVigenteAsync(int idPaciente, CancellationToken cancellationToken)
     {
         var asignacion = await asignacionService.ObtenerVigentePorPacienteAsync(idPaciente, cancellationToken);
         return asignacion is null
@@ -173,19 +145,15 @@ public sealed class PlanesController(IPlanService planService, IAsignacionPlanSe
     }
 
     /*
-     * Descripción:
-     * Lista el historial de asignaciones de plan de un paciente.
-     * Entradas:
-     * Recibe identificador del paciente y token de cancelación HTTP.
-     * Salidas:
-     * Devuelve HTTP 200 con el historial de asignaciones.
-     * Restricciones:
-     * No modifica datos.
+     * Descripción: Lista el historial de asignaciones de plan de un paciente.
+     * Entradas: Recibe identificador del paciente y token de cancelación HTTP.
+     * Salidas: Devuelve HTTP 200 con el historial de asignaciones.
+     * Restricciones: No modifica datos.
      */
 
-    [HttpGet("asignaciones/paciente/{idPaciente:guid}")]
+    [HttpGet("asignaciones/paciente/{idPaciente:int}")]
     public async Task<ActionResult<ApiResponse<IReadOnlyCollection<AsignacionPlanResponse>>>> ListarPorPacienteAsync(
-        Guid idPaciente,
+        int idPaciente,
         CancellationToken cancellationToken)
     {
         var asignaciones = await asignacionService.ListarPorPacienteAsync(idPaciente, cancellationToken);

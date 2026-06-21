@@ -1,19 +1,25 @@
 namespace NutriTec.Infrastructure.Sql.Persistence.Entities;
 
-public sealed class PlanSql
+public sealed class PlanAlimentacionSql
 {
-    public Guid Id { get; set; }
-    public string IdNutricionista { get; set; } = string.Empty;
+    public int IdPlan { get; set; }
     public string Nombre { get; set; } = string.Empty;
-    public DateTime FechaCreacionUtc { get; set; }
-    public List<ItemPlanSql> Items { get; set; } = [];
+    public string CedulaNutricionista { get; set; } = string.Empty;
+    public decimal TotalCalorias { get; set; }
+    public List<TiempoComidaPlanSql> Tiempos { get; set; } = [];
 }
 
-public sealed class ItemPlanSql
+public sealed class TiempoComidaPlanSql
 {
-    public Guid Id { get; set; }
-    public Guid IdPlan { get; set; }
-    public int TiempoComida { get; set; }
+    public int IdTiempo { get; set; }
+    public int IdPlan { get; set; }
+    public string TipoComida { get; set; } = string.Empty;
+    public List<PlanProductoSql> Productos { get; set; } = [];
+}
+
+public sealed class PlanProductoSql
+{
+    public int IdTiempo { get; set; }
     public Guid IdProducto { get; set; }
-    public decimal Porciones { get; set; }
+    public decimal CantidadPorciones { get; set; }
 }

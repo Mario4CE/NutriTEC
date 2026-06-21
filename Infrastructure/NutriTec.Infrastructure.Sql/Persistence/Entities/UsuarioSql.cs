@@ -3,7 +3,6 @@ namespace NutriTec.Infrastructure.Sql.Persistence.Entities;
 public sealed class UsuarioSql
 {
     public int IdUsuario { get; set; }
-    public Guid IdCliente { get; set; } = Guid.NewGuid();
     public string Nombre { get; set; } = string.Empty;
     public string Apellidos { get; set; } = string.Empty;
     public int Edad { get; set; }

@@ -12,38 +12,38 @@ namespace NutriTec.Infrastructure.Sql.Persistence.Configurations;
  * Recibe el constructor de entidad proporcionado por Entity Framework Core.
  *
  * Salidas:
- * Define tabla, clave primaria, columnas e índice único de asociación.
+ * Define tabla, llave primaria compuesta y llaves foráneas hacia NUTRICIONISTA y USUARIO.
  *
  * Restricciones:
- * Debe mantenerse alineado con Database/SqlServer/Tables/PACIENTE_NUTRICIONISTA.sql.
- * No declara FK formal a NUTRICIONISTA.IdNutricionista porque ese campo no es su llave
- * primaria (la llave primaria de NUTRICIONISTA es Cedula); la integridad se valida desde
- * la capa de aplicación mediante IUsuarioConsultaRepository y IPacienteRepository.
+ * Debe mantenerse alineado con Database/SqlServer/Complete/TablaCompleta.sql.
  */
 public sealed class PacienteNutricionistaConfiguration : IEntityTypeConfiguration<PacienteNutricionistaSql>
 {
     public void Configure(EntityTypeBuilder<PacienteNutricionistaSql> builder)
     {
         builder.ToTable("PACIENTE_NUTRICIONISTA");
-        builder.HasKey(paciente => paciente.Id);
+        builder.HasKey(paciente => new { paciente.CedulaNutricionista, paciente.IdUsuario });
 
-        builder.Property(paciente => paciente.Id)
-            .HasColumnName("id_paciente_nutricionista")
-            .ValueGeneratedNever();
-
-        builder.Property(paciente => paciente.IdNutricionista)
-            .HasColumnName("id_nutricionista")
+        builder.Property(paciente => paciente.CedulaNutricionista)
+            .HasColumnName("cedula_nutricionista")
+            .HasMaxLength(20)
+            .IsUnicode(false)
             .IsRequired();
 
-        builder.Property(paciente => paciente.IdPaciente)
-            .HasColumnName("id_paciente")
+        builder.Property(paciente => paciente.IdUsuario)
+            .HasColumnName("id_usuario")
             .IsRequired();
 
-        builder.Property(paciente => paciente.FechaAsociacionUtc)
-            .HasColumnName("fecha_asociacion_utc")
-            .IsRequired();
+        builder.HasOne<NutricionistaSql>()
+            .WithMany()
+            .HasForeignKey(paciente => paciente.CedulaNutricionista)
+            .HasPrincipalKey(nutricionista => nutricionista.Cedula)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(paciente => new { paciente.IdNutricionista, paciente.IdPaciente })
-            .IsUnique();
+        builder.HasOne<UsuarioSql>()
+            .WithMany()
+            .HasForeignKey(paciente => paciente.IdUsuario)
+            .HasPrincipalKey(usuario => usuario.IdUsuario)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

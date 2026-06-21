@@ -4,19 +4,6 @@ using NutriTec.Infrastructure.Sql.Persistence.Entities;
 
 namespace NutriTec.Infrastructure.Sql.Persistence.Configurations;
 
-/*
- * Descripción:
- * Configura el mapeo relacional de UsuarioSql para SQL Server.
- *
- * Entradas:
- * Recibe el constructor de entidad proporcionado por Entity Framework Core.
- *
- * Salidas:
- * Define tabla, clave primaria, columnas, longitudes, precisiones e índice único de email.
- *
- * Restricciones:
- * Debe mantenerse alineado con Database/SqlServer/Tables/003_USUARIO.sql.
- */
 public sealed class UsuarioSqlConfiguration : IEntityTypeConfiguration<UsuarioSql>
 {
     public void Configure(EntityTypeBuilder<UsuarioSql> builder)
@@ -25,8 +12,6 @@ public sealed class UsuarioSqlConfiguration : IEntityTypeConfiguration<UsuarioSq
         builder.HasKey(usuario => usuario.IdUsuario);
 
         builder.Property(usuario => usuario.IdUsuario).HasColumnName("id_usuario");
-        builder.Property(usuario => usuario.IdCliente).HasColumnName("id_cliente").IsRequired();
-        builder.HasIndex(usuario => usuario.IdCliente).IsUnique();
         builder.Property(usuario => usuario.Nombre).HasColumnName("nombre").HasMaxLength(100).IsUnicode(false).IsRequired();
         builder.Property(usuario => usuario.Apellidos).HasColumnName("apellidos").HasMaxLength(100).IsUnicode(false).IsRequired();
         builder.Property(usuario => usuario.Edad).HasColumnName("edad").IsRequired();
@@ -43,7 +28,6 @@ public sealed class UsuarioSqlConfiguration : IEntityTypeConfiguration<UsuarioSq
         builder.Property(usuario => usuario.Email).HasColumnName("email").HasMaxLength(100).IsUnicode(false).IsRequired();
         builder.Property(usuario => usuario.PasswordHash).HasColumnName("password_hash").HasMaxLength(255).IsUnicode(false).IsRequired();
 
-        builder.HasIndex(usuario => usuario.Email)
-            .IsUnique();
+        builder.HasIndex(usuario => usuario.Email).IsUnique();
     }
 }

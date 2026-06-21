@@ -6,10 +6,32 @@ using NutriTec.Domain.Pacientes;
 
 namespace NutriTec.Application.Pacientes;
 
+/*
+ * Descripción:
+ * Implementa las reglas de aplicación para buscar clientes y asociarlos como pacientes
+ * de un nutricionista.
+ *
+ * Entradas:
+ * Recibe DTOs de solicitud y repositorios desacoplados de persistencia.
+ *
+ * Salidas:
+ * Devuelve DTOs preparados para la API o confirma modificaciones.
+ *
+ * Restricciones:
+ * Rechaza identificadores vacíos, criterios sin contenido y asociaciones duplicadas.
+ */
+
 public sealed class PacienteService(
     IPacienteRepository repository,
     IUsuarioConsultaRepository usuarioConsultaRepository) : IPacienteService
 {
+    /*
+     * Descripción: Busca clientes candidatos a ser pacientes.
+     * Entradas: Criterio de búsqueda y token de cancelación.
+     * Salidas: Devuelve clientes coincidentes como DTOs.
+     * Restricciones: El criterio no puede estar vacío.
+     */
+
     public async Task<IReadOnlyCollection<ClienteBusquedaResponse>> BuscarClientesAsync(string criterio, CancellationToken cancellationToken)
     {
         ValidarTexto(criterio, nameof(criterio));
@@ -17,17 +39,23 @@ public sealed class PacienteService(
         return clientes.Select(Mapear).ToArray();
     }
 
+    /*
+     * Descripción: Asocia un cliente como paciente de un nutricionista.
+     * Entradas: Cédula del nutricionista, DTO de solicitud y token de cancelación.
+     * Salidas: Devuelve la asociación creada como DTO.
+     * Restricciones: El cliente debe existir y no puede estar ya asociado al mismo nutricionista.
+     */
+
     public async Task<PacienteNutricionistaResponse> AsociarAsync(
         string idNutricionista,
         AsociarPacienteRequest request,
         CancellationToken cancellationToken)
     {
         ValidarTexto(idNutricionista, nameof(idNutricionista));
-        ValidarIdentificador(request.IdCliente, nameof(request.IdCliente));
 
         if (!await usuarioConsultaRepository.EsClienteAsync(request.IdCliente, cancellationToken))
         {
-            throw new ArgumentException("El usuario indicado no existe o no es un cliente.", nameof(request.IdCliente));
+            throw new ArgumentException("El usuario indicado no existe.", nameof(request.IdCliente));
         }
 
         if (await repository.ExisteAsociacionAsync(idNutricionista, request.IdCliente, cancellationToken))
@@ -47,6 +75,13 @@ public sealed class PacienteService(
         return Mapear(creada);
     }
 
+    /*
+     * Descripción: Lista los pacientes asociados a un nutricionista.
+     * Entradas: Cédula del nutricionista y token de cancelación.
+     * Salidas: Devuelve una colección de DTOs.
+     * Restricciones: La cédula no puede estar vacía.
+     */
+
     public async Task<IReadOnlyCollection<PacienteNutricionistaResponse>> ListarPorNutricionistaAsync(
         string idNutricionista,
         CancellationToken cancellationToken)
@@ -55,6 +90,13 @@ public sealed class PacienteService(
         var asociaciones = await repository.ListarPorNutricionistaAsync(idNutricionista, cancellationToken);
         return asociaciones.Select(Mapear).ToArray();
     }
+
+    /*
+     * Descripción: Elimina la asociación entre un nutricionista y un paciente.
+     * Entradas: Identificador de la asociación y token de cancelación.
+     * Salidas: Devuelve verdadero cuando la asociación fue eliminada.
+     * Restricciones: El identificador no puede ser vacío.
+     */
 
     public Task<bool> DesasociarAsync(Guid id, CancellationToken cancellationToken)
     {
