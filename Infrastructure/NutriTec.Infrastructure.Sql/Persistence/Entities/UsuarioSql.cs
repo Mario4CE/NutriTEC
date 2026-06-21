@@ -15,7 +15,7 @@ public sealed class UsuarioSql
     public decimal? Caderas { get; set; }
     public decimal? PctMusculo { get; set; }
     public decimal? PctGrasa { get; set; }
-    public int CaloriasDiariasMax { get; set; }
+    public decimal CaloriasDiariasMax { get; set; }
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
 }
