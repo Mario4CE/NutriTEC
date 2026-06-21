@@ -15,20 +15,13 @@ namespace NutriTec.Infrastructure.Sql.Persistence.Configurations;
  * Define tabla, clave primaria por identificador, columnas, precisiones e índice único de código de barras.
  *
  * Restricciones:
- * Debe mantenerse alineado con el script Database/SqlServer/Tables/006_PRODUCTO.sql.
+ * Debe mantenerse alineado con Database/SqlServer/Complete/TablaCompleta.sql. La tabla real
+ * no incluye porcion_g_ml, sodio_mg, vitaminas, calcio_mg ni hierro_mg; esas propiedades del
+ * dominio se marcan como no persistidas (Ignore) hasta que el equipo decida si se agregan
+ * a la tabla PRODUCTO.
  */
 public sealed class ProductoConfiguration : IEntityTypeConfiguration<Producto>
 {
-    /*
-     * Descripción:
-     * Aplica el mapeo de Producto al modelo EF Core.
-     * Entradas:
-     * Recibe el constructor relacional de la entidad.
-     * Salidas:
-     * Configura tabla, propiedades e índice único.
-     * Restricciones:
-     * Debe mantenerse alineado con el script SQL versionado.
-     */
     public void Configure(EntityTypeBuilder<Producto> builder)
     {
         builder.ToTable("PRODUCTO");
@@ -52,11 +45,6 @@ public sealed class ProductoConfiguration : IEntityTypeConfiguration<Producto>
 
         builder.HasIndex(producto => producto.CodigoBarras).IsUnique();
 
-        builder.Property(producto => producto.PorcionGramosMililitros)
-            .HasColumnName("porcion_g_ml")
-            .HasPrecision(10, 2)
-            .IsRequired();
-
         builder.Property(producto => producto.Calorias)
             .HasColumnName("calorias")
             .HasPrecision(10, 2)
@@ -77,24 +65,6 @@ public sealed class ProductoConfiguration : IEntityTypeConfiguration<Producto>
             .HasPrecision(10, 2)
             .IsRequired();
 
-        builder.Property(producto => producto.SodioMiligramos)
-            .HasColumnName("sodio_mg")
-            .HasPrecision(10, 2)
-            .IsRequired();
-
-        builder.Property(producto => producto.Vitaminas)
-            .HasColumnName("vitaminas")
-            .HasMaxLength(255)
-            .IsUnicode(false);
-
-        builder.Property(producto => producto.CalcioMiligramos)
-            .HasColumnName("calcio_mg")
-            .HasPrecision(10, 2);
-
-        builder.Property(producto => producto.HierroMiligramos)
-            .HasColumnName("hierro_mg")
-            .HasPrecision(10, 2);
-
         builder.Property(producto => producto.EstaAprobado)
             .HasColumnName("aprobado")
             .HasDefaultValue(false)
@@ -103,5 +73,11 @@ public sealed class ProductoConfiguration : IEntityTypeConfiguration<Producto>
         builder.Property(producto => producto.FechaCreacionUtc)
             .HasColumnName("fecha_creacion_utc")
             .IsRequired();
+
+        builder.Ignore(producto => producto.PorcionGramosMililitros);
+        builder.Ignore(producto => producto.SodioMiligramos);
+        builder.Ignore(producto => producto.Vitaminas);
+        builder.Ignore(producto => producto.CalcioMiligramos);
+        builder.Ignore(producto => producto.HierroMiligramos);
     }
 }
