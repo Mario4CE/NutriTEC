@@ -1,13 +1,10 @@
-using NutriTec.Contracts.Administracion;
+using NutriTec.Domain.Productos;
 
 namespace NutriTec.Application.Abstractions.Persistence;
 
 public interface IAdministracionRepository
 {
-    Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> GenerarReporteCobroAsync(
-        decimal montoBasePorPaciente,
-        bool incluirSinPacientes,
-        CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<Producto>> ListarProductosPendientesAsync(CancellationToken cancellationToken);
 
-    Task<decimal?> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken);
+    Task<bool> AprobarProductoAsync(Guid idProducto, CancellationToken cancellationToken);
 }

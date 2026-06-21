@@ -21,7 +21,9 @@ namespace NutriTec.Application.Administracion;
  * No permite desaprobar productos ni mezcla operaciones administrativas con controllers de CRUD.
  */
 
-public sealed class AdministracionService(IProductoRepository repository, IAdministracionRepository administracionRepository) : IAdministracionService
+public sealed class AdministracionService(
+    IAdministracionRepository administracionRepository,
+    IObjetosSqlService objetosSqlService) : IAdministracionService
 {
 
     /*
@@ -34,7 +36,7 @@ public sealed class AdministracionService(IProductoRepository repository, IAdmin
     public async Task<IReadOnlyCollection<ProductoResponse>> ListarProductosPendientesAsync(
         CancellationToken cancellationToken)
     {
-        var productos = await repository.ListarPendientesAsync(cancellationToken);
+        var productos = await administracionRepository.ListarProductosPendientesAsync(cancellationToken);
         return productos.Select(ProductoMapper.Mapear).ToArray();
     }
 
@@ -54,34 +56,36 @@ public sealed class AdministracionService(IProductoRepository repository, IAdmin
             throw new ArgumentException("El identificador no puede estar vacío.", nameof(idProducto));
         }
 
-        return repository.AprobarAsync(idProducto, cancellationToken);
+        return administracionRepository.AprobarProductoAsync(idProducto, cancellationToken);
     }
 
-    public Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> GenerarReporteCobroAsync(
+    public async Task<IReadOnlyCollection<ReporteCobroNutricionistaResponse>> GenerarReporteCobroAsync(
         decimal montoBasePorPaciente,
         bool incluirSinPacientes,
         CancellationToken cancellationToken)
     {
-        if (montoBasePorPaciente <= 0)
-        {
-            throw new ArgumentException("El monto base por paciente debe ser mayor que cero.", nameof(montoBasePorPaciente));
-        }
+        var reporte = await objetosSqlService.ObtenerReporteCobroNutricionistasAsync(
+            montoBasePorPaciente,
+            incluirSinPacientes,
+            cancellationToken);
 
-        return administracionRepository.GenerarReporteCobroAsync(montoBasePorPaciente, incluirSinPacientes, cancellationToken);
+        return reporte
+            .Select(fila => new ReporteCobroNutricionistaResponse(
+                fila.CedulaNutricionista,
+                fila.NombreNutricionista,
+                fila.TipoCobro,
+                fila.CantidadPacientes,
+                fila.MontoBasePorPaciente,
+                fila.Subtotal,
+                fila.PorcentajeDescuento,
+                fila.MontoDescuento,
+                fila.TotalCobrar))
+            .ToArray();
     }
 
-    public Task<decimal?> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken)
+    public async Task<decimal?> CalcularImcAsync(decimal pesoKg, decimal estaturaCm, CancellationToken cancellationToken)
     {
-        if (pesoKg <= 0)
-        {
-            throw new ArgumentException("El peso debe ser mayor que cero.", nameof(pesoKg));
-        }
-
-        if (estaturaCm <= 0)
-        {
-            throw new ArgumentException("La estatura debe ser mayor que cero.", nameof(estaturaCm));
-        }
-
-        return administracionRepository.CalcularImcAsync(pesoKg, estaturaCm, cancellationToken);
+        var resultado = await objetosSqlService.CalcularImcAsync(pesoKg, estaturaCm, cancellationToken);
+        return resultado.Imc;
     }
 }
