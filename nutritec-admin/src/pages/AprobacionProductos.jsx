@@ -4,14 +4,12 @@ import { USE_MOCKS, ENDPOINTS, apiFetch } from "../config/api.js";
 import { MOCK_PRODUCTOS_PENDIENTES } from "../config/mockData.js";
 
 // =============================================================
-// Servicios — campos exactos de ProductoResponse del backend:
-//   id, nombre, codigoBarras, porcionGramosMililitros,
-//   calorias, proteinas, carbohidratos, grasas, sodioMiligramos,
-//   vitaminas, calcioMiligramos, hierroMiligramos,
-//   estaAprobado, fechaCreacionUtc
+// Aprobación de productos usa el SP directamente:
+//   PUT /api/sql-programable/stored-procedures/productos/{id}/aprobacion
+//   → ProductoAprobadoSqlResponse (confirma que se ejecutó el SP)
 //
-// Aprobar: PUT /api/administracion/productos/{id}/aprobacion → 204
-// Rechazar: DELETE /api/productos/{id} → 204 (rol Administrador)
+// Para listar los pendientes usamos el endpoint de administración:
+//   GET /api/administracion/productos/pendientes
 // =============================================================
 
 async function fetchProductosPendientes() {
@@ -19,22 +17,28 @@ async function fetchProductosPendientes() {
     return new Promise((res) => setTimeout(() => res([...MOCK_PRODUCTOS_PENDIENTES]), 500));
   }
   const data = await apiFetch(ENDPOINTS.administracion.productosPendientes());
-  // El backend envuelve en ApiResponse<T> — extraemos .data
   return data?.data ?? data;
 }
 
 async function aprobarProducto(id) {
-  if (USE_MOCKS) return new Promise((res) => setTimeout(() => res(null), 400));
-  return apiFetch(ENDPOINTS.administracion.aprobarProducto(id), { method: "PUT" });
+  if (USE_MOCKS) {
+    return new Promise((res) => setTimeout(() => res({ aprobado: true }), 400));
+  }
+  // Usamos el SP para la aprobación — cumple con el requerimiento del enunciado
+  const data = await apiFetch(ENDPOINTS.sp.aprobarProductoSP(id), { method: "PUT" });
+  return data?.data ?? data;
 }
 
 async function rechazarProducto(id) {
-  if (USE_MOCKS) return new Promise((res) => setTimeout(() => res(null), 400));
+  if (USE_MOCKS) {
+    return new Promise((res) => setTimeout(() => res(null), 400));
+  }
+  // Rechazar = eliminar el producto (requiere rol Administrador)
   return apiFetch(ENDPOINTS.productos.eliminar(id), { method: "DELETE" });
 }
 
 // =============================================================
-// Fila expandible
+// Fila expandible con todos los campos del ProductoResponse
 // =============================================================
 function FilaProducto({ producto, onAprobar, onRechazar }) {
   const [expandido, setExpandido]   = useState(false);
@@ -56,6 +60,17 @@ function FilaProducto({ producto, onAprobar, onRechazar }) {
     day: "2-digit", month: "short", year: "numeric",
   });
 
+  const nutrientes = [
+    { label: "Porción",       valor: producto.porcionGramosMililitros, unidad: "g/ml" },
+    { label: "Proteínas",     valor: producto.proteinas,               unidad: "g"    },
+    { label: "Carbohidratos", valor: producto.carbohidratos,           unidad: "g"    },
+    { label: "Grasas",        valor: producto.grasas,                  unidad: "g"    },
+    { label: "Sodio",         valor: producto.sodioMiligramos,         unidad: "mg"   },
+    { label: "Calcio",        valor: producto.calcioMiligramos,        unidad: "mg"   },
+    { label: "Hierro",        valor: producto.hierroMiligramos,        unidad: "mg"   },
+    { label: "Vitaminas",     valor: producto.vitaminas,               unidad: ""     },
+  ].filter(({ valor }) => valor !== null && valor !== undefined);
+
   return (
     <div style={s.card}>
       <div style={s.cardHeader}>
@@ -67,18 +82,14 @@ function FilaProducto({ producto, onAprobar, onRechazar }) {
             &nbsp;·&nbsp; {fecha}
           </span>
         </div>
-
         <div style={s.cardActions}>
           <span style={s.calChip}>{producto.calorias} kcal</span>
-
           <button style={s.iconBtn} onClick={() => setExpandido((e) => !e)} title="Ver detalles nutricionales">
             {expandido ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
-
           <button style={{ ...s.actionBtn, ...s.btnAprobar }} onClick={handleAprobar} disabled={!!accionando}>
             {accionando === "aprobar" ? "..." : <><Check size={14} strokeWidth={2.5} /> Aprobar</>}
           </button>
-
           <button style={{ ...s.actionBtn, ...s.btnRechazar }} onClick={handleRechazar} disabled={!!accionando}>
             {accionando === "rechazar" ? "..." : <><X size={14} strokeWidth={2.5} /> Rechazar</>}
           </button>
@@ -87,23 +98,12 @@ function FilaProducto({ producto, onAprobar, onRechazar }) {
 
       {expandido && (
         <div style={s.nutriGrid}>
-          {[
-            { label: "Porción",        valor: producto.porcionGramosMililitros, unidad: "g/ml" },
-            { label: "Proteínas",      valor: producto.proteinas,               unidad: "g"    },
-            { label: "Carbohidratos",  valor: producto.carbohidratos,           unidad: "g"    },
-            { label: "Grasas",         valor: producto.grasas,                  unidad: "g"    },
-            { label: "Sodio",          valor: producto.sodioMiligramos,         unidad: "mg"   },
-            { label: "Calcio",         valor: producto.calcioMiligramos,        unidad: "mg"   },
-            { label: "Hierro",         valor: producto.hierroMiligramos,        unidad: "mg"   },
-            { label: "Vitaminas",      valor: producto.vitaminas,               unidad: ""     },
-          ]
-            .filter(({ valor }) => valor !== null && valor !== undefined)
-            .map(({ label, valor, unidad }) => (
-              <div key={label} style={s.nutriItem}>
-                <span style={s.nutriLabel}>{label}</span>
-                <span style={s.nutriValor}>{valor} {unidad}</span>
-              </div>
-            ))}
+          {nutrientes.map(({ label, valor, unidad }) => (
+            <div key={label} style={s.nutriItem}>
+              <span style={s.nutriLabel}>{label}</span>
+              <span style={s.nutriValor}>{valor} {unidad}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -143,7 +143,7 @@ export default function AprobacionProductos() {
         <div>
           <h2 style={s.sectionTitle}>Aprobación de productos</h2>
           <p style={s.sectionSub}>
-            Revisá y aprobá los productos enviados por usuarios y nutricionistas antes de que estén disponibles para toda la comunidad.
+            Revisá los productos enviados por usuarios y nutricionistas. La aprobación se ejecuta mediante el stored procedure <code>sp_AprobarProducto</code>.
           </p>
         </div>
         {productos && (
@@ -180,7 +180,7 @@ export default function AprobacionProductos() {
 const s = {
   sectionHeader:  { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "24px", gap: "16px" },
   sectionTitle:   { fontSize: "20px", fontWeight: 600, color: "#2B2A26", margin: "0 0 4px", letterSpacing: "-0.01em" },
-  sectionSub:     { fontSize: "13px", color: "#8C887D", margin: 0, maxWidth: "520px" },
+  sectionSub:     { fontSize: "13px", color: "#8C887D", margin: 0, maxWidth: "560px" },
   badge:          { flexShrink: 0, background: "#DCEFE0", color: "#3F7A52", fontSize: "12px", fontWeight: 600, padding: "4px 12px", borderRadius: "20px", whiteSpace: "nowrap" },
   lista:          { display: "flex", flexDirection: "column", gap: "10px" },
   card:           { background: "#FFFFFF", border: "1px solid #E8E4D9", borderRadius: "14px", padding: "16px 20px" },
