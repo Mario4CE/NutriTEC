@@ -7,7 +7,7 @@ const idPaciente = params.get("idPaciente");
 const idPacienteMostrado = document.getElementById("idPacienteMostrado");
 const hiloMensajes = document.getElementById("hiloMensajes");
 const formMensaje = document.getElementById("formMensaje");
-const alertaMensajeSeguimiento = document.getElementById("alertaMensaje");
+const alertaMensajeSeguimisento = document.getElementById("alertaMensaje");
 
 let idRetroalimentacionActual = null;
 

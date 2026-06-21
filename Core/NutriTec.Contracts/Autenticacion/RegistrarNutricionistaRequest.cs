@@ -2,18 +2,46 @@ using System.ComponentModel.DataAnnotations;
 
 namespace NutriTec.Contracts.Autenticacion;
 
-public sealed record RegistrarNutricionistaRequest(
-    [property: Required, MaxLength(20)] string Cedula,
-    [property: Required, MaxLength(100)] string Nombre,
-    [property: Required, MaxLength(150)] string Apellidos,
-    [property: Required, MaxLength(50)] string CodigoNutricionista,
-    [property: Range(0, 130)] int Edad,
-    DateOnly FechaNacimiento,
-    [property: Range(0.01, 1000)] decimal Peso,
-    [property: Range(0.01, 200)] decimal Imc,
-    [property: Required, MaxLength(255)] string Direccion,
-    [property: MaxLength(500)] string? FotoUrl,
-    [property: Required, MaxLength(100)] string TarjetaCredito,
-    [property: Required, RegularExpression("^(semanal|mensual|anual)$")] string TipoCobro,
-    [property: Required, EmailAddress, MaxLength(100)] string Correo,
-    [property: Required, MinLength(8), MaxLength(100)] string Contrasena);
+public sealed class RegistrarNutricionistaRequest
+{
+    [Required, MaxLength(20)]
+    public string Cedula { get; init; } = string.Empty;
+
+    [Required, MaxLength(100)]
+    public string Nombre { get; init; } = string.Empty;
+
+    [Required, MaxLength(150)]
+    public string Apellidos { get; init; } = string.Empty;
+
+    [Required, MaxLength(50)]
+    public string CodigoNutricionista { get; init; } = string.Empty;
+
+    [Range(0, 130)]
+    public int Edad { get; init; }
+
+    public DateOnly FechaNacimiento { get; init; }
+
+    [Range(0.01, 1000)]
+    public decimal Peso { get; init; }
+
+    [Range(0.01, 200)]
+    public decimal Imc { get; init; }
+
+    [Required, MaxLength(255)]
+    public string Direccion { get; init; } = string.Empty;
+
+    [MaxLength(500)]
+    public string? FotoUrl { get; init; }
+
+    [Required, MaxLength(100)]
+    public string TarjetaCredito { get; init; } = string.Empty;
+
+    [Required, RegularExpression("^(semanal|mensual|anual)$")]
+    public string TipoCobro { get; init; } = string.Empty;
+
+    [Required, EmailAddress, MaxLength(100)]
+    public string Correo { get; init; } = string.Empty;
+
+    [Required, MinLength(8), MaxLength(100)]
+    public string Contrasena { get; init; } = string.Empty;
+}

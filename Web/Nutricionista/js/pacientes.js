@@ -34,7 +34,7 @@ function mostrarResultadosBusqueda(clientes) {
             <td>${cliente.nombre} ${cliente.apellidos}</td>
             <td>${cliente.correo}</td>
             <td class="text-end">
-                <button class="btn btn-sm btn-success" onclick="asociarPaciente('${cliente.id}')">Asociar como paciente</button>
+                <button class="btn btn-sm btn-success" onclick="asociarPaciente(${cliente.id})">Asociar como paciente</button>
             </td>
         </tr>
     `).join("");
@@ -83,10 +83,8 @@ function mostrarListaPacientes(pacientes) {
     const filas = pacientes.map(paciente => `
         <tr>
             <td>${paciente.idPaciente}</td>
-            <td>${new Date(paciente.fechaAsociacionUtc).toLocaleDateString()}</td>
             <td class="text-end">
                 <a href="seguimiento.html?idPaciente=${paciente.idPaciente}" class="btn btn-sm btn-success">Seguimiento</a>
-                <button class="btn btn-sm btn-outline-danger" onclick="desasociarPaciente('${paciente.id}')">Quitar</button>
             </td>
         </tr>
     `).join("");
@@ -94,25 +92,11 @@ function mostrarListaPacientes(pacientes) {
     listaPacientes.innerHTML = `
         <table class="table table-sm align-middle">
             <thead>
-                <tr><th>Paciente</th><th>Fecha asociación</th><th></th></tr>
+                <tr><th>Paciente (ID)</th><th></th></tr>
             </thead>
             <tbody>${filas}</tbody>
         </table>
     `;
-}
-
-async function desasociarPaciente(id) {
-    if (!confirm("¿Está seguro de quitar este paciente?")) {
-        return;
-    }
-
-    try {
-        await apiFetch(`/pacientes/${id}`, { method: "DELETE" });
-        mostrarMensaje("Paciente eliminado.", "success");
-        cargarPacientes();
-    } catch (error) {
-        mostrarMensaje(error.message, "danger");
-    }
 }
 
 function mostrarMensaje(texto, tipo) {

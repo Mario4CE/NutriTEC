@@ -1,5 +1,5 @@
-const API_SQL_BASE_URL = "https://localhost:7281/api";
-const API_MONGO_BASE_URL = "https://localhost:7044/api";
+const API_SQL_BASE_URL = "http://localhost:5255/api";
+const API_MONGO_BASE_URL = "http://localhost:5272/api";
 
 function obtenerToken() {
     return localStorage.getItem("nutritec_token");

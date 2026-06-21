@@ -133,21 +133,23 @@ public sealed class AuthServiceTests
         Correo: correo,
         Contrasena: "Password123!");
 
-    private static RegistrarNutricionistaRequest CrearRegistrarNutricionistaRequest(string correo = "nutricionista@example.com") => new(
-        Cedula: "1-1111-1111",
-        Nombre: "Nutricionista",
-        Apellidos: "Demo",
-        CodigoNutricionista: "NUT-001",
-        Edad: 35,
-        FechaNacimiento: new DateOnly(1989, 5, 10),
-        Peso: 68.0m,
-        Imc: 23.0m,
-        Direccion: "San José, Costa Rica",
-        FotoUrl: null,
-        TarjetaCredito: "411111******1111",
-        TipoCobro: "mensual",
-        Correo: correo,
-        Contrasena: "Password123!");
+    private static RegistrarNutricionistaRequest CrearRegistrarNutricionistaRequest(string correo = "nutricionista@example.com") => new()
+    {
+        Cedula = "1-1111-1111",
+        Nombre = "Nutricionista",
+        Apellidos = "Demo",
+        CodigoNutricionista = "NUT-001",
+        Edad = 35,
+        FechaNacimiento = new DateOnly(1989, 5, 10),
+        Peso = 68.0m,
+        Imc = 23.0m,
+        Direccion = "San José, Costa Rica",
+        FotoUrl = null,
+        TarjetaCredito = "411111******1111",
+        TipoCobro = "mensual",
+        Correo = correo,
+        Contrasena = "Password123!"
+    };
 
     private sealed class FakeAuthRepository : IAuthRepository
     {
