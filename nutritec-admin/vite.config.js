@@ -17,12 +17,14 @@ export default defineConfig({
     port: 3001,
     proxy: {
       "/api/sql": {
-        target: "http://localhost:5000",
+        target: "http://localhost:5255",
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/sql/, "/api"),
       },
       "/api/mongo": {
-        target: "http://localhost:5050",
+        target: "http://localhost:5272",
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/mongo/, "/api"),
       },
     },
   },
