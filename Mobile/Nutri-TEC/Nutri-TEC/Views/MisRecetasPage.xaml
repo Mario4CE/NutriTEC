@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Nutri_TEC.Views.MisRecetasPage"
+             Title="Mis Recetas"
+             BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+
+    <Grid RowDefinitions="*" Padding="0" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+        <!-- Content -->
+        <CollectionView Grid.Row="0" x:Name="RecetasView" SelectionMode="Single" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="10"/>
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 10" StrokeThickness="2" Stroke="#2ecc71" Padding="15" Margin="15,5" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                        <VerticalStackLayout Spacing="8" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                            <!-- Nombre -->
+                            <Label Text="{Binding Nombre}" FontSize="14" FontAttributes="Bold" TextColor="#2ecc71"/>
+
+                            <!-- Descripción -->
+                            <Label Text="{Binding Descripcion}" FontSize="11" TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}" LineBreakMode="TailTruncation"/>
+
+                            <!-- Nutrientes -->
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10" Margin="0,5,0,0" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                                <VerticalStackLayout Grid.Column="0" Spacing="3" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                                    <Label Text="{Binding TotalCalorias, StringFormat='{0:F0} kcal'}" FontSize="12" FontAttributes="Bold" TextColor="#2ecc71"/>
+                                    <Label Text="Calorías" FontSize="9" TextColor="{AppThemeBinding Light=#666666, Dark=#b0b0b0}"/>
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="1" Spacing="3" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                                    <Label Text="{Binding TotalProteinas, StringFormat='{0:F1}g'}" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#333333, Dark=#ffffff}"/>
+                                    <Label Text="Proteínas" FontSize="9" TextColor="{AppThemeBinding Light=#666666, Dark=#b0b0b0}"/>
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Grid.Column="2" Spacing="3" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                                    <Label Text="{Binding TotalCarbohidratos, StringFormat='{0:F1}g'}" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#333333, Dark=#ffffff}"/>
+                                    <Label Text="Carbos" FontSize="9" TextColor="{AppThemeBinding Light=#666666, Dark=#b0b0b0}"/>
+                                </VerticalStackLayout>
+                            </Grid>
+
+                            <!-- Botones -->
+                            <StackLayout Orientation="Horizontal" Spacing="8" Margin="0,10,0,0" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                                <Button Text="Usar en Consumo" Clicked="OnUsarReceta" CommandParameter="{Binding Id}" Background="#3498db" TextColor="White" Padding="10,5" CornerRadius="5" FontSize="11"/>
+                                <Button Text="Eliminar" Clicked="OnEliminarReceta" CommandParameter="{Binding Id}" Background="#ff6b6b" TextColor="White" Padding="10,5" CornerRadius="5" FontSize="11"/>
+                            </StackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <!-- Mensaje vacío -->
+        <VerticalStackLayout Grid.Row="0" Padding="20" Spacing="10" VerticalOptions="Center" HorizontalOptions="Center" x:Name="EmptyStateView" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+            <Label Text="📝" FontSize="60" HorizontalOptions="Center"/>
+            <Label Text="No tienes recetas aún" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center" TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"/>
+            <Label Text="Crea tu primera receta desde el registro de consumo" FontSize="12" HorizontalOptions="Center" TextColor="{AppThemeBinding Light=#666666, Dark=#b0b0b0}" HorizontalTextAlignment="Center"/>
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>
