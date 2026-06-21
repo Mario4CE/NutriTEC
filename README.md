@@ -1,82 +1,63 @@
 # NutriTEC
 
-NutriTEC es una plataforma para acompañar hábitos de nutrición saludable. Sus usuarios pueden gestionar su alimentación de forma independiente o trabajar con un nutricionista.
+NutriTEC es una plataforma para acompañar hábitos de nutrición saludable. El repositorio incluye APIs, una web de cliente en HTML/JS, un backend prototipo de la vista cliente y una app móvil MAUI.
 
-## Estado actual
+## Estado general actualizado
 
-El repositorio contiene una arquitectura inicial de APIs separadas por motor de persistencia, con lógica compartida en capas reutilizables:
+| Área | Estado | Notas |
+| --- | --- | --- |
+| API SQL Server | Implementada parcialmente y activa | Autenticación/JWT, productos, administración de aprobación, endpoints de Cliente y Nutricionista, objetos SQL programables. |
+| API MongoDB | Implementada parcialmente y activa | Retroalimentaciones/foro entre paciente y nutricionista con JWT. |
+| Web Cliente | Implementada como prototipo funcional local | HTML, CSS y JavaScript vanilla; usa `localStorage`, no consume todavía la API SQL central. |
+| Backend en `Vista Cliente/backend` | Prototipo separado | Contiene modelos y `DbContext`, pero no es el backend principal recomendado; la API principal es `Api/NutriTec.SqlApi`. |
+| App móvil MAUI | Implementada como prototipo funcional local | Login/registro, consumo diario y recetas con persistencia JSON local; todavía sin sincronización con APIs. |
+| Vista Admin | Cubierta en API SQL | Productos pendientes y aprobación. No hay frontend admin dedicado en este repositorio. |
+| Vista Nutricionista Web | No existe frontend dedicado | La API SQL ya expone endpoints para pacientes, planes y seguimiento. |
 
-- **API SQL Server:** CRUD inicial de productos y revisión administrativa de productos pendientes.
-- **API MongoDB:** primer corte vertical del módulo de retroalimentaciones tipo foro.
-- **Application:** servicios e interfaces compartidos, sin dependencia de bases de datos concretas.
-- **Domain:** entidades centrales del dominio.
-- **Contracts:** DTOs y respuestas HTTP estandarizadas.
-- **Infrastructure:** adaptadores independientes para SQL Server y MongoDB.
-- **Auth inicial:** contratos y abstracciones base para login, registro y hashing, todavía sin endpoints ni persistencia concreta.
-- **Documentación interna:** archivos `README.md` por carpeta relevante dentro de `Api/`, `Core/` e `Infrastructure/` para explicar responsabilidades y restricciones.
-
-Todavía no están implementados los endpoints de Auth, JWT, clientes, nutricionistas, recetas, planes alimenticios, consumo diario ni reportes. El módulo administrativo solo incluye por ahora la revisión de productos.
-
-## Arquitectura
+## Arquitectura principal
 
 ```text
-Controller → Service → Repository → Database
+Controller → Application Service → Repository → Database
 ```
 
 ```text
 NutriTEC/
 ├── Api/
-│   ├── NutriTec.SqlApi
-│   └── NutriTec.MongoApi
+│   ├── NutriTec.SqlApi        # API principal relacional
+│   └── NutriTec.MongoApi      # API documental para retroalimentaciones
 ├── Core/
-│   ├── NutriTec.Application
-│   ├── NutriTec.Domain
-│   └── NutriTec.Contracts
+│   ├── NutriTec.Application   # Casos de uso e interfaces
+│   ├── NutriTec.Domain        # Entidades de dominio
+│   └── NutriTec.Contracts     # DTOs públicos
 ├── Infrastructure/
 │   ├── NutriTec.Infrastructure.Sql
 │   └── NutriTec.Infrastructure.Mongo
 ├── Database/
 │   ├── SqlServer/
 │   └── MongoDB/
-├── Docs/
-├── Mobile/
-├── Web/
-└── NutriTec.slnx
+├── Vista Cliente/
+│   ├── frontend/              # Web cliente prototipo
+│   └── backend/               # Backend prototipo legado/separado
+├── Mobile/Nutri-TEC/          # App MAUI prototipo
+└── Tests/
 ```
 
 Cada API registra únicamente su adaptador de persistencia:
 
-- `NutriTec.SqlApi` registra `AddNutriTecSqlInfrastructure()`.
-- `NutriTec.MongoApi` registra `AddNutriTecMongoInfrastructure()`.
-- `NutriTec.SqlApi` registra `AddNutriTecSqlApplication()` y `NutriTec.MongoApi` registra `AddNutriTecMongoApplication()` para cargar solo los servicios que tienen repositorios disponibles en cada API.
-
-
-## Documentación interna por carpeta
-
-Además del README principal, el repositorio incluye archivos `README.md` internos dentro de `Api/`, `Core/` e `Infrastructure/`. Estos documentos explican qué responsabilidad tiene cada carpeta y qué restricciones deben respetarse al extender el proyecto.
-
-Ejemplos relevantes:
-
-- `Api/README.md`: describe la responsabilidad de los proyectos ASP.NET Core y recuerda que los controllers no acceden directamente a bases de datos.
-- `Core/README.md`: resume el núcleo compartido del sistema y su independencia frente a infraestructura concreta.
-- `Core/NutriTec.Contracts/Autenticacion/README.md`: explica los DTOs públicos iniciales de autenticación.
-- `Infrastructure/README.md`: documenta los adaptadores concretos y la separación entre SQL Server y MongoDB.
-
-Cuando se agregue una carpeta nueva dentro del alcance del API o sus capas de soporte, debe incluirse un README breve que describa responsabilidades y restricciones.
+- `NutriTec.SqlApi` usa `AddNutriTecSqlApplication()` y `AddNutriTecSqlInfrastructure()`.
+- `NutriTec.MongoApi` usa `AddNutriTecMongoApplication()` y `AddNutriTecMongoInfrastructure()`.
 
 ## Requisitos locales
 
-- .NET SDK 10.
-- SQL Server accesible para ejecutar la API SQL.
-- MongoDB accesible para ejecutar la API Mongo.
+- .NET SDK compatible con los proyectos versionados.
+- SQL Server accesible para ejecutar `Api/NutriTec.SqlApi`.
+- MongoDB accesible para ejecutar `Api/NutriTec.MongoApi`.
+- Navegador moderno para la web cliente.
+- Workload MAUI/emulador si se desea ejecutar la app móvil.
 
-## Configuración de desarrollo
+> Nota de entorno: en este contenedor de trabajo no está instalado el CLI `dotnet`, por lo que aquí no se pueden ejecutar builds ni pruebas .NET.
 
-Los archivos `appsettings.Development.json` contienen valores locales de ejemplo. No deben utilizarse credenciales reales dentro del repositorio.
-
-Antes de iniciar la API SQL, configure `ConnectionStrings:NutriTecSqlServer`. Antes de iniciar la API Mongo, configure `MongoDb:ConnectionString` y `MongoDb:DatabaseName`. Para secretos locales puede utilizar variables de entorno o .NET User Secrets.
-
-## Ejecutar las APIs
+## Ejecutar las APIs principales
 
 ```bash
 dotnet restore NutriTec.slnx
@@ -84,40 +65,60 @@ dotnet run --project Api/NutriTec.SqlApi/NutriTec.SqlApi.csproj
 dotnet run --project Api/NutriTec.MongoApi/NutriTec.MongoApi.csproj
 ```
 
-## Autenticación inicial
+## Autenticación y seguridad
 
-El proyecto ya cuenta con contratos y abstracciones iniciales para comenzar Auth de forma gradual:
+La API SQL ya incluye:
 
-- `LoginRequest` y `LoginResponse` definen la solicitud y respuesta segura de login.
-- `RegistrarClienteRequest` y `RegistrarNutricionistaRequest` definen los datos mínimos de registro.
-- `IAuthService` define los casos de uso esperados para login y registro.
-- `IPasswordHasher` separa la generación y validación de hashes de una implementación concreta.
-- `IAuthRepository`, `CredencialAutenticacion` y `NuevoUsuarioAutenticacion` expresan la persistencia mínima requerida sin acoplar Application a SQL Server.
+- `POST /api/auth/login`
+- `POST /api/auth/registrar-cliente`
+- `POST /api/auth/registrar-nutricionista`
+- `GET /api/auth/me`
+- JWT Bearer con políticas de rol `Cliente`, `Nutricionista` y `Administrador`.
+- Rate limit para login.
+- Hashing de contraseñas en infraestructura SQL.
 
-Este primer corte no implementa `AuthController`, JWT, hash concreto, repositorio SQL concreto ni cambios de base de datos. Las contraseñas no deben persistirse en texto plano y los hashes no deben exponerse al frontend.
+No se deben versionar contraseñas, secretos JWT reales, tarjetas completas ni cadenas de conexión productivas.
 
-## Endpoints implementados
+## Endpoints implementados en API SQL
 
-### Productos — SQL Server
+### Productos y administración
 
 | Método | Ruta | Descripción |
 | --- | --- | --- |
 | `POST` | `/api/productos` | Registra un producto pendiente de aprobación. |
-| `GET` | `/api/productos` | Lista productos. |
+| `GET` | `/api/productos` | Lista solo productos aprobados. |
 | `GET` | `/api/productos/{idProducto}` | Consulta un producto por identificador. |
-| `GET` | `/api/productos/buscar?nombre={nombre}` | Busca productos por nombre. |
-| `GET` | `/api/productos/codigo-barras/{codigoBarras}` | Consulta un producto por código de barras. |
+| `GET` | `/api/productos/buscar?nombre={nombre}` | Busca solo productos aprobados por nombre. |
+| `GET` | `/api/productos/codigo-barras/{codigoBarras}` | Consulta solo productos aprobados por código de barras. |
 | `PUT` | `/api/productos/{idProducto}` | Edita un producto. |
 | `DELETE` | `/api/productos/{idProducto}` | Elimina un producto. |
-
-### Administración de productos — SQL Server
-
-| Método | Ruta | Descripción |
-| --- | --- | --- |
 | `GET` | `/api/administracion/productos/pendientes` | Lista productos pendientes de aprobación. |
 | `PUT` | `/api/administracion/productos/{idProducto}/aprobacion` | Aprueba un producto pendiente. |
 
-### Retroalimentaciones — MongoDB
+### Vista Cliente API
+
+| Método | Ruta | Descripción |
+| --- | --- | --- |
+| `GET` | `/api/planes/usuario/{idUsuario}` | Planes asignados al cliente. |
+| `POST` | `/api/registros-diarios` | Crear consumo diario. |
+| `GET` | `/api/registros-diarios/usuario/{idUsuario}` | Historial de consumo diario. |
+| `POST` | `/api/recetas` | Crear receta. |
+| `GET` | `/api/recetas/usuario/{idUsuario}` | Recetas del usuario. |
+| `GET` | `/api/medidas/usuario/{idUsuario}` | Historial de medidas. |
+| `POST` | `/api/medidas/usuario/{idUsuario}` | Registrar medidas como cliente. |
+
+### Vista Nutricionista API
+
+| Método | Ruta | Descripción |
+| --- | --- | --- |
+| `GET` | `/api/pacientes/nutricionista/{cedula}` | Listar pacientes asociados. |
+| `POST` | `/api/pacientes/asociar` | Asociar cliente como paciente. |
+| `GET` | `/api/planes/nutricionista/{cedula}` | Listar planes del nutricionista. |
+| `POST` | `/api/planes` | Crear plan alimenticio. |
+| `POST` | `/api/planes/{idPlan}/tiempos-comida` | Agregar tiempos de comida al plan. |
+| `GET` | `/api/registro-diario/paciente/{idUsuario}` | Ver registro diario del paciente. |
+
+## Endpoints implementados en API MongoDB
 
 | Método | Ruta | Descripción |
 | --- | --- | --- |
@@ -126,23 +127,20 @@ Este primer corte no implementa `AuthController`, JWT, hash concreto, repositori
 | `GET` | `/api/retroalimentaciones/nutricionistas/{idNutricionista}` | Consulta foros de un nutricionista. |
 | `POST` | `/api/retroalimentaciones/{idRetroalimentacion}/mensajes` | Agrega una respuesta a un foro. |
 
-Los archivos `.http` dentro de cada API incluyen solicitudes de ejemplo para realizar pruebas manuales.
+## Webs y apps implementadas
 
-## Convenciones internas
+- **Web Cliente:** sí está implementada como prototipo local en `Vista Cliente/frontend`. Permite login/registro simulado, dashboard, medidas, perfil, recetas, reportes y registro de consumo usando `localStorage`.
+- **Web Admin:** no hay frontend admin dedicado. La capacidad admin existe por API SQL.
+- **Web Nutricionista:** no hay frontend nutricionista dedicado. La capacidad nutricionista existe por API SQL.
+- **App móvil:** sí está implementada como prototipo MAUI en `Mobile/Nutri-TEC`; trabaja con JSON local y no sincroniza aún con las APIs.
 
-- Los controllers no acceden directamente a las bases de datos.
-- Las entidades del dominio no se exponen directamente al frontend.
-- La lógica común vive en `Core` y los detalles de persistencia viven en `Infrastructure`.
-- La documentación interna relevante utiliza bloques `/* ... */` con las secciones `Descripción`, `Entradas`, `Salidas` y `Restricciones`.
-- No se versionan contraseñas ni cadenas de conexión reales.
+## Documentación interna
 
-## Próximos pasos
+Cada carpeta principal mantiene un README con su responsabilidad, estado y restricciones. Cuando se agregue una carpeta nueva relevante, se debe agregar un README breve y mantener esta tabla de estado actualizada.
 
-1. Implementar `AuthService` usando `IAuthRepository` e `IPasswordHasher`.
-2. Agregar una implementación concreta y segura de hashing de contraseñas.
-3. Implementar la persistencia SQL concreta de autenticación cuando exista el soporte relacional correspondiente.
-4. Agregar `AuthController` y endpoints de login/registro después de completar servicio e infraestructura.
-5. Incorporar JWT en un incremento posterior, sin exponer secretos reales en código ni configuración versionada.
-6. Agregar clientes y nutricionistas como módulos relacionales.
-7. Incorporar pruebas automatizadas cuando el entorno de desarrollo incluya el SDK de .NET.
-8. Mantener scripts, vistas, funciones y procedimientos de base de datos fuera del alcance de los incrementos exclusivos del API.
+## Pendientes conocidos
+
+- Conectar la Web Cliente y la app MAUI con `Api/NutriTec.SqlApi` en lugar de usar almacenamiento local.
+- Crear frontends dedicados para Admin y Nutricionista si el alcance del proyecto los requiere.
+- Mover cualquier endpoint transitorio que consulte SQL desde controller hacia Application/Infrastructure para mantener la arquitectura estricta.
+- Ejecutar builds/pruebas en un ambiente con SDK .NET instalado.

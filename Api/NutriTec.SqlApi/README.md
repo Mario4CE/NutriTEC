@@ -2,6 +2,17 @@
 
 API HTTP para los casos de uso que persisten en SQL Server. Incluye autenticación, registro de usuarios, productos, administración, aprobación de productos y reportes respaldados por objetos programables de SQL Server.
 
+## Estado actual
+
+La API SQL es el backend principal para los módulos relacionales. Actualmente cubre:
+
+- Autenticación y registro de clientes/nutricionistas con JWT.
+- Productos públicos filtrados por aprobación y administración de productos pendientes.
+- Endpoints de Vista Cliente: planes asignados, consumo diario, recetas y medidas.
+- Endpoints de Vista Nutricionista: pacientes, asociación, planes, tiempos de comida y seguimiento.
+- Objetos programables SQL para aprobación, asignación, medidas, reportes y funciones.
+
+
 ## Ejecución local
 
 La configuración de desarrollo usa LocalDB con Windows Authentication:
@@ -187,6 +198,31 @@ Respuesta exitosa `200 OK`:
 
 Este endpoint está protegido con JWT y devuelve únicamente claims de identidad ya validados. No consulta base de datos, no devuelve contraseña, no devuelve `password_hash` y no emite tokens nuevos.
 
+
+## Endpoints de vistas Cliente y Nutricionista
+
+Además de autenticación, productos y administración, la API SQL expone los endpoints que consumen las vistas del cliente y del nutricionista. Los endpoints están protegidos con JWT y políticas de rol (`Cliente` o `Nutricionista`).
+
+### Vista Cliente
+
+- `GET /api/productos`: devuelve únicamente productos aprobados. Las búsquedas por nombre y código de barras también filtran productos aprobados.
+- `GET /api/planes/usuario/{idUsuario}`: lista planes asignados al cliente después del login.
+- `POST /api/registros-diarios`: crea un registro diario con productos consumidos.
+- `GET /api/registros-diarios/usuario/{idUsuario}`: consulta el historial de consumo diario del cliente.
+- `POST /api/recetas`: crea recetas del cliente con sus productos.
+- `GET /api/recetas/usuario/{idUsuario}`: lista recetas creadas por el cliente.
+- `GET /api/medidas/usuario/{idUsuario}`: consulta el historial de medidas corporales.
+- `POST /api/medidas/usuario/{idUsuario}`: permite que un cliente registre sus propias medidas sin depender del flujo administrativo.
+
+### Vista Nutricionista
+
+- `GET /api/pacientes/nutricionista/{cedula}`: lista pacientes asociados al nutricionista.
+- `POST /api/pacientes/asociar`: asocia un cliente existente como paciente.
+- `GET /api/planes/nutricionista/{cedula}`: lista planes creados por el nutricionista.
+- `POST /api/planes`: crea un plan alimenticio.
+- `POST /api/planes/{idPlan}/tiempos-comida`: agrega tiempos de comida y productos a un plan.
+- `GET /api/registro-diario/paciente/{idUsuario}`: permite al nutricionista revisar registros diarios de un paciente para seguimiento.
+
 ## Endpoints de productos
 
 Los productos registrados quedan pendientes de aprobación administrativa. El controller no aprueba productos ni accede directamente a Entity Framework Core; delega en Application.
@@ -288,13 +324,13 @@ Internamente este endpoint consulta la función SQL `dbo.fn_CalcularImc`.
 
 ## Autenticación JWT
 
-El login y los registros devuelven un JWT firmado. Para consumir endpoints protegidos en futuros módulos, enviar el token así:
+El login y los registros devuelven un JWT firmado. Para consumir endpoints protegidos, enviar el token así:
 
 ```http
 Authorization: Bearer <jwt>
 ```
 
-Claims incluidos inicialmente:
+Claims incluidos:
 
 - `sub`: identificador del usuario.
 - `email`: correo del usuario.
