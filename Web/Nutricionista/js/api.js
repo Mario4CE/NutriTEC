@@ -1,4 +1,5 @@
-const API_BASE_URL = "https://localhost:7000/api";
+const API_SQL_BASE_URL = "https://localhost:7281/api";
+const API_MONGO_BASE_URL = "https://localhost:7044/api";
 
 function obtenerToken() {
     return localStorage.getItem("nutritec_token");
@@ -31,7 +32,7 @@ function requiereAutenticacion() {
     }
 }
 
-async function apiFetch(ruta, opciones = {}) {
+async function realizarPeticion(baseUrl, ruta, opciones = {}) {
     const token = obtenerToken();
     const headers = {
         "Content-Type": "application/json",
@@ -42,7 +43,7 @@ async function apiFetch(ruta, opciones = {}) {
         headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const respuesta = await fetch(`${API_BASE_URL}${ruta}`, {
+    const respuesta = await fetch(`${baseUrl}${ruta}`, {
         ...opciones,
         headers
     });
@@ -60,4 +61,12 @@ async function apiFetch(ruta, opciones = {}) {
     }
 
     return cuerpo;
+}
+
+function apiFetch(ruta, opciones = {}) {
+    return realizarPeticion(API_SQL_BASE_URL, ruta, opciones);
+}
+
+function apiMongoFetch(ruta, opciones = {}) {
+    return realizarPeticion(API_MONGO_BASE_URL, ruta, opciones);
 }

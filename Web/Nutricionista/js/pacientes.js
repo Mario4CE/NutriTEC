@@ -85,6 +85,7 @@ function mostrarListaPacientes(pacientes) {
             <td>${paciente.idPaciente}</td>
             <td>${new Date(paciente.fechaAsociacionUtc).toLocaleDateString()}</td>
             <td class="text-end">
+                <a href="seguimiento.html?idPaciente=${paciente.idPaciente}" class="btn btn-sm btn-success">Seguimiento</a>
                 <button class="btn btn-sm btn-outline-danger" onclick="desasociarPaciente('${paciente.id}')">Quitar</button>
             </td>
         </tr>
