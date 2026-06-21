@@ -12,7 +12,7 @@
 
     Restricciones:
     - Solo usar en ambientes locales/de prueba.
-    - No contiene contraseñas reales ni tarjetas reales; los hashes son marcadores no válidos para login real.
+    - No contiene tarjetas reales; las contraseñas demo están documentadas para login local/QA.
     - Es idempotente para los datos identificados por correos, cédulas, códigos y nombres demo.
 */
 
@@ -33,43 +33,49 @@ WHEN NOT MATCHED THEN
     INSERT (codigo_tipo_cobro, nombre, activo)
     VALUES (source.codigo_tipo_cobro, source.nombre, source.activo);
 
-/* 5 administradores demo. */
+/* 5 administradores demo. Contraseña para todos: Admin2026! */
 MERGE ADMINISTRADOR AS target
 USING (VALUES
-    ('admin.demo1@nutritec.test', 'TEST_HASH_NO_USAR_01'),
-    ('admin.demo2@nutritec.test', 'TEST_HASH_NO_USAR_02'),
-    ('admin.demo3@nutritec.test', 'TEST_HASH_NO_USAR_03'),
-    ('admin.demo4@nutritec.test', 'TEST_HASH_NO_USAR_04'),
-    ('admin.demo5@nutritec.test', 'TEST_HASH_NO_USAR_05')
+    ('admin.demo1@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNBZG1pbjAxIQ==$pr0B257yIi5JuhQjy9+q+tOjcIJhTO5of3VA06RqL5I='),
+    ('admin.demo2@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNBZG1pbjAxIQ==$pr0B257yIi5JuhQjy9+q+tOjcIJhTO5of3VA06RqL5I='),
+    ('admin.demo3@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNBZG1pbjAxIQ==$pr0B257yIi5JuhQjy9+q+tOjcIJhTO5of3VA06RqL5I='),
+    ('admin.demo4@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNBZG1pbjAxIQ==$pr0B257yIi5JuhQjy9+q+tOjcIJhTO5of3VA06RqL5I='),
+    ('admin.demo5@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNBZG1pbjAxIQ==$pr0B257yIi5JuhQjy9+q+tOjcIJhTO5of3VA06RqL5I=')
 ) AS source (email, password_hash)
 ON target.email = source.email
+WHEN MATCHED THEN
+    UPDATE SET password_hash = source.password_hash
 WHEN NOT MATCHED THEN
     INSERT (email, password_hash) VALUES (source.email, source.password_hash);
 
-/* 5 clientes demo. */
+/* 5 clientes demo. Contraseña para todos: Cliente2026! */
 MERGE USUARIO AS target
 USING (VALUES
-    ('Cliente', 'Demo Uno', 29, CONVERT(date, '1997-02-10'), 70.50, 23.10, 'Costa Rica', 82.00, 38.00, 96.00, 42.00, 19.00, 2200.00, 'cliente.demo1@nutritec.test', 'TEST_HASH_NO_USAR_01'),
-    ('Cliente', 'Demo Dos', 34, CONVERT(date, '1992-06-18'), 81.00, 25.20, 'Costa Rica', 90.00, 40.00, 101.00, 39.00, 24.00, 2100.00, 'cliente.demo2@nutritec.test', 'TEST_HASH_NO_USAR_02'),
-    ('Cliente', 'Demo Tres', 25, CONVERT(date, '2001-03-25'), 62.30, 21.40, 'Costa Rica', 74.00, 34.00, 91.00, 44.00, 17.50, 2000.00, 'cliente.demo3@nutritec.test', 'TEST_HASH_NO_USAR_03'),
-    ('Cliente', 'Demo Cuatro', 41, CONVERT(date, '1985-11-03'), 88.20, 27.80, 'Costa Rica', 98.00, 42.00, 105.00, 36.00, 29.00, 1900.00, 'cliente.demo4@nutritec.test', 'TEST_HASH_NO_USAR_04'),
-    ('Cliente', 'Demo Cinco', 31, CONVERT(date, '1995-09-14'), 68.00, 22.70, 'Costa Rica', 80.00, 36.00, 94.00, 41.50, 20.00, 2150.00, 'cliente.demo5@nutritec.test', 'TEST_HASH_NO_USAR_05')
+    ('Cliente', 'Demo Uno', 29, CONVERT(date, '1997-02-10'), 70.50, 23.10, 'Costa Rica', 82.00, 38.00, 96.00, 42.00, 19.00, 2200.00, 'cliente.demo1@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNDbGllbnRlMQ==$tiRxiOvueH5Y9xL4tfnTpsOJJtmyHLfEmDfuUNguq4c='),
+    ('Cliente', 'Demo Dos', 34, CONVERT(date, '1992-06-18'), 81.00, 25.20, 'Costa Rica', 90.00, 40.00, 101.00, 39.00, 24.00, 2100.00, 'cliente.demo2@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNDbGllbnRlMQ==$tiRxiOvueH5Y9xL4tfnTpsOJJtmyHLfEmDfuUNguq4c='),
+    ('Cliente', 'Demo Tres', 25, CONVERT(date, '2001-03-25'), 62.30, 21.40, 'Costa Rica', 74.00, 34.00, 91.00, 44.00, 17.50, 2000.00, 'cliente.demo3@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNDbGllbnRlMQ==$tiRxiOvueH5Y9xL4tfnTpsOJJtmyHLfEmDfuUNguq4c='),
+    ('Cliente', 'Demo Cuatro', 41, CONVERT(date, '1985-11-03'), 88.20, 27.80, 'Costa Rica', 98.00, 42.00, 105.00, 36.00, 29.00, 1900.00, 'cliente.demo4@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNDbGllbnRlMQ==$tiRxiOvueH5Y9xL4tfnTpsOJJtmyHLfEmDfuUNguq4c='),
+    ('Cliente', 'Demo Cinco', 31, CONVERT(date, '1995-09-14'), 68.00, 22.70, 'Costa Rica', 80.00, 36.00, 94.00, 41.50, 20.00, 2150.00, 'cliente.demo5@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNDbGllbnRlMQ==$tiRxiOvueH5Y9xL4tfnTpsOJJtmyHLfEmDfuUNguq4c=')
 ) AS source (nombre, apellidos, edad, fecha_nacimiento, peso, imc, pais, cintura, cuello, caderas, pct_musculo, pct_grasa, calorias_diarias_max, email, password_hash)
 ON target.email = source.email
+WHEN MATCHED THEN
+    UPDATE SET password_hash = source.password_hash
 WHEN NOT MATCHED THEN
     INSERT (nombre, apellidos, edad, fecha_nacimiento, peso, imc, pais, cintura, cuello, caderas, pct_musculo, pct_grasa, calorias_diarias_max, email, password_hash)
     VALUES (source.nombre, source.apellidos, source.edad, source.fecha_nacimiento, source.peso, source.imc, source.pais, source.cintura, source.cuello, source.caderas, source.pct_musculo, source.pct_grasa, source.calorias_diarias_max, source.email, source.password_hash);
 
-/* 5 nutricionistas demo. */
+/* 5 nutricionistas demo. Contraseña para todos: Nutricion2026! */
 MERGE NUTRICIONISTA AS target
 USING (VALUES
-    ('NUT-DEMO-001', 'Nutricionista', 'Demo Uno', 'COD-DEMO-001', 35, CONVERT(date, '1991-01-12'), 66.00, 22.30, 'San José', NULL, '****-****-****-1001', 'mensual', 'nutri.demo1@nutritec.test', 'TEST_HASH_NO_USAR_01'),
-    ('NUT-DEMO-002', 'Nutricionista', 'Demo Dos', 'COD-DEMO-002', 38, CONVERT(date, '1988-04-04'), 72.00, 24.10, 'Heredia', NULL, '****-****-****-1002', 'semanal', 'nutri.demo2@nutritec.test', 'TEST_HASH_NO_USAR_02'),
-    ('NUT-DEMO-003', 'Nutricionista', 'Demo Tres', 'COD-DEMO-003', 32, CONVERT(date, '1994-08-20'), 61.00, 21.80, 'Alajuela', NULL, '****-****-****-1003', 'anual', 'nutri.demo3@nutritec.test', 'TEST_HASH_NO_USAR_03'),
-    ('NUT-DEMO-004', 'Nutricionista', 'Demo Cuatro', 'COD-DEMO-004', 45, CONVERT(date, '1981-12-02'), 75.00, 25.00, 'Cartago', NULL, '****-****-****-1004', 'mensual', 'nutri.demo4@nutritec.test', 'TEST_HASH_NO_USAR_04'),
-    ('NUT-DEMO-005', 'Nutricionista', 'Demo Cinco', 'COD-DEMO-005', 29, CONVERT(date, '1997-07-07'), 59.00, 20.90, 'Puntarenas', NULL, '****-****-****-1005', 'semanal', 'nutri.demo5@nutritec.test', 'TEST_HASH_NO_USAR_05')
+    ('NUT-DEMO-001', 'Nutricionista', 'Demo Uno', 'COD-DEMO-001', 35, CONVERT(date, '1991-01-12'), 66.00, 22.30, 'San José', NULL, '****-****-****-1001', 'mensual', 'nutri.demo1@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNOdXRyaTAwMQ==$O0mzVY+ddrrKzmKyBnJLVvwB2LsshsQyidUbm/hHFtI='),
+    ('NUT-DEMO-002', 'Nutricionista', 'Demo Dos', 'COD-DEMO-002', 38, CONVERT(date, '1988-04-04'), 72.00, 24.10, 'Heredia', NULL, '****-****-****-1002', 'semanal', 'nutri.demo2@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNOdXRyaTAwMQ==$O0mzVY+ddrrKzmKyBnJLVvwB2LsshsQyidUbm/hHFtI='),
+    ('NUT-DEMO-003', 'Nutricionista', 'Demo Tres', 'COD-DEMO-003', 32, CONVERT(date, '1994-08-20'), 61.00, 21.80, 'Alajuela', NULL, '****-****-****-1003', 'anual', 'nutri.demo3@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNOdXRyaTAwMQ==$O0mzVY+ddrrKzmKyBnJLVvwB2LsshsQyidUbm/hHFtI='),
+    ('NUT-DEMO-004', 'Nutricionista', 'Demo Cuatro', 'COD-DEMO-004', 45, CONVERT(date, '1981-12-02'), 75.00, 25.00, 'Cartago', NULL, '****-****-****-1004', 'mensual', 'nutri.demo4@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNOdXRyaTAwMQ==$O0mzVY+ddrrKzmKyBnJLVvwB2LsshsQyidUbm/hHFtI='),
+    ('NUT-DEMO-005', 'Nutricionista', 'Demo Cinco', 'COD-DEMO-005', 29, CONVERT(date, '1997-07-07'), 59.00, 20.90, 'Puntarenas', NULL, '****-****-****-1005', 'semanal', 'nutri.demo5@nutritec.test', 'PBKDF2-SHA256$310000$TnV0cmlURUNOdXRyaTAwMQ==$O0mzVY+ddrrKzmKyBnJLVvwB2LsshsQyidUbm/hHFtI=')
 ) AS source (cedula, nombre, apellidos, codigo_nutricionista, edad, fecha_nacimiento, peso, imc, direccion, foto_url, tarjeta_credito, tipo_cobro, email, password_hash)
 ON target.cedula = source.cedula
+WHEN MATCHED THEN
+    UPDATE SET password_hash = source.password_hash
 WHEN NOT MATCHED THEN
     INSERT (cedula, nombre, apellidos, codigo_nutricionista, edad, fecha_nacimiento, peso, imc, direccion, foto_url, tarjeta_credito, tipo_cobro, email, password_hash)
     VALUES (source.cedula, source.nombre, source.apellidos, source.codigo_nutricionista, source.edad, source.fecha_nacimiento, source.peso, source.imc, source.direccion, source.foto_url, source.tarjeta_credito, source.tipo_cobro, source.email, source.password_hash);
@@ -225,6 +231,16 @@ INNER JOIN REGISTRO_DIARIO rd ON rd.id_usuario = u.id_usuario AND rd.fecha = v.f
 WHERE NOT EXISTS (SELECT 1 FROM REGISTRO_PRODUCTO rp WHERE rp.id_registro = rd.id_registro AND rp.id_producto = v.id_producto);
 
 COMMIT TRANSACTION;
+
+
+/* Credenciales demo para login local/QA.
+   Admins: Admin2026!
+   Clientes: Cliente2026!
+   Nutricionistas: Nutricion2026!
+*/
+SELECT 'admin.demo1@nutritec.test' AS correo, 'Admin2026!' AS contrasena, 'Administrador' AS rol
+UNION ALL SELECT 'cliente.demo1@nutritec.test', 'Cliente2026!', 'Cliente'
+UNION ALL SELECT 'nutri.demo1@nutritec.test', 'Nutricion2026!', 'Nutricionista';
 
 /* Resumen rápido de cobertura. */
 SELECT 'ADMINISTRADOR demo' AS entidad, COUNT(*) AS cantidad FROM ADMINISTRADOR WHERE email LIKE 'admin.demo%@nutritec.test'
