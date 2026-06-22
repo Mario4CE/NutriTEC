@@ -107,6 +107,20 @@ public sealed class VistasController(NutriTecDbContext context) : ControllerBase
         return Ok(ApiResponse<object>.SuccessResponse(new { IdRegistro = idRegistro }, "Registro eliminado."));
     }
 
+    [HttpGet("api/pacientes/usuario/{idUsuario:int}/nutricionista")]
+    [Authorize(Policy = "Cliente")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyCollection<object>>>> NutricionistaDelPaciente(int idUsuario, CancellationToken ct)
+    {
+        const string sql = """
+            SELECT TOP(1) n.cedula, n.nombre, n.apellidos, n.email
+            FROM NUTRICIONISTA n
+            INNER JOIN PACIENTE_NUTRICIONISTA pn ON pn.cedula_nutricionista = n.cedula
+            WHERE pn.id_usuario = @idUsuario
+            """;
+        return Ok(ApiResponse<IReadOnlyCollection<object>>.SuccessResponse(
+            await QueryAsync(sql, ct, P("@idUsuario", idUsuario))));
+    }
+
     [HttpGet("api/medidas/usuario/{idUsuario:int}")]
     [Authorize(Policy = "Cliente")]
     public async Task<ActionResult<ApiResponse<IReadOnlyCollection<object>>>> MedidasUsuario(int idUsuario, CancellationToken ct) =>

@@ -47,6 +47,9 @@ const ENDPOINTS = {
     porPaciente:    (idPaciente) => `${API_CONFIG.MONGO}/retroalimentaciones/pacientes/${idPaciente}`,
     responder:      (id)         => `${API_CONFIG.MONGO}/retroalimentaciones/${id}/mensajes`,
   },
+  pacientes: {
+    nutricionista: (idUsuario) => `${API_CONFIG.SQL}/pacientes/usuario/${idUsuario}/nutricionista`,
+  },
 };
 
 async function apiFetch(url, options = {}) {

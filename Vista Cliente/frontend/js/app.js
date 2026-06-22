@@ -599,31 +599,49 @@ class NutriTECApp {
   // ── Retroalimentación ─────────────────────────────────────
 
   async enviarRetroalimentacion() {
-    const mensaje  = document.getElementById("nuevoMensaje")?.value.trim();
-    const session  = getSession();
-    const email    = this.currentUser.correo ?? this.currentUser.email;
-    const idGuid   = `00000000-0000-0000-0000-${String(session.idUsuario).padStart(12, "0")}`;
+      const mensaje  = document.getElementById("nuevoMensaje")?.value.trim();
+      const session  = getSession();
+      const email    = this.currentUser.correo ?? this.currentUser.email;
 
-    if (!mensaje) {
-      this.showAlert("Escribe un mensaje primero", "warning");
-      return;
-    }
+      if (!mensaje) {
+        this.showAlert("Escribe un mensaje primero", "warning");
+        return;
+      }
 
-    try {
-      await apiFetch(ENDPOINTS.retroalimentacion.crear(), {
-        method: "POST",
-        body: JSON.stringify({
-          IdPaciente:      idGuid,
-          IdNutricionista: "00000000-0000-0000-0000-000000000000",
-          Autor:           email,
-          Mensaje:         mensaje,
-        }),
-      });
-      this.showAlert("Mensaje enviado", "success");
-      await this.showView("retroalimentacion");
-    } catch (err) {
-      this.showAlert("Error al enviar mensaje: " + err.message, "danger");
-    }
+      // Obtener nutricionista asignado
+      let idNutricionistaGuid = null;
+      try {
+        const res = await apiFetch(ENDPOINTS.pacientes.nutricionista(session.idUsuario));
+        const lista = res?.data ?? res ?? [];
+        if (lista.length === 0) {
+          this.showAlert("No tenés un nutricionista asignado aún", "warning");
+          return;
+        }
+        // Convertir cédula del nutricionista a Guid
+        const cedula = lista[0].cedula;
+        idNutricionistaGuid = `00000000-0000-0000-0000-${String(cedula).padStart(12, "0")}`;
+      } catch (err) {
+        this.showAlert("Error al obtener nutricionista: " + err.message, "danger");
+        return;
+      }
+
+      const idPacienteGuid = `00000000-0000-0000-0000-${String(session.idUsuario).padStart(12, "0")}`;
+
+      try {
+        await apiFetch(ENDPOINTS.retroalimentacion.crear(), {
+          method: "POST",
+          body: JSON.stringify({
+            IdPaciente:      idPacienteGuid,
+            IdNutricionista: idNutricionistaGuid,
+            Autor:           email,
+            Mensaje:         mensaje,
+          }),
+        });
+        this.showAlert("Mensaje enviado", "success");
+        await this.showView("retroalimentacion");
+      } catch (err) {
+        this.showAlert("Error al enviar mensaje: " + err.message, "danger");
+      }
   }
 
   async responderRetroalimentacion(idRetro) {

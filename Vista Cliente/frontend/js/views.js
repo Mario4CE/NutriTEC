@@ -657,7 +657,7 @@ class Views {
                                                         <strong>${m.autor === email ? "Tú" : "Nutricionista"}</strong>
                                                         · ${new Date(m.fechaUtc).toLocaleString("es-CR")}
                                                     </small>
-                                                    <p class="mb-0 mt-1">${m.contenido}</p>
+                                                    <p class="mb-0 mt-1">${m.contenido ?? m.mensaje ?? m.Mensaje ?? "—"}</p>
                                                 </div>
                                             </div>
                                         </div>
