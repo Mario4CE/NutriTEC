@@ -48,6 +48,37 @@
             </div>
         </div>
 
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h2 class="h6">Asignar plan a paciente</h2>
+                <form id="formAsignacion">
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <label for="selectPlan" class="form-label small">Plan</label>
+                            <select class="form-select form-select-sm" id="selectPlan" required>
+                                <option value="" disabled selected>Seleccione...</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="selectPaciente" class="form-label small">Paciente (ID)</label>
+                            <input type="number" class="form-control form-control-sm" id="selectPaciente" placeholder="ID del paciente" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="fechaInicio" class="form-label small">Fecha inicio</label>
+                            <input type="date" class="form-control form-control-sm" id="fechaInicio" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="fechaFin" class="form-label small">Fecha fin</label>
+                            <input type="date" class="form-control form-control-sm" id="fechaFin" required>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-success btn-sm w-100">Asignar</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <div class="card shadow-sm">
             <div class="card-body">
                 <h2 class="h6">Mis planes</h2>

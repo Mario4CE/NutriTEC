@@ -1,10 +1,12 @@
 const tiemposComidaContenedor = document.getElementById("tiemposComida");
 const btnAgregarItem = document.getElementById("btnAgregarItem");
 const formPlan = document.getElementById("formPlan");
+const formAsignacion = document.getElementById("formAsignacion");
 const plantillaItem = document.getElementById("plantillaItemPlan");
 const listaPlanes = document.getElementById("listaPlanes");
 const alertaMensajePlanes = document.getElementById("alertaMensaje");
 const totalCaloriasEstimado = document.getElementById("totalCaloriasEstimado");
+const selectPlan = document.getElementById("selectPlan");
 
 document.addEventListener("DOMContentLoaded", () => {
     agregarItemPlan();
@@ -103,13 +105,58 @@ if (formPlan) {
     });
 }
 
+if (formAsignacion) {
+    formAsignacion.addEventListener("submit", async (evento) => {
+        evento.preventDefault();
+
+        const idPlan = parseInt(selectPlan.value, 10);
+        const idPaciente = parseInt(document.getElementById("selectPaciente").value, 10);
+        const fechaInicio = document.getElementById("fechaInicio").value;
+        const fechaFin = document.getElementById("fechaFin").value;
+
+        if (!idPlan || !idPaciente || !fechaInicio || !fechaFin) {
+            mostrarMensajePlanes("Complete todos los campos para asignar el plan.", "danger");
+            return;
+        }
+
+        if (fechaFin < fechaInicio) {
+            mostrarMensajePlanes("La fecha de fin no puede ser anterior a la de inicio.", "danger");
+            return;
+        }
+
+        try {
+            await apiFetch("/planes/asignaciones", {
+                method: "POST",
+                body: JSON.stringify({ idPlan, idPaciente, fechaInicio, fechaFin })
+            });
+
+            mostrarMensajePlanes("Plan asignado correctamente.", "success");
+            formAsignacion.reset();
+        } catch (error) {
+            mostrarMensajePlanes(error.message, "danger");
+        }
+    });
+}
+
 async function cargarPlanes() {
     try {
         const respuesta = await apiFetch("/planes");
         mostrarListaPlanes(respuesta.data);
+        actualizarSelectPlanes(respuesta.data);
     } catch (error) {
         listaPlanes.innerHTML = `<p class="text-danger">No se pudieron cargar los planes.</p>`;
     }
+}
+
+function actualizarSelectPlanes(planes) {
+    if (!selectPlan || !planes) return;
+    selectPlan.innerHTML = `<option value="" disabled selected>Seleccione...</option>`;
+    planes.forEach(plan => {
+        const opcion = document.createElement("option");
+        opcion.value = plan.id;
+        opcion.textContent = `${plan.nombre} (${plan.caloriasTotales.toFixed(1)} kcal)`;
+        selectPlan.appendChild(opcion);
+    });
 }
 
 const nombresTiempoComida = {

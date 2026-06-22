@@ -5,9 +5,10 @@ const params = new URLSearchParams(window.location.search);
 const idPaciente = params.get("idPaciente");
 
 const idPacienteMostrado = document.getElementById("idPacienteMostrado");
+const contenedorRegistroDiario = document.getElementById("contenedorRegistroDiario");
 const hiloMensajes = document.getElementById("hiloMensajes");
 const formMensaje = document.getElementById("formMensaje");
-const alertaMensajeSeguimisento = document.getElementById("alertaMensaje");
+const alertaMensajeSeguimiento = document.getElementById("alertaMensaje");
 
 let idRetroalimentacionActual = null;
 
@@ -18,8 +19,42 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     idPacienteMostrado.textContent = idPaciente;
-    await cargarConversacion();
+    await Promise.all([cargarRegistroDiario(), cargarConversacion()]);
 });
+
+async function cargarRegistroDiario() {
+    if (!contenedorRegistroDiario) return;
+
+    try {
+        const respuesta = await apiFetch(`/registro-diario/paciente/${idPaciente}`);
+        const registros = respuesta.data;
+
+        if (!registros || registros.length === 0) {
+            contenedorRegistroDiario.innerHTML = `<p class="text-muted small">El paciente aún no tiene registros diarios.</p>`;
+            return;
+        }
+
+        const porFecha = registros.reduce((agrupado, registro) => {
+            const fecha = new Date(registro.fecha).toLocaleDateString();
+            if (!agrupado[fecha]) agrupado[fecha] = [];
+            agrupado[fecha].push(registro);
+            return agrupado;
+        }, {});
+
+        contenedorRegistroDiario.innerHTML = Object.entries(porFecha).map(([fecha, items]) => `
+            <div class="mb-2">
+                <div class="small fw-bold text-muted">${fecha}</div>
+                ${items.map(item => `
+                    <div class="small ps-2">• ${item.tipo_comida ?? item.tipoComida ?? ''}</div>
+                `).join("")}
+            </div>
+        `).join("");
+    } catch (error) {
+        if (contenedorRegistroDiario) {
+            contenedorRegistroDiario.innerHTML = `<p class="text-muted small">No se pudo cargar el registro diario.</p>`;
+        }
+    }
+}
 
 async function cargarConversacion() {
     try {
