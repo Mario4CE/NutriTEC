@@ -44,10 +44,10 @@ class NutriTECApp {
         break;
 
       case "dashboard": {
-        const email           = this.currentUser.correo ?? this.currentUser.email;
-        const consumoHoy      = await Data.getConsumoHoy(email);
+        const email            = this.currentUser.correo ?? this.currentUser.email;
+        const consumoHoy       = await Data.getConsumoHoy(email);
         const medidasRecientes = await Data.getAllMedidas(email);
-        const nutrientesHoy   = Data.getNutrientesDia(email, consumoHoy);
+        const nutrientesHoy    = Data.getNutrientesDia(email, consumoHoy);
         this.appContainer.innerHTML = Views.getDashboardView(this.currentUser, consumoHoy, medidasRecientes, nutrientesHoy);
         this.setupDashboardHandlers();
         break;
@@ -80,6 +80,20 @@ class NutriTECApp {
         this.appContainer.innerHTML = Views.getReporteView(this.currentUser);
         this.setupReporteHandlers();
         break;
+
+      case "retroalimentacion": {
+        const session = getSession();
+        let mensajes  = [];
+        try {
+          const idGuid = `00000000-0000-0000-0000-${String(session.idUsuario).padStart(12, "0")}`;
+          const res    = await apiFetch(ENDPOINTS.retroalimentacion.porPaciente(idGuid));
+          mensajes     = res?.data ?? res ?? [];
+        } catch (err) {
+          console.warn("No se pudieron cargar mensajes:", err.message);
+        }
+        this.appContainer.innerHTML = Views.getRetroalimentacionView(this.currentUser, mensajes);
+        break;
+      }
 
       default:
         this.showView("login");
@@ -267,11 +281,14 @@ class NutriTECApp {
   }
 
   async eliminarProductoDelConsumo(consumoId, productoId) {
-    const email = this.currentUser.correo ?? this.currentUser.email;
-    if (Data.removeProductoDelConsumo(email, consumoId, productoId)) {
-      this.showAlert("Producto eliminado", "info");
-      await this.actualizarTablaConsumo();
+    try {
+      await apiFetch(ENDPOINTS.registros.eliminar(consumoId), { method: "DELETE" });
+      this.showAlert("Registro eliminado", "info");
+    } catch (err) {
+      console.error("Error eliminando registro:", err.message);
+      this.showAlert("Error al eliminar", "danger");
     }
+    await this.actualizarTablaConsumo();
   }
 
   async actualizarTablaConsumo() {
@@ -317,8 +334,7 @@ class NutriTECApp {
       panel.innerHTML = `
         <div class="mb-4">
           <div class="progress" style="height:30px;">
-            <div class="progress-bar bg-success" role="progressbar"
-              style="width:${porcentaje}%;">
+            <div class="progress-bar bg-success" role="progressbar" style="width:${porcentaje}%;">
               <small>${porcentaje.toFixed(0)}%</small>
             </div>
           </div>
@@ -445,7 +461,7 @@ class NutriTECApp {
         }
 
         debounceTimer = setTimeout(async () => {
-          let resultados = await Data.buscarProductosYRecetas(query);
+          let resultados = await Data.buscarProductos(query, "nombre");
           if (resultados.length === 0 && !isNaN(query)) {
             resultados = await Data.buscarProductos(query, "codigoBarras");
           }
@@ -580,6 +596,57 @@ class NutriTECApp {
     }
   }
 
+  // ── Retroalimentación ─────────────────────────────────────
+
+  async enviarRetroalimentacion() {
+    const mensaje  = document.getElementById("nuevoMensaje")?.value.trim();
+    const session  = getSession();
+    const email    = this.currentUser.correo ?? this.currentUser.email;
+    const idGuid   = `00000000-0000-0000-0000-${String(session.idUsuario).padStart(12, "0")}`;
+
+    if (!mensaje) {
+      this.showAlert("Escribe un mensaje primero", "warning");
+      return;
+    }
+
+    try {
+      await apiFetch(ENDPOINTS.retroalimentacion.crear(), {
+        method: "POST",
+        body: JSON.stringify({
+          IdPaciente:      idGuid,
+          IdNutricionista: "00000000-0000-0000-0000-000000000000",
+          Autor:           email,
+          Mensaje:         mensaje,
+        }),
+      });
+      this.showAlert("Mensaje enviado", "success");
+      await this.showView("retroalimentacion");
+    } catch (err) {
+      this.showAlert("Error al enviar mensaje: " + err.message, "danger");
+    }
+  }
+
+  async responderRetroalimentacion(idRetro) {
+    const mensaje = document.getElementById(`respuesta-${idRetro}`)?.value.trim();
+    const email   = this.currentUser.correo ?? this.currentUser.email;
+
+    if (!mensaje) {
+      this.showAlert("Escribe una respuesta primero", "warning");
+      return;
+    }
+
+    try {
+      await apiFetch(ENDPOINTS.retroalimentacion.responder(idRetro), {
+        method: "POST",
+        body: JSON.stringify({ Autor: email, Mensaje: mensaje }),
+      });
+      this.showAlert("Respuesta enviada", "success");
+      await this.showView("retroalimentacion");
+    } catch (err) {
+      this.showAlert("Error al enviar respuesta: " + err.message, "danger");
+    }
+  }
+
   // ── Reporte ───────────────────────────────────────────────
 
   setupReporteHandlers() {
@@ -653,7 +720,7 @@ class NutriTECApp {
       html += '<table class="table table-striped"><thead><tr><th>Fecha</th><th>Tiempo de Comida</th><th>Productos</th><th>Calorías</th><th>Proteínas (g)</th><th>Grasas (g)</th><th>Carbohidratos (g)</th></tr></thead><tbody>';
 
       consumos.forEach((consumo) => {
-        const fecha    = new Date(consumo.fecha).toLocaleDateString("es-CR");
+        const fecha     = new Date(consumo.fecha).toLocaleDateString("es-CR");
         const productos = (consumo.productos ?? []).map((p) => `${p.producto.descripcion} (${p.cantidad}g)`).join(", ");
         let totalCal = 0, totalProt = 0, totalGrasa = 0, totalCarb = 0;
         (consumo.productos ?? []).forEach((p) => {

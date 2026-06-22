@@ -215,7 +215,7 @@ class Data {
       const res   = await apiFetch(ENDPOINTS.registros.porUsuario(session.idUsuario));
       const lista = res?.data ?? res ?? [];
       if (!Array.isArray(lista)) return [];
-      const hoy = new Date().toISOString().split("T")[0];
+      const hoy = new Date().toLocaleDateString("en-CA");
       return Data._agruparRegistros(lista, (fecha) => fecha === hoy);
     } catch (err) {
       console.error("getConsumoHoy error:", err.message);
@@ -291,7 +291,7 @@ class Data {
         const receta   = recetas.find((r) => String(r.id) === idReceta);
         if (!receta || !receta.productos?.length) return false;
 
-        const hoy = new Date().toISOString().split("T")[0];
+        const hoy = new Date().toLocaleDateString("en-CA");
         for (const prod of receta.productos) {
           await apiFetch(ENDPOINTS.registros.crear(), {
             method: "POST",
@@ -299,14 +299,14 @@ class Data {
               IdUsuario:  parseInt(session.idUsuario),
               Fecha:      hoy,
               TipoComida: tiempoComida,
-              Productos:  [{ IdProducto: prod.productoId, CantidadPorciones: prod.cantidad * (cantidad / 100) }],
+              Productos:  [{ IdProducto: prod.productoId, CantidadPorciones: prod.cantidad }],
             }),
           });
         }
         return true;
       }
 
-      const hoy = new Date().toISOString().split("T")[0];
+      const hoy = new Date().toLocaleDateString("en-CA");
       const res = await apiFetch(ENDPOINTS.registros.crear(), {
         method: "POST",
         body: JSON.stringify({

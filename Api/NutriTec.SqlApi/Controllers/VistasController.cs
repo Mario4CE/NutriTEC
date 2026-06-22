@@ -97,6 +97,16 @@ public sealed class VistasController(NutriTecDbContext context) : ControllerBase
             await QueryAsync(sql, ct, P("@idUsuario", idUsuario))));
     }
 
+    [HttpDelete("api/registros-diarios/{idRegistro:int}")]
+    [Authorize(Policy = "Cliente")]
+    public async Task<ActionResult<ApiResponse<object>>> EliminarRegistroDiario(int idRegistro, CancellationToken ct)
+    {
+        await NonQueryAsync(await OpenAsync(ct), null,
+            "DELETE FROM REGISTRO_PRODUCTO WHERE id_registro = @id; DELETE FROM REGISTRO_DIARIO WHERE id_registro = @id",
+            ct, P("@id", idRegistro));
+        return Ok(ApiResponse<object>.SuccessResponse(new { IdRegistro = idRegistro }, "Registro eliminado."));
+    }
+
     [HttpGet("api/medidas/usuario/{idUsuario:int}")]
     [Authorize(Policy = "Cliente")]
     public async Task<ActionResult<ApiResponse<IReadOnlyCollection<object>>>> MedidasUsuario(int idUsuario, CancellationToken ct) =>
