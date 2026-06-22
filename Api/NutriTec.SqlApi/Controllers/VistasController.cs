@@ -89,7 +89,7 @@ public sealed class VistasController(NutriTecDbContext context) : ControllerBase
     [Authorize(Policy = "Nutricionista")]
     public async Task<ActionResult<ApiResponse<IReadOnlyCollection<object>>>> PlanesNutricionista(string cedula, CancellationToken ct) => Ok(ApiResponse<IReadOnlyCollection<object>>.SuccessResponse(await QueryAsync("SELECT id_plan,nombre,cedula_nutricionista,total_calorias FROM PLAN_ALIMENTACION WHERE cedula_nutricionista=@c ORDER BY nombre", ct, P("@c", cedula))));
 
-    [HttpPost("api/planes")]
+    [HttpPost("api/vistas/planes")]
     [Authorize(Policy = "Nutricionista")]
     public async Task<ActionResult<ApiResponse<object>>> CrearPlan([FromBody] PlanRequest r, CancellationToken ct)
     { var id = await ScalarAsync<int>(await OpenAsync(ct), null, "INSERT INTO PLAN_ALIMENTACION (nombre,cedula_nutricionista) OUTPUT INSERTED.id_plan VALUES (@n,@c)", ct, P("@n", r.Nombre), P("@c", r.CedulaNutricionista)); return StatusCode(201, ApiResponse<object>.SuccessResponse(new { IdPlan = id }, "Plan creado.")); }
