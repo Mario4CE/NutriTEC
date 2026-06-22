@@ -134,6 +134,152 @@ No se deben versionar contraseñas, secretos JWT reales, tarjetas completas ni c
 - **Web Nutricionista:** no hay frontend nutricionista dedicado. La capacidad nutricionista existe por API SQL.
 - **App móvil:** sí está implementada como prototipo MAUI en `Mobile/Nutri-TEC`; trabaja con JSON local y no sincroniza aún con las APIs.
 
+## Despliegue recomendado en Azure
+
+Para cumplir el requisito de que la capa de servicios esté en **C# + Entity Framework** y que la API, la web y la base de datos estén desplegadas en la nube, la opción más directa es usar estos servicios de Azure:
+
+| Componente del proyecto | Servicio de Azure | Proyecto/carpeta |
+| --- | --- | --- |
+| Capa de servicios/API C# | Azure App Service para ASP.NET Core | `Api/NutriTec.SqlApi` |
+| Base de datos relacional | Azure SQL Database | Scripts de `Database/SqlServer` y EF Core de `Infrastructure/NutriTec.Infrastructure.Sql` |
+| Web admin React/Vite | Azure Static Web Apps o Azure App Service | `nutritec-admin` |
+| Web cliente HTML/JS | Azure Static Web Apps | `Vista Cliente/frontend` |
+| MongoDB/retroalimentaciones, si se incluye | Azure Cosmos DB for MongoDB o MongoDB Atlas | `Api/NutriTec.MongoApi` |
+
+### ¿Azure para un API o para una web?
+
+Sí: en Azure se publican ambos, pero normalmente en servicios distintos.
+
+- Un **API ASP.NET Core** se publica en **Azure App Service**. El resultado es una URL tipo `https://nutritec-sql-api.azurewebsites.net` que expone rutas como `/api/auth/login` o `/api/productos`.
+- Una **web estática** como React/Vite o HTML/JS se publica en **Azure Static Web Apps**. Esa web llama al API usando la URL pública del App Service.
+- La **base de datos** va en **Azure SQL Database**. El API no debe guardar la cadena de conexión en el repositorio; se configura como variable de aplicación en Azure.
+
+### Variables que se configuran en Azure App Service para el API SQL
+
+En el portal de Azure, entrar al App Service del API y abrir **Settings → Environment variables**. Agregar:
+
+| Nombre | Ejemplo | Descripción |
+| --- | --- | --- |
+| `ConnectionStrings__NutriTec` | `Server=tcp:<servidor>.database.windows.net,1433;Initial Catalog=NutriTEC;User ID=<usuario>;Password=<password>;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;` | Cadena de conexión usada por EF Core. |
+| `Jwt__Issuer` | `NutriTec.SqlApi` | Emisor del token. |
+| `Jwt__Audience` | `NutriTec.Clients` | Audiencia del token. |
+| `Jwt__Secret` | un secreto largo, no versionado | Llave para firmar JWT; obligatoria en producción. |
+| `Cors__AllowedOrigins__0` | `https://<tu-web>.azurestaticapps.net` | Permite que la web desplegada consuma el API. |
+| `BootstrapAdmin__Enabled` | `true` o `false` | Activa la creación inicial del administrador si se requiere. |
+| `BootstrapAdmin__Email` | `admin@nutritec.com` | Correo del admin inicial si el bootstrap está activo. |
+
+> En ASP.NET Core, las variables con doble guion bajo (`__`) reemplazan los niveles de `appsettings.json`. Por ejemplo, `ConnectionStrings__NutriTec` reemplaza `ConnectionStrings:NutriTec`.
+
+### Pasos rápidos con Azure CLI
+
+Los nombres deben ser únicos globalmente donde aplique. Cambiar `nutritec-demo` por un prefijo propio.
+
+```bash
+# 1) Login y variables base
+az login
+az group create --name rg-nutritec --location eastus
+
+# 2) Crear Azure SQL Server y base de datos
+az sql server create \
+  --name sql-nutritec-demo \
+  --resource-group rg-nutritec \
+  --location eastus \
+  --admin-user nutritecadmin \
+  --admin-password "CAMBIAR_PASSWORD_SEGURA"
+
+az sql db create \
+  --resource-group rg-nutritec \
+  --server sql-nutritec-demo \
+  --name NutriTEC \
+  --service-objective Basic
+
+# Permitir acceso desde servicios Azure al SQL Server
+az sql server firewall-rule create \
+  --resource-group rg-nutritec \
+  --server sql-nutritec-demo \
+  --name AllowAzureServices \
+  --start-ip-address 0.0.0.0 \
+  --end-ip-address 0.0.0.0
+
+# 3) Crear App Service para el API C#
+az appservice plan create \
+  --name plan-nutritec-api \
+  --resource-group rg-nutritec \
+  --sku B1 \
+  --is-linux
+
+az webapp create \
+  --name app-nutritec-sql-api-demo \
+  --resource-group rg-nutritec \
+  --plan plan-nutritec-api \
+  --runtime "DOTNET:8"
+
+# 4) Configurar secretos del API en Azure
+az webapp config appsettings set \
+  --name app-nutritec-sql-api-demo \
+  --resource-group rg-nutritec \
+  --settings \
+    Jwt__Issuer="NutriTec.SqlApi" \
+    Jwt__Audience="NutriTec.Clients" \
+    Jwt__Secret="CAMBIAR_SECRETO_LARGO_DE_PRODUCCION" \
+    Cors__AllowedOrigins__0="https://<tu-web>.azurestaticapps.net"
+
+az webapp config connection-string set \
+  --name app-nutritec-sql-api-demo \
+  --resource-group rg-nutritec \
+  --connection-string-type SQLAzure \
+  --settings NutriTec="Server=tcp:sql-nutritec-demo.database.windows.net,1433;Initial Catalog=NutriTEC;User ID=nutritecadmin;Password=CAMBIAR_PASSWORD_SEGURA;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+
+# 5) Publicar el API desde la carpeta del repo
+dotnet publish Api/NutriTec.SqlApi/NutriTec.SqlApi.csproj -c Release -o ./publish/sql-api
+cd publish/sql-api
+zip -r ../sql-api.zip .
+cd ../..
+az webapp deploy \
+  --resource-group rg-nutritec \
+  --name app-nutritec-sql-api-demo \
+  --src-path ./publish/sql-api.zip \
+  --type zip
+```
+
+### Crear tablas y objetos en Azure SQL
+
+Se puede ejecutar el script completo desde SQL Server Management Studio, Azure Data Studio o `sqlcmd` apuntando a la base de datos de Azure SQL:
+
+```bash
+sqlcmd \
+  -S tcp:sql-nutritec-demo.database.windows.net,1433 \
+  -d NutriTEC \
+  -U nutritecadmin \
+  -P "CAMBIAR_PASSWORD_SEGURA" \
+  -i Database/SqlServer/Complete/TablaCompleta.sql
+```
+
+Si se desea usar migraciones de EF Core en vez de scripts SQL, ejecutar el comando contra la misma cadena de conexión de Azure desde un ambiente con .NET SDK y `dotnet-ef` instalado.
+
+### Publicar la web admin React/Vite
+
+Para la web de `nutritec-admin`, configurar primero la URL del API. En desarrollo el proyecto usa proxy `/api/sql`, pero en Azure la web debe llamar al dominio público del App Service o usar una regla de proxy de Static Web Apps.
+
+Opción simple: desplegar con Azure Static Web Apps desde GitHub indicando:
+
+| Campo | Valor |
+| --- | --- |
+| App location | `nutritec-admin` |
+| Output location | `dist` |
+| Build command | `npm run build` |
+
+Después, actualizar `Cors__AllowedOrigins__0` en el App Service con la URL real de Static Web Apps.
+
+### Checklist para demostrar el requisito
+
+- API SQL en C# publicada en Azure App Service y respondiendo `/swagger` o `/api/productos`.
+- Azure SQL Database creada con las tablas, vistas, funciones, triggers y procedimientos almacenados del proyecto.
+- `ConnectionStrings__NutriTec` configurada en Azure, no en Git.
+- `Jwt__Secret` configurado como secreto de Azure, no en Git.
+- `Cors__AllowedOrigins__0` apuntando a la URL de la web desplegada.
+- Web admin o web cliente publicada en Azure Static Web Apps y consumiendo el API publicado.
+
 ## Documentación interna
 
 Cada carpeta principal mantiene un README con su responsabilidad, estado y restricciones. Cuando se agregue una carpeta nueva relevante, se debe agregar un README breve y mantener esta tabla de estado actualizada.
