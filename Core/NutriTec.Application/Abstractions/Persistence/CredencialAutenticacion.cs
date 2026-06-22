@@ -5,4 +5,10 @@ public sealed record CredencialAutenticacion(
     string Nombre,
     string Correo,
     string ContrasenaHash,
-    string TipoUsuario);
+    string TipoUsuario,
+    decimal? Peso,
+    decimal? Imc,
+    int? CaloriasDiariasMax,
+    string? Apellidos,
+    int? Edad,
+    string? Pais);

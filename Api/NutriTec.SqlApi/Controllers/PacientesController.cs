@@ -60,7 +60,7 @@ public sealed class PacientesController(IPacienteService service) : ControllerBa
 
     [HttpPost]
     public async Task<ActionResult<ApiResponse<PacienteNutricionistaResponse>>> AsociarAsync(
-        [FromBody] AsociarPacienteRequest request,
+        [FromBody] NutriTec.Contracts.Pacientes.AsociarPacienteRequest request,
         CancellationToken cancellationToken)
     {
         var idNutricionista = ObtenerIdUsuarioActual();

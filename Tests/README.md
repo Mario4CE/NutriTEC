@@ -8,6 +8,19 @@ Proyectos de pruebas automatizadas de NutriTEC.
 - `Tests/NutriTec.Infrastructure.Sql.Tests`: pruebas unitarias de servicios concretos de Infrastructure.Sql, como hashing, JWT y bootstrap de administrador.
 
 
+
+## Datos de prueba SQL
+
+`Tests/SeedDemoData.sql` carga datos demo idempotentes para validar manualmente los endpoints nuevos y las vistas principales. Inserta al menos 5 registros demo para administradores, clientes, nutricionistas, productos aprobados, asociaciones paciente-nutricionista, medidas, recetas, planes, asignaciones, tiempos de comida y registros diarios.
+
+Uso recomendado en una base local/de QA después de ejecutar los scripts de `Database/SqlServer`:
+
+```bash
+sqlcmd -S .\SQLEXPRESS -d NutriTec -i Tests/SeedDemoData.sql
+```
+
+El archivo no contiene contraseñas reales ni tarjetas reales; los hashes son marcadores para pruebas de datos, no credenciales válidas para login.
+
 ## Documentación de casos de prueba
 
 La explicación de cada prueba está en [`Tests/TEST_CASES.md`](TEST_CASES.md). Para pruebas manuales desde navegador con Swagger UI, consulte [`Tests/SwaggerExamples.md`](SwaggerExamples.md).

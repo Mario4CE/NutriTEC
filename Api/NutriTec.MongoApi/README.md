@@ -2,6 +2,10 @@
 
 Proyecto ASP.NET Core encargado de exponer los módulos respaldados por MongoDB.
 
+## Estado actual
+
+La API MongoDB está implementada para retroalimentaciones/foros entre pacientes y nutricionistas. Requiere JWT compatible con la API SQL y no reemplaza los módulos relacionales de cliente, nutricionista, productos o planes.
+
 Responsabilidades principales:
 
 - Configurar controllers para recursos documentales.
@@ -81,7 +85,7 @@ Flujo básico de uso:
 
 ```http
 POST /api/retroalimentaciones
-GET /api/retroalimentaciones/paciente/{idPaciente}
+GET /api/retroalimentaciones/pacientes/{idPaciente}
 GET /api/retroalimentaciones/nutricionista/{idNutricionista}
 POST /api/retroalimentaciones/{idRetroalimentacion}/mensajes
 ```

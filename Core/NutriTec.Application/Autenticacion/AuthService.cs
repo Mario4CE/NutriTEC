@@ -131,6 +131,12 @@ public sealed class AuthService(
             credencial.Correo,
             credencial.TipoUsuario,
             token.Token,
-            token.ExpiraEn);
+            token.ExpiraEn,
+            credencial.Peso,
+            credencial.Imc,
+            credencial.CaloriasDiariasMax,
+            credencial.Apellidos,
+            credencial.Edad,
+            credencial.Pais);
     }
 }
