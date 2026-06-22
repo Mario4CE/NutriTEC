@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="Nutri_TEC.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:Nutri_TEC.Views"
+    Title="NutriTEC">
+
+    <!-- Rutas de autenticación -->
+    <ShellContent
+        Title="Login"
+        ContentTemplate="{DataTemplate local:LoginPage}"
+        Route="login" />
+
+    <ShellContent
+        Title="Registro"
+        ContentTemplate="{DataTemplate local:RegistroPage}"
+        Route="registro" />
+
+    <!-- Rutas principales después del login -->
+    <TabBar>
+        <ShellContent
+            Title="Registrar Consumo"
+            Icon="food.png"
+            ContentTemplate="{DataTemplate local:RegistroConsumoPage}"
+            Route="consumo" />
+
+        <ShellContent
+            Title="Mis Recetas"
+            Icon="book.png"
+            ContentTemplate="{DataTemplate local:MisRecetasPage}"
+            Route="recetas" />
+
+        <ShellContent
+            Title="Crear Receta"
+            ContentTemplate="{DataTemplate local:CrearRecetaPage}"
+            Route="crear-receta"
+            IsVisible="False" />
+    </TabBar>
+
+</Shell>

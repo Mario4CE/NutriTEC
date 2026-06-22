@@ -1,16 +1,25 @@
-# Controllers
+# Controllers SQL API
 
-Esta carpeta contiene los controllers HTTP de la API SQL.
+Controllers HTTP de `NutriTec.SqlApi`.
 
-Responsabilidades principales:
+## Controllers actuales
 
-- Definir rutas REST para módulos relacionales.
-- Recibir DTOs de entrada desde `NutriTec.Contracts`.
-- Invocar servicios de `NutriTec.Application`.
-- Devolver `ApiResponse<T>` con códigos HTTP adecuados.
+| Controller | Estado | Responsabilidad |
+| --- | --- | --- |
+| `AuthController` | Implementado | Login, registro de cliente/nutricionista y `/me`. |
+| `ProductosController` | Implementado | CRUD de productos; listados públicos filtran aprobados. |
+| `AdministracionController` | Implementado | Productos pendientes y aprobación administrativa. |
+| `ObjetosSqlController` | Implementado | Endpoints que ejecutan objetos programables SQL. |
+| `VistasController` | Implementado como cierre de brechas | Endpoints faltantes de vistas Cliente/Nutricionista. |
 
-Restricciones:
+## Rutas agregadas para vistas
 
-- No deben consultar repositorios ni bases de datos directamente.
-- No deben devolver entidades de dominio.
-- No deben contener reglas de negocio extensas.
+- Cliente: planes asignados, registros diarios, recetas y medidas.
+- Nutricionista: pacientes, asociación, planes, tiempos de comida y seguimiento de registro diario.
+
+## Restricciones
+
+- No devolver entidades internas ni datos sensibles.
+- Proteger endpoints con JWT y políticas de rol cuando corresponda.
+- Mantener respuestas consistentes con `ApiResponse<T>` o contratos públicos.
+- Para nuevos endpoints, preferir mover la lógica a `Application`/`Infrastructure` en lugar de agregar SQL directo en controllers.

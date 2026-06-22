@@ -64,7 +64,11 @@ public sealed class ProductoCrudSqlRepository(NutriTecDbContext context) : IProd
      */
     public async Task<IReadOnlyCollection<Producto>> ListarAsync(CancellationToken cancellationToken)
     {
-        return await context.Productos.AsNoTracking().OrderBy(producto => producto.Nombre).ToListAsync(cancellationToken);
+        return await context.Productos
+            .AsNoTracking()
+            .Where(producto => producto.EstaAprobado)
+            .OrderBy(producto => producto.Nombre)
+            .ToListAsync(cancellationToken);
     }
 
     /*
@@ -81,7 +85,7 @@ public sealed class ProductoCrudSqlRepository(NutriTecDbContext context) : IProd
     {
         return await context.Productos
             .AsNoTracking()
-            .Where(producto => producto.Nombre.Contains(nombre))
+            .Where(producto => producto.EstaAprobado && producto.Nombre.Contains(nombre))
             .OrderBy(producto => producto.Nombre)
             .ToListAsync(cancellationToken);
     }
@@ -98,7 +102,9 @@ public sealed class ProductoCrudSqlRepository(NutriTecDbContext context) : IProd
      */
     public Task<Producto?> ObtenerPorCodigoBarrasAsync(string codigoBarras, CancellationToken cancellationToken)
     {
-        return context.Productos.AsNoTracking().SingleOrDefaultAsync(producto => producto.CodigoBarras == codigoBarras, cancellationToken);
+        return context.Productos
+            .AsNoTracking()
+            .SingleOrDefaultAsync(producto => producto.CodigoBarras == codigoBarras && producto.EstaAprobado, cancellationToken);
     }
 
     /*
