@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using NutriTec.Application.Abstractions.Persistence;
 using NutriTec.Domain.Planes;
@@ -9,7 +10,9 @@ namespace NutriTec.Infrastructure.Sql.Repositories;
 /*
  * Descripción:
  * Implementa la persistencia relacional de la asignación de planes de alimentación a
- * pacientes mediante Entity Framework Core y SQL Server.
+ * pacientes mediante SQL Server. La inserción utiliza el procedimiento almacenado
+ * sp_AsignarPlanPaciente, que valida la asociación entre nutricionista y paciente,
+ * evita duplicados y retorna el identificador generado.
  *
  * Entradas:
  * Recibe NutriTecDbContext y criterios definidos por Application.
@@ -23,26 +26,43 @@ namespace NutriTec.Infrastructure.Sql.Repositories;
 public sealed class AsignacionPlanSqlRepository(NutriTecDbContext context) : IAsignacionPlanRepository
 {
     /*
-     * Descripción: Persiste la asignación de un plan a un paciente.
+     * Descripción: Persiste la asignación de un plan a un paciente usando el SP
+     * sp_AsignarPlanPaciente, que valida que el paciente esté asociado al nutricionista
+     * del plan y evita duplicados de asignación.
      * Entradas: Agregado y token de cancelación.
-     * Salidas: Agregado persistido, con el identificador generado por la base de datos.
-     * Restricciones: Recibe datos validados.
+     * Salidas: Agregado persistido, con el identificador generado por el SP.
+     * Restricciones: El SP lanza un error si el plan no existe, si el paciente no está
+     * asociado al nutricionista, o si ya existe una asignación idéntica.
      */
-
     public async Task<AsignacionPlan> AsignarAsync(AsignacionPlan asignacion, CancellationToken cancellationToken)
     {
-        var entidad = new AsignacionPlanSql
+        var conexion = (SqlConnection)context.Database.GetDbConnection();
+        if (conexion.State != System.Data.ConnectionState.Open)
+            await conexion.OpenAsync(cancellationToken);
+
+        await using var comando = new SqlCommand("sp_AsignarPlanPaciente", conexion)
         {
-            IdPlan = asignacion.IdPlan,
-            IdUsuario = asignacion.IdPaciente,
-            FechaInicio = asignacion.FechaInicio,
-            FechaFin = asignacion.FechaFin
+            CommandType = System.Data.CommandType.StoredProcedure
         };
 
-        context.AsignacionesPlan.Add(entidad);
-        await context.SaveChangesAsync(cancellationToken);
+        comando.Parameters.AddWithValue("@idPlan", asignacion.IdPlan);
+        comando.Parameters.AddWithValue("@idUsuario", asignacion.IdPaciente);
+        comando.Parameters.AddWithValue("@fechaInicio", asignacion.FechaInicio.ToDateTime(TimeOnly.MinValue));
+        comando.Parameters.AddWithValue("@fechaFin", asignacion.FechaFin.ToDateTime(TimeOnly.MinValue));
 
-        return MapearADominio(entidad, asignacion.IdNutricionista);
+        var resultado = await comando.ExecuteScalarAsync(cancellationToken);
+        var idAsignacion = Convert.ToInt32(resultado);
+
+        return new AsignacionPlan
+        {
+            Id = idAsignacion,
+            IdPaciente = asignacion.IdPaciente,
+            IdPlan = asignacion.IdPlan,
+            IdNutricionista = asignacion.IdNutricionista,
+            FechaInicio = asignacion.FechaInicio,
+            FechaFin = asignacion.FechaFin,
+            FechaAsignacionUtc = DateTime.UtcNow
+        };
     }
 
     /*
@@ -51,7 +71,6 @@ public sealed class AsignacionPlanSqlRepository(NutriTecDbContext context) : IAs
      * Salidas: Asignación vigente o nula.
      * Restricciones: No modifica datos.
      */
-
     public async Task<AsignacionPlan?> ObtenerVigentePorPacienteAsync(int idPaciente, CancellationToken cancellationToken)
     {
         var hoy = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -75,7 +94,6 @@ public sealed class AsignacionPlanSqlRepository(NutriTecDbContext context) : IAs
      * Salidas: Colección de asignaciones ordenadas por fecha.
      * Restricciones: No modifica datos.
      */
-
     public async Task<IReadOnlyCollection<AsignacionPlan>> ListarPorPacienteAsync(int idPaciente, CancellationToken cancellationToken)
     {
         var resultados = await (
