@@ -1,11 +1,5 @@
 /**
  * app.js - Controlador principal de la aplicación NutriTEC
- *
- * Cambios respecto a la versión original:
- *  - login y register son ahora async (llaman a la API real)
- *  - getStoredUser lee de sessionStorage via Auth.getCurrentUser()
- *  - setupRegistroConsumoHandlers usa await para buscarProductos
- *  - setupRecetasHandlers usa await para buscarProductos
  */
 
 class NutriTECApp {
@@ -18,7 +12,6 @@ class NutriTECApp {
 
   init() {
     this.currentUser = this.getStoredUser();
-
     if (this.currentUser) {
       this.showView("dashboard");
     } else {
@@ -36,7 +29,7 @@ class NutriTECApp {
     });
   }
 
-  showView(viewName) {
+  async showView(viewName) {
     this.currentView = viewName;
 
     switch (viewName) {
@@ -44,34 +37,50 @@ class NutriTECApp {
         this.appContainer.innerHTML = Views.getLoginView();
         this.setupLoginHandlers();
         break;
+
       case "register":
         this.appContainer.innerHTML = Views.getRegisterView();
         this.setupRegisterHandlers();
         break;
-      case "dashboard":
-        this.appContainer.innerHTML = Views.getDashboardView(this.currentUser);
+
+      case "dashboard": {
+        const email           = this.currentUser.correo ?? this.currentUser.email;
+        const consumoHoy      = await Data.getConsumoHoy(email);
+        const medidasRecientes = await Data.getAllMedidas(email);
+        const nutrientesHoy   = Data.getNutrientesDia(email, consumoHoy);
+        this.appContainer.innerHTML = Views.getDashboardView(this.currentUser, consumoHoy, medidasRecientes, nutrientesHoy);
         this.setupDashboardHandlers();
         break;
-      case "registro-consumo":
-        this.appContainer.innerHTML = Views.getRegistroConsumoView(this.currentUser);
-        this.setupRegistroConsumoHandlers();
+      }
+
+      case "registro-consumo": {
+        const emailC      = this.currentUser.correo ?? this.currentUser.email;
+        const consumoHoyC = await Data.getConsumoHoy(emailC);
+        this.appContainer.innerHTML = Views.getRegistroConsumoView(this.currentUser, consumoHoyC);
+        await this.setupRegistroConsumoHandlers();
         break;
+      }
+
       case "registro-medidas":
         this.appContainer.innerHTML = Views.getRegistroMedidasView(this.currentUser);
-        this.setupRegistroMedidasHandlers();
+        await this.setupRegistroMedidasHandlers();
         break;
+
       case "perfil":
         this.appContainer.innerHTML = Views.getPerfilView(this.currentUser);
         this.setupPerfilHandlers();
         break;
+
       case "recetas":
-        this.appContainer.innerHTML = Views.getRecetasView(this.currentUser);
+        this.appContainer.innerHTML = await Views.getRecetasView(this.currentUser);
         this.setupRecetasHandlers();
         break;
+
       case "reporte":
         this.appContainer.innerHTML = Views.getReporteView(this.currentUser);
         this.setupReporteHandlers();
         break;
+
       default:
         this.showView("login");
     }
@@ -80,7 +89,7 @@ class NutriTECApp {
   // ── Login ─────────────────────────────────────────────────
 
   setupLoginHandlers() {
-    const form            = document.getElementById("loginForm");
+    const form = document.getElementById("loginForm");
     const switchToRegisterBtn = document.getElementById("switchToRegister");
 
     if (form) {
@@ -88,11 +97,8 @@ class NutriTECApp {
         e.preventDefault();
         const email    = document.getElementById("email").value;
         const password = document.getElementById("password").value;
-
         const ok = await Auth.login(email, password);
-        if (!ok) {
-          this.showAlert("Correo o contraseña inválidos", "danger");
-        }
+        if (!ok) this.showAlert("Correo o contraseña inválidos", "danger");
       });
     }
 
@@ -104,13 +110,12 @@ class NutriTECApp {
   // ── Registro ──────────────────────────────────────────────
 
   setupRegisterHandlers() {
-    const form          = document.getElementById("registerForm");
+    const form = document.getElementById("registerForm");
     const switchToLoginBtn = document.getElementById("switchToLogin");
 
     if (form) {
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
-
         const userData = {
           nombre:            document.getElementById("nombre").value,
           apellidos:         document.getElementById("apellidos").value,
@@ -165,7 +170,7 @@ class NutriTECApp {
 
   // ── Registro de consumo ───────────────────────────────────
 
-  setupRegistroConsumoHandlers() {
+  async setupRegistroConsumoHandlers() {
     const searchInput    = document.getElementById("searchProducto");
     const productosLista = document.getElementById("productosLista");
 
@@ -184,21 +189,16 @@ class NutriTECApp {
           return;
         }
 
-        // Debounce para no llamar la API en cada tecla
         debounceTimer = setTimeout(async () => {
           productosLista.innerHTML = `<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-success"></div></div>`;
 
-          // Buscar primero por nombre, si no hay resultados y parece código, por código
-          let resultados = await Data.buscarProductos(query, "nombre");
+          let resultados = await Data.buscarProductosYRecetas(query);
           if (resultados.length === 0 && !isNaN(query)) {
             resultados = await Data.buscarProductos(query, "codigoBarras");
           }
 
-          // Actualizar cache local para poder agregar al consumo
           const cache = JSON.parse(localStorage.getItem("nutritec_productos_cache") || "[]");
-          resultados.forEach((p) => {
-            if (!cache.find((c) => c.id === p.id)) cache.push(p);
-          });
+          resultados.forEach((p) => { if (!cache.find((c) => c.id === p.id)) cache.push(p); });
           localStorage.setItem("nutritec_productos_cache", JSON.stringify(cache));
 
           if (resultados.length === 0) {
@@ -214,14 +214,12 @@ class NutriTECApp {
                     <div class="d-flex w-100 justify-content-between align-items-start">
                       <div style="flex-grow:1;">
                         <h6 class="mb-1">${p.descripcion}</h6>
-                        <small class="text-muted">
-                          Código: ${p.codigoBarras} | Kcal: ${p.energia}
-                        </small>
+                        <small class="text-muted">${p.esReceta ? `🍽️ Receta · ${p.energia} kcal` : `Código: ${p.codigoBarras} | Kcal: ${p.energia}`}</small>
                       </div>
                       <div style="margin-left:10px;">
-                        <input type="number" min="1" value="9999"
+                        <input type="number" min="1" max="9999" value="100"
                           class="form-control form-control-sm"
-                          style="width:60px;display:inline-block;"
+                          style="width:70px;display:inline-block;"
                           id="cant-${p.id}">
                         <button class="btn btn-sm btn-success ms-2"
                           onclick="window.app.agregarProductoAlConsumo('${p.id}')">
@@ -236,20 +234,25 @@ class NutriTECApp {
       });
     }
 
-    this.actualizarTablaConsumo();
+    await this.actualizarTablaConsumo();
   }
 
-  agregarProductoAlConsumo(productoId) {
-    const tiempoComida   = document.getElementById("tiempoComida").value;
-    const cantidadInput  = document.getElementById(`cant-${productoId}`);
-    const cantidad       = parseInt(cantidadInput?.value) || 1;
+  async agregarProductoAlConsumo(productoId) {
+    const tiempoComida  = document.getElementById("tiempoComida").value;
+    const cantidadInput = document.getElementById(`cant-${productoId}`);
+    const cantidad      = parseInt(cantidadInput?.value) || 100;
 
     if (!tiempoComida) {
       this.showAlert("Por favor selecciona un tiempo de comida", "warning");
       return;
     }
 
-    if (Data.addProductoAlConsumo(this.currentUser.correo ?? this.currentUser.email, tiempoComida, productoId, cantidad)) {
+    const ok = await Data.addProductoAlConsumo(
+      this.currentUser.correo ?? this.currentUser.email,
+      tiempoComida, productoId, cantidad
+    );
+
+    if (ok) {
       this.showAlert(`Producto agregado al ${tiempoComida}`, "success");
       document.getElementById("searchProducto").value = "";
       document.getElementById("productosLista").innerHTML = `
@@ -257,26 +260,26 @@ class NutriTECApp {
           <i class="fas fa-search" style="font-size:2rem;"></i>
           <p>Busca un producto para comenzar</p>
         </div>`;
-      this.actualizarTablaConsumo();
+      await this.actualizarTablaConsumo();
     } else {
       this.showAlert("Error al agregar producto", "danger");
     }
   }
 
-  eliminarProductoDelConsumo(consumoId, productoId) {
+  async eliminarProductoDelConsumo(consumoId, productoId) {
     const email = this.currentUser.correo ?? this.currentUser.email;
     if (Data.removeProductoDelConsumo(email, consumoId, productoId)) {
       this.showAlert("Producto eliminado", "info");
-      this.actualizarTablaConsumo();
+      await this.actualizarTablaConsumo();
     }
   }
 
-  actualizarTablaConsumo() {
+  async actualizarTablaConsumo() {
     const email      = this.currentUser.correo ?? this.currentUser.email;
-    const consumoHoy = Data.getConsumoHoy(email);
+    const consumoHoy = await Data.getConsumoHoy(email);
     const tableBody  = document.getElementById("consumoTableBody");
-    const nutrientes = Data.getNutrientesDia(email);
-    const metaDiaria = this.currentUser.caloriasMax ?? this.currentUser.caloriasDiariasMax ?? 2000;
+    const nutrientes = Data.getNutrientesDia(email, consumoHoy);
+    const metaDiaria = this.currentUser.caloriasDiariasMax ?? 2000;
     const porcentaje = Math.min((nutrientes.calorias / metaDiaria) * 100, 100);
 
     if (!tableBody) return;
@@ -292,7 +295,7 @@ class NutriTECApp {
             <tr>
               <td><small>${prod.producto.descripcion}</small></td>
               <td>
-                <input type="number" min="1" value="${prod.cantidad}"
+                <input type="number" min="1" max="9999" value="${prod.cantidad}"
                   class="form-control form-control-sm" style="width:70px;"
                   onchange="window.app.updateCantidadProducto('${consumo.id}', '${prod.productoId}', this.value)">
               </td>
@@ -309,14 +312,13 @@ class NutriTECApp {
       tableBody.innerHTML = html;
     }
 
-    // Panel de nutrientes
     const panel = document.querySelector(".card.sticky-top .card-body");
     if (panel) {
       panel.innerHTML = `
         <div class="mb-4">
           <div class="progress" style="height:30px;">
             <div class="progress-bar bg-success" role="progressbar"
-              style="width:${porcentaje}%;" aria-valuenow="${porcentaje}" aria-valuemin="0" aria-valuemax="100">
+              style="width:${porcentaje}%;">
               <small>${porcentaje.toFixed(0)}%</small>
             </div>
           </div>
@@ -335,18 +337,17 @@ class NutriTECApp {
     }
   }
 
-  updateCantidadProducto(consumoId, productoId, nuevaCantidad) {
+  async updateCantidadProducto(consumoId, productoId, nuevaCantidad) {
     const email = this.currentUser.correo ?? this.currentUser.email;
     if (Data.updateCantidadProducto(email, consumoId, productoId, parseInt(nuevaCantidad) || 1)) {
-      this.actualizarTablaConsumo();
+      await this.actualizarTablaConsumo();
     }
   }
 
   // ── Registro de medidas ───────────────────────────────────
 
-  setupRegistroMedidasHandlers() {
-    // Cargar historial
-    this._renderMedidasTable();
+  async setupRegistroMedidasHandlers() {
+    await this._renderMedidasTable();
 
     const form = document.getElementById("medidasForm");
     if (form) {
@@ -365,7 +366,7 @@ class NutriTECApp {
         if (ok) {
           this.showAlert("Medidas registradas exitosamente", "success");
           form.reset();
-          this._renderMedidasTable();
+          await this._renderMedidasTable();
         } else {
           this.showAlert("Error al registrar medidas", "danger");
         }
@@ -373,10 +374,10 @@ class NutriTECApp {
     }
   }
 
-  _renderMedidasTable() {
-    const email  = this.currentUser.correo ?? this.currentUser.email;
-    const medidas = Data.getAllMedidas(email);
-    const tbody  = document.getElementById("medidasTable");
+  async _renderMedidasTable() {
+    const email   = this.currentUser.correo ?? this.currentUser.email;
+    const medidas = await Data.getAllMedidas(email);
+    const tbody   = document.getElementById("medidasTable");
     if (!tbody) return;
 
     if (medidas.length === 0) {
@@ -444,12 +445,11 @@ class NutriTECApp {
         }
 
         debounceTimer = setTimeout(async () => {
-          let resultados = await Data.buscarProductos(query, "nombre");
+          let resultados = await Data.buscarProductosYRecetas(query);
           if (resultados.length === 0 && !isNaN(query)) {
             resultados = await Data.buscarProductos(query, "codigoBarras");
           }
 
-          // Actualizar cache
           const cache = JSON.parse(localStorage.getItem("nutritec_productos_cache") || "[]");
           resultados.forEach((p) => { if (!cache.find((c) => c.id === p.id)) cache.push(p); });
           localStorage.setItem("nutritec_productos_cache", JSON.stringify(cache));
@@ -467,9 +467,9 @@ class NutriTECApp {
                         <small class="text-muted">${p.energia} kcal</small>
                       </div>
                       <div style="margin-left:10px;">
-                        <input type="number" min="1" value="1"
+                        <input type="number" min="1" max="9999" value="1"
                           class="form-control form-control-sm"
-                          style="width:60px;display:inline-block;"
+                          style="width:70px;display:inline-block;"
                           id="cant-receta-${p.id}">
                         <button class="btn btn-sm btn-success ms-2"
                           onclick="window.app.agregarProductoAReceta('${p.id}')">
@@ -526,7 +526,7 @@ class NutriTECApp {
         <tr>
           <td><small>${prod.producto.descripcion}</small></td>
           <td>
-            <input type="number" min="1" value="${prod.cantidad}"
+            <input type="number" min="1" max="9999" value="${prod.cantidad}"
               class="form-control form-control-sm" style="width:70px;"
               onchange="window.app.updateCantidadProductoReceta('${prod.productoId}', this.value)">
           </td>
@@ -560,7 +560,7 @@ class NutriTECApp {
     }
   }
 
-  guardarReceta() {
+  async guardarReceta() {
     const nombreReceta = document.getElementById("nombreReceta")?.value.trim();
     const email        = this.currentUser.correo ?? this.currentUser.email;
 
@@ -569,11 +569,12 @@ class NutriTECApp {
       return;
     }
 
-    if (Data.saveReceta(email, nombreReceta)) {
+    const ok = await Data.saveReceta(email, nombreReceta);
+    if (ok) {
       this.showAlert("Receta guardada exitosamente", "success");
       document.getElementById("nombreReceta").value = "";
       this.actualizarTablaReceta();
-      this.showView("recetas");
+      await this.showView("recetas");
     } else {
       this.showAlert("Error al guardar receta o no hay productos", "danger");
     }
@@ -586,14 +587,14 @@ class NutriTECApp {
     const generatePDFBtn = document.getElementById("generatePDFBtn");
 
     if (generateBtn) {
-      generateBtn.addEventListener("click", () => {
+      generateBtn.addEventListener("click", async () => {
         const startDate = document.getElementById("startDate").value;
         const endDate   = document.getElementById("endDate").value;
         if (!startDate || !endDate) {
           this.showAlert("Por favor selecciona rango de fechas", "warning");
           return;
         }
-        this.showReporteData(startDate, endDate);
+        await this.showReporteData(startDate, endDate);
       });
     }
 
@@ -617,16 +618,16 @@ class NutriTECApp {
         title.textContent   = "Reporte de Nutrición NutriTEC";
         clonedElement.insertBefore(title, clonedElement.firstChild);
 
-        const dateInfo       = document.createElement("p");
-        dateInfo.innerHTML   = `<strong>Período:</strong> ${startDate} a ${endDate}`;
+        const dateInfo     = document.createElement("p");
+        dateInfo.innerHTML = `<strong>Período:</strong> ${startDate} a ${endDate}`;
         clonedElement.insertBefore(dateInfo, clonedElement.children[1]);
 
         html2pdf().set({
-          margin:     10,
-          filename:   `reporte_nutricion_${startDate}_${endDate}.pdf`,
-          image:      { type: "jpeg", quality: 0.98 },
-          html2canvas:{ scale: 2 },
-          jsPDF:      { orientation: "landscape", unit: "mm", format: "a4" },
+          margin:      10,
+          filename:    `reporte_nutricion_${startDate}_${endDate}.pdf`,
+          image:       { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF:       { orientation: "landscape", unit: "mm", format: "a4" },
         }).from(clonedElement).save();
 
         this.showAlert("PDF generado exitosamente", "success");
@@ -634,10 +635,10 @@ class NutriTECApp {
     }
   }
 
-  showReporteData(startDate, endDate) {
+  async showReporteData(startDate, endDate) {
     const email    = this.currentUser.correo ?? this.currentUser.email;
-    const consumos = Data.getConsumosByDateRange(email, startDate, endDate);
-    const medidas  = Data.getMedidasByRange(email, startDate, endDate);
+    const consumos = await Data.getConsumosByDateRange(email, startDate, endDate);
+    const medidas  = await Data.getMedidasByRange(email, startDate, endDate);
     const container = document.getElementById("reporteData");
 
     if (consumos.length === 0 && medidas.length === 0) {
@@ -649,19 +650,18 @@ class NutriTECApp {
 
     if (consumos.length > 0) {
       html += '<h6 class="mt-4 mb-3">Consumo Diario de Alimentos</h6>';
-      html += '<table class="table table-striped"><thead><tr><th>Fecha</th><th>Hora de Comida</th><th>Productos</th><th>Calorías</th><th>Proteínas (g)</th><th>Grasas (g)</th><th>Carbohidratos (g)</th></tr></thead><tbody>';
+      html += '<table class="table table-striped"><thead><tr><th>Fecha</th><th>Tiempo de Comida</th><th>Productos</th><th>Calorías</th><th>Proteínas (g)</th><th>Grasas (g)</th><th>Carbohidratos (g)</th></tr></thead><tbody>';
 
       consumos.forEach((consumo) => {
-        const fecha     = new Date(consumo.fecha).toLocaleDateString("es-CR");
+        const fecha    = new Date(consumo.fecha).toLocaleDateString("es-CR");
         const productos = (consumo.productos ?? []).map((p) => `${p.producto.descripcion} (${p.cantidad}g)`).join(", ");
         let totalCal = 0, totalProt = 0, totalGrasa = 0, totalCarb = 0;
         (consumo.productos ?? []).forEach((p) => {
-          totalCal  += (p.producto.energia       ?? 0) * (p.cantidad / 100);
-          totalProt += (p.producto.proteina      ?? 0) * (p.cantidad / 100);
-          totalGrasa+= (p.producto.grasa         ?? 0) * (p.cantidad / 100);
-          totalCarb += (p.producto.carbohidratos ?? 0) * (p.cantidad / 100);
+          totalCal   += (p.producto.energia       ?? 0) * (p.cantidad / 100);
+          totalProt  += (p.producto.proteina      ?? 0) * (p.cantidad / 100);
+          totalGrasa += (p.producto.grasa         ?? 0) * (p.cantidad / 100);
+          totalCarb  += (p.producto.carbohidratos ?? 0) * (p.cantidad / 100);
         });
-
         html += `<tr>
           <td>${fecha}</td>
           <td>${consumo.tiempoComida || "—"}</td>
@@ -672,14 +672,12 @@ class NutriTECApp {
           <td>${totalCarb.toFixed(1)}</td>
         </tr>`;
       });
-
       html += "</tbody></table>";
     }
 
     if (medidas.length > 0) {
       html += '<h6 class="mt-4 mb-3">Medidas Corporales</h6>';
       html += '<table class="table table-striped"><thead><tr><th>Fecha</th><th>Cintura (cm)</th><th>Cuello (cm)</th><th>Caderas (cm)</th><th>% Músculo</th><th>% Grasa</th></tr></thead><tbody>';
-
       medidas.forEach((m) => {
         html += `<tr>
           <td>${new Date(m.fecha).toLocaleDateString("es-CR")}</td>
@@ -690,7 +688,6 @@ class NutriTECApp {
           <td>${m.porcentajeGrasa}%</td>
         </tr>`;
       });
-
       html += "</tbody></table>";
     }
 
@@ -700,10 +697,9 @@ class NutriTECApp {
   // ── Utilidades ────────────────────────────────────────────
 
   showAlert(message, type = "info") {
-    const alertDiv       = document.createElement("div");
-    alertDiv.className   = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.innerHTML   = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
-
+    const alertDiv     = document.createElement("div");
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
     const container = document.querySelector(".container, main, [class*='content']");
     if (container) {
       container.insertBefore(alertDiv, container.firstChild);

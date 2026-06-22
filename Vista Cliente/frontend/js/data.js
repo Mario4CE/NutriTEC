@@ -1,15 +1,8 @@
 /**
  * data.js — Capa de datos de la Vista Cliente
  *
- * Reemplaza la versión anterior que guardaba todo en localStorage.
- * Ahora llama a la SQL API (puerto 5255) y la Mongo API (puerto 5272).
- *
- * Productos: se usan los endpoints /productos de la SQL API.
- * Medidas: se registran via sp_RegistrarMedidaUsuario.
- * Consumos y Recetas: estos endpoints aún no están implementados
- *   en el backend, así que por ahora se mantienen en localStorage
- *   como fallback temporal hasta que el compa los implemente.
- *   Están marcados con // TODO: conectar al backend.
+ * Unidades de cantidad: gramos (ej: 100g de pinto)
+ * Cálculo de calorías: (energia_por_100g * gramos) / 100
  */
 
 class Data {
@@ -18,23 +11,13 @@ class Data {
   // PRODUCTOS — SQL API
   // ===========================================================
 
-  /**
-   * Buscar productos aprobados por nombre o código de barras.
-   * @param {string} query
-   * @param {string} tipo — 'nombre' | 'codigoBarras'
-   * @returns {Promise<Array>}
-   */
   static async buscarProductos(query, tipo = "nombre") {
     try {
-      let url;
-      if (tipo === "nombre") {
-        url = ENDPOINTS.productos.buscar(query);
-      } else {
-        url = ENDPOINTS.productos.porCodigo(query);
-      }
-      const res = await apiFetch(url);
+      const url = tipo === "nombre"
+        ? ENDPOINTS.productos.buscar(query)
+        : ENDPOINTS.productos.porCodigo(query);
+      const res   = await apiFetch(url);
       const lista = res?.data ?? res ?? [];
-      // Normalizar campos al formato que espera views.js
       return Array.isArray(lista) ? lista.map(Data._normalizarProducto) : [];
     } catch (err) {
       console.error("buscarProductos error:", err.message);
@@ -42,13 +25,44 @@ class Data {
     }
   }
 
-  /**
-   * Obtener todos los productos aprobados.
-   * @returns {Promise<Array>}
-   */
+  static async buscarProductosYRecetas(query) {
+    try {
+      // Buscar productos aprobados
+      const productos = await Data.buscarProductos(query, "nombre");
+
+      // Buscar en recetas del usuario
+      const session = getSession();
+      const recetas = session?.idUsuario ? await Data.getRecetas(null) : [];
+      const recetasFiltradas = recetas
+        .filter((r) => r.nombre.toLowerCase().includes(query.toLowerCase()))
+        .map((r) => ({
+          id:            `receta-${r.id}`,
+          codigoBarras:  null,
+          descripcion:   `🍽️ ${r.nombre} (receta)`,
+          porcion:       100,
+          energia:       r.energia ?? 0,
+          proteina:      0,
+          carbohidratos: 0,
+          grasa:         0,
+          sodio:         null,
+          vitaminas:     null,
+          calcio:        null,
+          hierro:        null,
+          esReceta:      true,
+          idReceta:      r.id,
+          productosReceta: r.productos,
+        }));
+
+      return [...productos, ...recetasFiltradas];
+    } catch (err) {
+      console.error("buscarProductosYRecetas error:", err.message);
+      return [];
+    }
+  }
+
   static async getProductosAprobados() {
     try {
-      const res = await apiFetch(ENDPOINTS.productos.listar());
+      const res   = await apiFetch(ENDPOINTS.productos.listar());
       const lista = res?.data ?? res ?? [];
       return Array.isArray(lista) ? lista.map(Data._normalizarProducto) : [];
     } catch (err) {
@@ -57,11 +71,6 @@ class Data {
     }
   }
 
-  /**
-   * Crear un producto nuevo (queda pendiente de aprobación).
-   * @param {object} producto
-   * @returns {Promise<boolean>}
-   */
   static async crearProducto(producto) {
     try {
       await apiFetch(ENDPOINTS.productos.crear(), {
@@ -69,15 +78,15 @@ class Data {
         body: JSON.stringify({
           Nombre:                  producto.descripcion ?? producto.nombre,
           CodigoBarras:            producto.codigoBarras,
-          PorcionGramosMililitros: parseFloat(producto.porcion) || 100,
+          PorcionGramosMililitros: parseFloat(producto.porcion)    || 100,
           Calorias:                parseFloat(producto.energia),
           Proteinas:               parseFloat(producto.proteina),
           Carbohidratos:           parseFloat(producto.carbohidratos),
           Grasas:                  parseFloat(producto.grasa),
-          SodioMiligramos:         parseFloat(producto.sodio)   || null,
-          Vitaminas:               producto.vitaminas            || null,
-          CalcioMiligramos:        parseFloat(producto.calcio)  || null,
-          HierroMiligramos:        parseFloat(producto.hierro)  || null,
+          SodioMiligramos:         parseFloat(producto.sodio)      || null,
+          Vitaminas:               producto.vitaminas               || null,
+          CalcioMiligramos:        parseFloat(producto.calcio)     || null,
+          HierroMiligramos:        parseFloat(producto.hierro)     || null,
         }),
       });
       return true;
@@ -87,63 +96,44 @@ class Data {
     }
   }
 
-  /**
-   * Normaliza un ProductoResponse del backend al formato
-   * que ya usa views.js (campos como descripcion, energia, etc.)
-   */
   static _normalizarProducto(p) {
     return {
       id:            p.id,
       codigoBarras:  p.codigoBarras,
-      descripcion:   p.nombre,           // views.js usa "descripcion"
+      descripcion:   p.nombre,
       porcion:       p.porcionGramosMililitros ?? 100,
-      energia:       p.calorias,         // views.js usa "energia"
-      proteina:      p.proteinas,        // views.js usa "proteina"
+      energia:       p.calorias,
+      proteina:      p.proteinas,
       carbohidratos: p.carbohidratos,
-      grasa:         p.grasas,           // views.js usa "grasa"
+      grasa:         p.grasas,
       sodio:         p.sodioMiligramos,
       vitaminas:     p.vitaminas,
       calcio:        p.calcioMiligramos,
       hierro:        p.hierroMiligramos,
       estado:        p.estaAprobado ? "aprobado" : "pendiente",
+      esReceta:      false,
     };
   }
 
   // ===========================================================
-  // MEDIDAS — SP sp_RegistrarMedidaUsuario via SQL API
+  // MEDIDAS
   // ===========================================================
 
-  /**
-   * Registrar una medida corporal.
-   * Usa el SP sp_RegistrarMedidaUsuario directamente.
-   * @param {string} userEmail — no usado directamente, el idUsuario
-   *   viene de la sesión activa.
-   * @param {object} medida — { cintura, cuello, caderas,
-   *   porcentajeMusculo, porcentajeGrasa }
-   * @returns {Promise<boolean>}
-   */
   static async addMedida(userEmail, medida) {
     try {
       const session = getSession();
       if (!session?.idUsuario) return false;
-
-      await apiFetch(ENDPOINTS.sp.registrarMedida(), {
+      await apiFetch(ENDPOINTS.medidas.registrar(session.idUsuario), {
         method: "POST",
         body: JSON.stringify({
-          IdUsuario:   parseInt(session.idUsuario),
-          Fecha:       new Date().toISOString().split("T")[0],
-          PesoKg:      parseFloat(session.peso ?? 0),
-          EstaturaCm:  parseFloat(session.estaturaCm ?? 170), // fallback
-          Cintura:     parseFloat(medida.cintura)             || null,
-          Cuello:      parseFloat(medida.cuello)              || null,
-          Caderas:     parseFloat(medida.caderas)             || null,
-          PctMusculo:  parseFloat(medida.porcentajeMusculo)   || null,
-          PctGrasa:    parseFloat(medida.porcentajeGrasa)     || null,
+          Fecha:      new Date().toISOString().split("T")[0],
+          Cintura:    parseFloat(medida.cintura)           || null,
+          Cuello:     parseFloat(medida.cuello)            || null,
+          Caderas:    parseFloat(medida.caderas)           || null,
+          PctMusculo: parseFloat(medida.porcentajeMusculo) || null,
+          PctGrasa:   parseFloat(medida.porcentajeGrasa)  || null,
         }),
       });
-
-      // También guardamos localmente para historial inmediato
-      Data._addMedidaLocal(userEmail, medida);
       return true;
     } catch (err) {
       console.error("addMedida error:", err.message);
@@ -151,18 +141,32 @@ class Data {
     }
   }
 
-  /**
-   * Obtener medidas del historial local (fallback hasta que
-   * el backend tenga endpoint GET /medidas/usuario/:id).
-   */
-  static getAllMedidas(userEmail) {
-    return Data._getMedidasLocal(userEmail);
+  static async getAllMedidas(userEmail) {
+    try {
+      const session = getSession();
+      if (!session?.idUsuario) return [];
+      const res   = await apiFetch(ENDPOINTS.medidas.porUsuario(session.idUsuario));
+      const lista = res?.data ?? res ?? [];
+      return Array.isArray(lista) ? lista.map((m) => ({
+        id:                m.id_medida,
+        fecha:             m.fecha,
+        cintura:           m.cintura,
+        cuello:            m.cuello,
+        caderas:           m.caderas,
+        porcentajeMusculo: m.pct_musculo,
+        porcentajeGrasa:   m.pct_grasa,
+      })) : [];
+    } catch (err) {
+      console.error("getAllMedidas error:", err.message);
+      return [];
+    }
   }
 
-  static getMedidasByRange(userEmail, startDate, endDate) {
-    const medidas = Data._getMedidasLocal(userEmail);
-    const start = new Date(startDate);
-    const end   = new Date(endDate);
+  static async getMedidasByRange(userEmail, startDate, endDate) {
+    const medidas = await Data.getAllMedidas(userEmail);
+    const start   = new Date(startDate);
+    const end     = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
     return medidas.filter((m) => {
       const d = new Date(m.fecha);
       return d >= start && d <= end;
@@ -170,42 +174,97 @@ class Data {
   }
 
   // ===========================================================
-  // CONSUMOS — localStorage temporal
-  // TODO: conectar a backend cuando el compa implemente los endpoints
+  // CONSUMO DIARIO
   // ===========================================================
 
-  static getConsumoHoy(userEmail) {
-    const consumos = Data._getConsumosLocal(userEmail);
-    const hoy = new Date().toDateString();
-    return consumos.filter((c) => new Date(c.fecha).toDateString() === hoy);
-  }
-
-  static getConsumosByFecha(userEmail, fecha) {
-    const consumos = Data._getConsumosLocal(userEmail);
-    return consumos.filter(
-      (c) => new Date(c.fecha).toISOString().split("T")[0] === fecha
-    );
-  }
-
-  static getConsumosByDateRange(userEmail, fechaInicio, fechaFin) {
-    const consumos = Data._getConsumosLocal(userEmail);
-    const inicio = new Date(fechaInicio);
-    const fin    = new Date(fechaFin);
-    fin.setHours(23, 59, 59, 999);
-    return consumos.filter((c) => {
-      const d = new Date(c.fecha);
-      return d >= inicio && d <= fin;
+  static _agruparRegistros(lista, filtro) {
+    const grupos = {};
+    lista.forEach((r) => {
+      const fechaRegistro = r.fecha?.split("T")[0] ?? r.fecha;
+      if (!filtro(fechaRegistro, r)) return;
+      if (!grupos[r.id_registro]) {
+        grupos[r.id_registro] = {
+          id:           r.id_registro,
+          fecha:        r.fecha,
+          tiempoComida: r.tipo_comida,
+          productos:    [],
+        };
+      }
+      if (r.id_producto) {
+        grupos[r.id_registro].productos.push({
+          productoId: r.id_producto,
+          cantidad:   r.cantidad_porciones,
+          producto: {
+            descripcion:   r.nombre_producto,
+            energia:       r.calorias,
+            proteina:      r.proteinas,
+            carbohidratos: r.carbohidratos,
+            grasa:         r.grasas,
+            sodio:         r.sodio_mg,
+          },
+        });
+      }
     });
+    return Object.values(grupos);
   }
 
-  static getNutrientesDia(userEmail, fecha = null) {
-    const consumos = fecha
-      ? Data.getConsumosByFecha(userEmail, fecha)
-      : Data.getConsumoHoy(userEmail);
+  static async getConsumoHoy(userEmail) {
+    try {
+      const session = getSession();
+      if (!session?.idUsuario) return [];
+      const res   = await apiFetch(ENDPOINTS.registros.porUsuario(session.idUsuario));
+      const lista = res?.data ?? res ?? [];
+      if (!Array.isArray(lista)) return [];
+      const hoy = new Date().toISOString().split("T")[0];
+      return Data._agruparRegistros(lista, (fecha) => fecha === hoy);
+    } catch (err) {
+      console.error("getConsumoHoy error:", err.message);
+      return Data._getConsumosLocal(userEmail).filter(
+        (c) => new Date(c.fecha).toDateString() === new Date().toDateString()
+      );
+    }
+  }
 
+  static async getConsumosByFecha(userEmail, fecha) {
+    try {
+      const session = getSession();
+      if (!session?.idUsuario) return [];
+      const res   = await apiFetch(ENDPOINTS.registros.porUsuario(session.idUsuario));
+      const lista = res?.data ?? res ?? [];
+      if (!Array.isArray(lista)) return [];
+      return Data._agruparRegistros(lista, (fechaReg) => fechaReg === fecha);
+    } catch (err) {
+      console.error("getConsumosByFecha error:", err.message);
+      return [];
+    }
+  }
+
+  static async getConsumosByDateRange(userEmail, fechaInicio, fechaFin) {
+    try {
+      const session = getSession();
+      if (!session?.idUsuario) return [];
+      const res   = await apiFetch(ENDPOINTS.registros.porUsuario(session.idUsuario));
+      const lista = res?.data ?? res ?? [];
+      if (!Array.isArray(lista)) return [];
+      const inicio = new Date(fechaInicio);
+      const fin    = new Date(fechaFin);
+      fin.setHours(23, 59, 59, 999);
+      return Data._agruparRegistros(lista, (fechaReg) => {
+        const d = new Date(fechaReg);
+        return d >= inicio && d <= fin;
+      });
+    } catch (err) {
+      console.error("getConsumosByDateRange error:", err.message);
+      return [];
+    }
+  }
+
+  static getNutrientesDia(userEmail, consumos = null) {
+    const lista = consumos ?? Data._getConsumosLocal(userEmail).filter(
+      (c) => new Date(c.fecha).toDateString() === new Date().toDateString()
+    );
     let totales = { calorias: 0, proteinas: 0, grasas: 0, carbohidratos: 0, sodio: 0 };
-
-    consumos.forEach((consumo) => {
+    lista.forEach((consumo) => {
       (consumo.productos ?? []).forEach((prod) => {
         if (prod.producto) {
           const cant = prod.cantidad || 100;
@@ -217,52 +276,63 @@ class Data {
         }
       });
     });
-
     return totales;
   }
 
-  static addProductoAlConsumo(userEmail, tiempoComida, productoId, cantidad) {
-    const consumos = Data._getConsumosLocal(userEmail);
-    const hoy      = new Date().toISOString().split("T")[0];
+  static async addProductoAlConsumo(userEmail, tiempoComida, productoId, cantidad) {
+    try {
+      const session = getSession();
+      if (!session?.idUsuario) return false;
 
-    let consumo = consumos.find((c) => {
-      return new Date(c.fecha).toISOString().split("T")[0] === hoy
-        && c.tiempoComida === tiempoComida;
-    });
+      // Si es una receta, registrar cada producto de la receta por separado
+      if (String(productoId).startsWith("receta-")) {
+        const idReceta = String(productoId).replace("receta-", "");
+        const recetas  = await Data.getRecetas(null);
+        const receta   = recetas.find((r) => String(r.id) === idReceta);
+        if (!receta || !receta.productos?.length) return false;
 
-    if (!consumo) {
-      consumo = {
-        id: Date.now().toString(),
-        fecha: new Date().toISOString(),
-        tiempoComida,
-        productos: [],
-      };
-      consumos.push(consumo);
+        const hoy = new Date().toISOString().split("T")[0];
+        for (const prod of receta.productos) {
+          await apiFetch(ENDPOINTS.registros.crear(), {
+            method: "POST",
+            body: JSON.stringify({
+              IdUsuario:  parseInt(session.idUsuario),
+              Fecha:      hoy,
+              TipoComida: tiempoComida,
+              Productos:  [{ IdProducto: prod.productoId, CantidadPorciones: prod.cantidad * (cantidad / 100) }],
+            }),
+          });
+        }
+        return true;
+      }
+
+      const hoy = new Date().toISOString().split("T")[0];
+      const res = await apiFetch(ENDPOINTS.registros.crear(), {
+        method: "POST",
+        body: JSON.stringify({
+          IdUsuario:  parseInt(session.idUsuario),
+          Fecha:      hoy,
+          TipoComida: tiempoComida,
+          Productos:  [{ IdProducto: productoId, CantidadPorciones: cantidad }],
+        }),
+      });
+
+      const idRegistro = res?.data?.idRegistro ?? res?.idRegistro ?? Date.now();
+      const producto   = Data._getProductoCache(productoId);
+      Data._addConsumoLocal(userEmail, tiempoComida, idRegistro, productoId, cantidad, producto);
+      return true;
+    } catch (err) {
+      console.error("addProductoAlConsumo error:", err.message);
+      return Data._addConsumoLocalFallback(userEmail, tiempoComida, productoId, cantidad);
     }
-
-    const producto = Data._getProductoLocal(productoId);
-    if (!producto) return false;
-
-    const existente = consumo.productos.find((p) => p.productoId == productoId);
-    if (existente) {
-      existente.cantidad += cantidad;
-    } else {
-      consumo.productos.push({ productoId, cantidad, producto });
-    }
-
-    Data._saveConsumosLocal(userEmail, consumos);
-    return true;
   }
 
   static removeProductoDelConsumo(userEmail, consumoId, productoId) {
     const consumos = Data._getConsumosLocal(userEmail);
-    const consumo  = consumos.find((c) => c.id === consumoId);
+    const consumo  = consumos.find((c) => c.id == consumoId);
     if (!consumo) return false;
     consumo.productos = consumo.productos.filter((p) => p.productoId != productoId);
-    if (consumo.productos.length === 0) {
-      const idx = consumos.indexOf(consumo);
-      consumos.splice(idx, 1);
-    }
+    if (consumo.productos.length === 0) consumos.splice(consumos.indexOf(consumo), 1);
     Data._saveConsumosLocal(userEmail, consumos);
     return true;
   }
@@ -270,7 +340,7 @@ class Data {
   static updateCantidadProducto(userEmail, consumoId, productoId, nuevaCantidad) {
     nuevaCantidad = parseInt(nuevaCantidad) || 1;
     const consumos = Data._getConsumosLocal(userEmail);
-    const consumo  = consumos.find((c) => c.id === consumoId);
+    const consumo  = consumos.find((c) => c.id == consumoId);
     if (!consumo) return false;
     const prod = consumo.productos.find((p) => p.productoId == productoId);
     if (!prod) return false;
@@ -281,46 +351,92 @@ class Data {
   }
 
   // ===========================================================
-  // RECETAS — localStorage temporal
-  // TODO: conectar a backend cuando el compa implemente los endpoints
+  // RECETAS
   // ===========================================================
 
-  static getRecetas(userEmail) {
-    const key = `recetas_${userEmail}`;
-    return JSON.parse(localStorage.getItem(key) || "[]");
+  static async getRecetas(userEmail) {
+    try {
+      const session = getSession();
+      if (!session?.idUsuario) return [];
+      const res   = await apiFetch(ENDPOINTS.recetas.detalle(session.idUsuario));
+      const lista = res?.data ?? res ?? [];
+      if (!Array.isArray(lista)) return [];
+
+      // Agrupar filas por id_receta (JOIN repite la receta por cada producto)
+      const grupos = {};
+      lista.forEach((r) => {
+        if (!grupos[r.id_receta]) {
+          grupos[r.id_receta] = {
+            id:        r.id_receta,
+            nombre:    r.nombre,
+            energia:   r.total_calorias ?? 0,
+            productos: [],
+          };
+        }
+        if (r.id_producto) {
+          grupos[r.id_receta].productos.push({
+            productoId: r.id_producto,
+            cantidad:   r.cantidad_porciones,
+            producto: {
+              descripcion:   r.nombre_producto,
+              energia:       r.calorias,
+              proteina:      r.proteinas,
+              carbohidratos: r.carbohidratos,
+              grasa:         r.grasas,
+              sodio:         r.sodio_mg,
+            },
+          });
+        }
+      });
+      return Object.values(grupos);
+    } catch (err) {
+      console.error("getRecetas error:", err.message);
+      return JSON.parse(localStorage.getItem(`recetas_${userEmail}`) || "[]");
+    }
   }
 
-  static saveReceta(userEmail, nombreReceta) {
+  static async saveReceta(userEmail, nombreReceta) {
     if (!nombreReceta || Data._recetaEnEdicion.productos.length === 0) return false;
-    const recetas = Data.getRecetas(userEmail);
-    recetas.push({
-      id: Date.now().toString(),
-      nombre: nombreReceta,
-      fechaCreacion: new Date().toISOString(),
-      productos: [...Data._recetaEnEdicion.productos],
-    });
-    localStorage.setItem(`recetas_${userEmail}`, JSON.stringify(recetas));
-    Data._recetaEnEdicion.productos = [];
-    return true;
+    try {
+      const session = getSession();
+      if (!session?.idUsuario) return false;
+      await apiFetch(ENDPOINTS.recetas.crear(), {
+        method: "POST",
+        body: JSON.stringify({
+          IdUsuario: parseInt(session.idUsuario),
+          Nombre:    nombreReceta,
+          Productos: Data._recetaEnEdicion.productos.map((p) => ({
+            IdProducto:        p.productoId,
+            CantidadPorciones: p.cantidad,
+          })),
+        }),
+      });
+      Data._recetaEnEdicion.productos = [];
+      return true;
+    } catch (err) {
+      console.error("saveReceta error:", err.message);
+      return false;
+    }
   }
 
   static deleteReceta(userEmail, recetaId) {
-    const recetas = Data.getRecetas(userEmail).filter((r) => r.id !== recetaId);
+    const recetas = JSON.parse(localStorage.getItem(`recetas_${userEmail}`) || "[]")
+      .filter((r) => r.id !== recetaId);
     localStorage.setItem(`recetas_${userEmail}`, JSON.stringify(recetas));
     return true;
   }
 
   // ===========================================================
-  // RECETA EN EDICIÓN (temporal en memoria)
+  // RECETA EN EDICIÓN
   // ===========================================================
 
   static _recetaEnEdicion = { productos: [] };
 
-  static getProductosRecetaEnEdicion()   { return Data._recetaEnEdicion.productos; }
-  static clearRecetaEnEdicion()           { Data._recetaEnEdicion.productos = []; }
+  static getProductosRecetaEnEdicion()  { return Data._recetaEnEdicion.productos; }
+  static clearRecetaEnEdicion()          { Data._recetaEnEdicion.productos = []; }
 
   static addProductoARecetaTemporal(productoId, cantidad) {
-    const producto = Data._getProductoLocal(productoId);
+    const producto = Data._getProductoCache(productoId);
     if (!producto) return false;
     const existente = Data._recetaEnEdicion.productos.find((p) => p.productoId == productoId);
     if (existente) { existente.cantidad += cantidad; }
@@ -368,7 +484,7 @@ class Data {
   }
 
   // ===========================================================
-  // HELPERS INTERNOS (localStorage)
+  // HELPERS INTERNOS
   // ===========================================================
 
   static _getConsumosLocal(userEmail) {
@@ -379,25 +495,34 @@ class Data {
     localStorage.setItem(`consumos_${userEmail}`, JSON.stringify(consumos));
   }
 
-  static _getMedidasLocal(userEmail) {
-    return JSON.parse(localStorage.getItem(`medidas_${userEmail}`) || "[]");
+  static _addConsumoLocal(userEmail, tiempoComida, idRegistro, productoId, cantidad, producto) {
+    const consumos = Data._getConsumosLocal(userEmail);
+    const hoy = new Date().toDateString();
+    let consumo = consumos.find(
+      (c) => new Date(c.fecha).toDateString() === hoy && c.tiempoComida === tiempoComida
+    );
+    if (!consumo) {
+      consumo = { id: idRegistro, fecha: new Date().toISOString(), tiempoComida, productos: [] };
+      consumos.push(consumo);
+    }
+    const existente = consumo.productos.find((p) => p.productoId == productoId);
+    if (existente) { existente.cantidad += cantidad; }
+    else { consumo.productos.push({ productoId, cantidad, producto }); }
+    Data._saveConsumosLocal(userEmail, consumos);
   }
 
-  static _addMedidaLocal(userEmail, medida) {
-    const medidas = Data._getMedidasLocal(userEmail);
-    medidas.unshift({ id: Date.now().toString(), fecha: new Date().toISOString(), ...medida });
-    localStorage.setItem(`medidas_${userEmail}`, JSON.stringify(medidas));
+  static _addConsumoLocalFallback(userEmail, tiempoComida, productoId, cantidad) {
+    const producto = Data._getProductoCache(productoId);
+    if (!producto) return false;
+    Data._addConsumoLocal(userEmail, tiempoComida, Date.now(), productoId, cantidad, producto);
+    return true;
   }
 
-  static _getProductoLocal(productoId) {
-    const productos = JSON.parse(localStorage.getItem("nutritec_productos_cache") || "[]");
-    return productos.find((p) => p.id == productoId) ?? null;
+  static _getProductoCache(productoId) {
+    const cache = JSON.parse(localStorage.getItem("nutritec_productos_cache") || "[]");
+    return cache.find((p) => p.id == productoId) ?? null;
   }
 
-  /**
-   * Cachear productos de la API en localStorage para búsquedas offline
-   * y para el selector de consumo/recetas.
-   */
   static async cargarCacheProductos() {
     try {
       const productos = await Data.getProductosAprobados();
@@ -407,16 +532,11 @@ class Data {
     }
   }
 
-  /**
-   * Inicializar datos de prueba — ya no crea usuarios falsos,
-   * solo carga el cache de productos desde la API.
-   */
   static initializeTestData() {
     Data.cargarCacheProductos();
   }
 }
 
-// Cargar productos al iniciar
 document.addEventListener("DOMContentLoaded", () => {
   Data.initializeTestData();
 });
