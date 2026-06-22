@@ -45,8 +45,22 @@ public sealed class VistasController(NutriTecDbContext context) : ControllerBase
 
     [HttpGet("api/registros-diarios/usuario/{idUsuario:int}")]
     [Authorize(Policy = "Cliente")]
-    public async Task<ActionResult<ApiResponse<IReadOnlyCollection<object>>>> RegistrosUsuario(int idUsuario, CancellationToken ct) =>
-        Ok(ApiResponse<IReadOnlyCollection<object>>.SuccessResponse(await QueryAsync("SELECT id_registro, id_usuario, fecha, tipo_comida FROM REGISTRO_DIARIO WHERE id_usuario=@idUsuario ORDER BY fecha DESC, id_registro DESC", ct, P("@idUsuario", idUsuario))));
+    public async Task<ActionResult<ApiResponse<IReadOnlyCollection<object>>>> RegistrosUsuario(int idUsuario, CancellationToken ct)
+    {
+        const string sql = """
+            SELECT 
+                rd.id_registro, rd.id_usuario, rd.fecha, rd.tipo_comida,
+                rp.id_producto, rp.cantidad_porciones,
+                p.nombre AS nombre_producto, p.calorias, p.proteinas,
+                p.carbohidratos, p.grasas, p.sodio_mg
+            FROM REGISTRO_DIARIO rd
+            LEFT JOIN REGISTRO_PRODUCTO rp ON rp.id_registro = rd.id_registro
+            LEFT JOIN PRODUCTO p ON p.id_producto = rp.id_producto
+            WHERE rd.id_usuario = @idUsuario
+            ORDER BY rd.fecha DESC, rd.id_registro DESC
+            """;
+        return Ok(ApiResponse<IReadOnlyCollection<object>>.SuccessResponse(await QueryAsync(sql, ct, P("@idUsuario", idUsuario))));
+    }
 
     [HttpPost("api/recetas")]
     [Authorize(Policy = "Cliente")]
@@ -62,6 +76,50 @@ public sealed class VistasController(NutriTecDbContext context) : ControllerBase
     [Authorize(Policy = "Cliente")]
     public async Task<ActionResult<ApiResponse<IReadOnlyCollection<object>>>> RecetasUsuario(int idUsuario, CancellationToken ct) =>
         Ok(ApiResponse<IReadOnlyCollection<object>>.SuccessResponse(await QueryAsync("SELECT id_receta, nombre, id_usuario, total_calorias, total_carbohidratos, total_proteina, total_grasa FROM RECETA WHERE id_usuario=@idUsuario ORDER BY id_receta DESC", ct, P("@idUsuario", idUsuario))));
+
+    [HttpGet("api/recetas/usuario/{idUsuario:int}/detalle")]
+    [Authorize(Policy = "Cliente")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyCollection<object>>>> RecetasUsuarioDetalle(int idUsuario, CancellationToken ct)
+    {
+        const string sql = """
+            SELECT r.id_receta, r.nombre, r.total_calorias, r.total_carbohidratos,
+                r.total_proteina, r.total_grasa,
+                rp.id_producto, rp.cantidad_porciones,
+                p.nombre AS nombre_producto, p.calorias, p.proteinas,
+                p.carbohidratos, p.grasas, p.sodio_mg
+            FROM RECETA r
+            LEFT JOIN RECETA_PRODUCTO rp ON rp.id_receta = r.id_receta
+            LEFT JOIN PRODUCTO p ON p.id_producto = rp.id_producto
+            WHERE r.id_usuario = @idUsuario
+            ORDER BY r.id_receta DESC
+            """;
+        return Ok(ApiResponse<IReadOnlyCollection<object>>.SuccessResponse(
+            await QueryAsync(sql, ct, P("@idUsuario", idUsuario))));
+    }
+
+    [HttpDelete("api/registros-diarios/{idRegistro:int}")]
+    [Authorize(Policy = "Cliente")]
+    public async Task<ActionResult<ApiResponse<object>>> EliminarRegistroDiario(int idRegistro, CancellationToken ct)
+    {
+        await NonQueryAsync(await OpenAsync(ct), null,
+            "DELETE FROM REGISTRO_PRODUCTO WHERE id_registro = @id; DELETE FROM REGISTRO_DIARIO WHERE id_registro = @id",
+            ct, P("@id", idRegistro));
+        return Ok(ApiResponse<object>.SuccessResponse(new { IdRegistro = idRegistro }, "Registro eliminado."));
+    }
+
+    [HttpGet("api/pacientes/usuario/{idUsuario:int}/nutricionista")]
+    [Authorize(Policy = "Cliente")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyCollection<object>>>> NutricionistaDelPaciente(int idUsuario, CancellationToken ct)
+    {
+        const string sql = """
+            SELECT TOP(1) n.cedula, n.nombre, n.apellidos, n.email
+            FROM NUTRICIONISTA n
+            INNER JOIN PACIENTE_NUTRICIONISTA pn ON pn.cedula_nutricionista = n.cedula
+            WHERE pn.id_usuario = @idUsuario
+            """;
+        return Ok(ApiResponse<IReadOnlyCollection<object>>.SuccessResponse(
+            await QueryAsync(sql, ct, P("@idUsuario", idUsuario))));
+    }
 
     [HttpGet("api/medidas/usuario/{idUsuario:int}")]
     [Authorize(Policy = "Cliente")]
