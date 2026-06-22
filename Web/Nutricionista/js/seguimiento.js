@@ -1,6 +1,6 @@
 requiereAutenticacion();
 
-const usuario = obtenerUsuarioActual();
+const usuarioActual = obtenerUsuarioActual();
 const params = new URLSearchParams(window.location.search);
 const idPaciente = params.get("idPaciente");
 
@@ -82,7 +82,7 @@ function mostrarMensajes(mensajes) {
     }
 
     hiloMensajes.innerHTML = mensajes.map(mensaje => `
-        <div class="mb-2 p-2 rounded ${mensaje.autor === usuario.nombre ? 'bg-success bg-opacity-10 text-end' : 'bg-light'}">
+        <div class="mb-2 p-2 rounded ${mensaje.autor === usuarioActual.nombre ? 'bg-success bg-opacity-10 text-end' : 'bg-light'}">
             <div class="small fw-bold">${mensaje.autor}</div>
             <div>${mensaje.mensaje}</div>
             <div class="small text-muted">${new Date(mensaje.fechaUtc).toLocaleString()}</div>
@@ -103,15 +103,15 @@ if (formMensaje) {
             if (idRetroalimentacionActual) {
                 await apiMongoFetch(`/retroalimentaciones/${idRetroalimentacionActual}/mensajes`, {
                     method: "POST",
-                    body: JSON.stringify({ autor: usuario.nombre, mensaje: texto })
+                    body: JSON.stringify({ autor: usuarioActual.nombre, mensaje: texto })
                 });
             } else {
                 await apiMongoFetch("/retroalimentaciones", {
                     method: "POST",
                     body: JSON.stringify({
                         idPaciente,
-                        idNutricionista: usuario.id,
-                        autor: usuario.nombre,
+                        idNutricionista: usuarioActual.id,
+                        autor: usuarioActual.nombre,
                         mensaje: texto
                     })
                 });
