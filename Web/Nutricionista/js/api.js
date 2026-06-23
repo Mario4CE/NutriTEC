@@ -1,5 +1,5 @@
-const API_SQL_BASE_URL = "http://localhost:5255/api";
-const API_MONGO_BASE_URL = "http://localhost:5272/api";
+const SQL_API_BASE_URL = "https://app-nutritec-sql-api-demo.azurewebsites.net/api";
+const MONGO_API_BASE_URL = "https://app-nutritec-mongo-api-demo.azurewebsites.net/api";
 
 function obtenerToken() {
     return localStorage.getItem("nutritec_token");
