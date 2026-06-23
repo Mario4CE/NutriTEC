@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Nutri_TEC.Views.CrearRecetaPage"
+             Title="Crear Receta"
+             BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+
+    <ScrollView BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+        <VerticalStackLayout Padding="20" Spacing="15" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+            <!-- Nombre Receta -->
+            <VerticalStackLayout Spacing="8" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+                <Label Text="Nombre de la Receta" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"/>
+                <Border Padding="12,8" Stroke="#ddd" StrokeThickness="1" StrokeShape="RoundRectangle 8,8,8,8" Background="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                    <Entry x:Name="NombreRecetaEntry" 
+                           Placeholder="Ej: Pinto Desayuno" 
+                           TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"
+                           PlaceholderColor="{AppThemeBinding Light=#999999, Dark=#666666}"
+                           Background="Transparent"/>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- Descripción -->
+            <VerticalStackLayout Spacing="8" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+                <Label Text="Descripción" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"/>
+                <Border Padding="12,8" Stroke="#ddd" StrokeThickness="1" StrokeShape="RoundRectangle 8,8,8,8" Background="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                    <Editor x:Name="DescripcionEditor" 
+                            Placeholder="Describe tu receta..." 
+                            HeightRequest="80"
+                            TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"
+                            PlaceholderColor="{AppThemeBinding Light=#999999, Dark=#666666}"
+                            Background="Transparent"/>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- Productos en la Receta -->
+            <VerticalStackLayout Spacing="10" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+                <Label Text="Productos en la Receta" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"/>
+
+                <!-- Búsqueda de Productos -->
+                <VerticalStackLayout Spacing="8" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+                    <Label Text="Agregar Productos" FontSize="12" TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"/>
+                    <SearchBar x:Name="SearchBar" 
+                               Placeholder="Busca un producto..."
+                               TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"
+                               PlaceholderColor="{AppThemeBinding Light=#999999, Dark=#666666}"
+                               Background="{AppThemeBinding Light=White, Dark=#2a2a2a}"
+                               SearchButtonPressed="OnSearchProducto"/>
+                </VerticalStackLayout>
+
+                <!-- Resultados Búsqueda -->
+                <CollectionView x:Name="ResultadosView" SelectionMode="Single" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="5"/>
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border StrokeShape="RoundRectangle 6" StrokeThickness="1" Stroke="#ddd" Padding="10" Margin="0,3" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                                <VerticalStackLayout Spacing="5" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                                    <Label Text="{Binding Descripcion}" FontAttributes="Bold" FontSize="11" TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"/>
+                                    <Label Text="{Binding Energia, StringFormat='{0:F0} kcal'}" FontSize="10" TextColor="{AppThemeBinding Light=#666666, Dark=#b0b0b0}"/>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Productos Agregados a Receta -->
+                <Label Text="Productos Agregados" FontSize="12" FontAttributes="Bold" Margin="0,10,0,0" TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"/>
+                <CollectionView x:Name="ProductosRecetaView" SelectionMode="Single" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" ItemSpacing="8"/>
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#2ecc71" Padding="12" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                                            <VerticalStackLayout Grid.Column="0" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                                                <Label Text="{Binding Producto.Descripcion}" FontAttributes="Bold" FontSize="11" TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"/>
+                                                <Label Text="{Binding Cantidad, StringFormat='{0}g'}" FontSize="10" TextColor="{AppThemeBinding Light=#666666, Dark=#b0b0b0}"/>
+                                            </VerticalStackLayout>
+                                            <Entry Grid.Column="1" Text="{Binding Cantidad, Mode=TwoWay}" Keyboard="Numeric" WidthRequest="50" Placeholder="g" TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}" PlaceholderColor="{AppThemeBinding Light=#999999, Dark=#666666}" Background="{AppThemeBinding Light=White, Dark=#2a2a2a}"/>
+                                            <Button Grid.Column="2" Text="✕" Clicked="OnEliminarProductoReceta" CommandParameter="{Binding .}" Background="#ff6b6b" TextColor="White" WidthRequest="40" Padding="0"/>
+                                        </Grid>
+                                    </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+
+            <!-- Resumen Nutrientes -->
+            <Border StrokeShape="RoundRectangle 8" StrokeThickness="2" Stroke="#3498db" Padding="15" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                <VerticalStackLayout Spacing="8" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                    <Label Text="Resumen Nutrientes" FontSize="12" FontAttributes="Bold" TextColor="#3498db"/>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                        <VerticalStackLayout Grid.Column="0" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                            <Label Text="Calorías" FontSize="10" TextColor="{AppThemeBinding Light=#666666, Dark=#b0b0b0}"/>
+                            <Label x:Name="CaloriasLabel" Text="0" FontSize="14" FontAttributes="Bold" TextColor="#2ecc71"/>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                            <Label Text="Proteínas (g)" FontSize="10" TextColor="{AppThemeBinding Light=#666666, Dark=#b0b0b0}"/>
+                            <Label x:Name="ProteinasLabel" Text="0" FontSize="14" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#333333, Dark=#ffffff}"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="10" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                        <VerticalStackLayout Grid.Column="0" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                            <Label Text="Grasas (g)" FontSize="10" TextColor="{AppThemeBinding Light=#666666, Dark=#b0b0b0}"/>
+                            <Label x:Name="GrasasLabel" Text="0" FontSize="14" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#333333, Dark=#ffffff}"/>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout Grid.Column="1" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                            <Label Text="Carbohidratos (g)" FontSize="10" TextColor="{AppThemeBinding Light=#666666, Dark=#b0b0b0}"/>
+                            <Label x:Name="CarbosLabel" Text="0" FontSize="14" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#333333, Dark=#ffffff}"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Botones -->
+            <Button Text="Guardar Receta" Clicked="OnGuardarReceta" Background="#2ecc71" TextColor="White" Padding="16,12" CornerRadius="8" FontAttributes="Bold" Margin="0,10,0,0"/>
+            <Button Text="Cancelar" Clicked="OnCancelar" Background="{AppThemeBinding Light=White, Dark=#2a2a2a}" TextColor="{AppThemeBinding Light=#666666, Dark=#b0b0b0}" BorderColor="#ddd" BorderWidth="1" Padding="16,12" CornerRadius="8"/>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

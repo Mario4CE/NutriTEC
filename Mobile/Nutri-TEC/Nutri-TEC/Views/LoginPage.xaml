@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Nutri_TEC.Views.LoginPage"
+             Title="Iniciar Sesión"
+             BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+
+    <ScrollView BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+        <VerticalStackLayout Padding="20" Spacing="20" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+            <!-- Logo -->
+            <VerticalStackLayout Spacing="10" Padding="0,40,0,20" HorizontalOptions="Center" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+                <Label Text="🥗" FontSize="60" HorizontalTextAlignment="Center"/>
+                <Label Text="NutriTEC" FontSize="32" FontAttributes="Bold" TextColor="#2ecc71" HorizontalTextAlignment="Center"/>
+                <Label Text="Tu app de nutrición personal" FontSize="14" TextColor="{AppThemeBinding Light=#666666, Dark=#b0b0b0}" HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
+
+            <!-- Email -->
+            <VerticalStackLayout Spacing="8" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+                <Label Text="Correo Electrónico" FontSize="14" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"/>
+                <Border Padding="12,8" Stroke="#ddd" StrokeThickness="1" StrokeShape="RoundRectangle 8,8,8,8" Background="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                    <Entry x:Name="EmailEntry" 
+                           Placeholder="tu@correo.com" 
+                           Keyboard="Email"
+                           TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"
+                           PlaceholderColor="{AppThemeBinding Light=#999999, Dark=#666666}"
+                           Background="Transparent"/>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- Contraseña -->
+            <VerticalStackLayout Spacing="8" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+                <Label Text="Contraseña" FontSize="14" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"/>
+                <Border Padding="12,8" Stroke="#ddd" StrokeThickness="1" StrokeShape="RoundRectangle 8,8,8,8" Background="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                    <Entry x:Name="ContraseñaEntry" 
+                           Placeholder="••••••••" 
+                           IsPassword="True"
+                           TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"
+                           PlaceholderColor="{AppThemeBinding Light=#999999, Dark=#666666}"
+                           Background="Transparent"/>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- Botón Login -->
+            <Button Text="Iniciar Sesión" 
+                    Clicked="OnLoginClicked"
+                    Background="#2ecc71"
+                    TextColor="White"
+                    Padding="16,12"
+                    CornerRadius="8"
+                    FontSize="16"
+                    FontAttributes="Bold"/>
+
+            <!-- Divider -->
+            <StackLayout Orientation="Horizontal" Spacing="10" VerticalOptions="Center" BackgroundColor="{AppThemeBinding Light=#f5f5f5, Dark=#1f1f1f}">
+                <BoxView Color="#ddd" WidthRequest="60" HeightRequest="1" VerticalOptions="Center"/>
+                <Label Text="o" TextColor="{AppThemeBinding Light=#999999, Dark=#666666}" FontSize="12"/>
+                <BoxView Color="#ddd" WidthRequest="60" HeightRequest="1" VerticalOptions="Center"/>
+            </StackLayout>
+
+            <!-- Botón Registro -->
+            <Button Text="Crear Nueva Cuenta" 
+                    Clicked="OnRegistroClicked"
+                    Background="{AppThemeBinding Light=White, Dark=#2a2a2a}"
+                    TextColor="#2ecc71"
+                    BorderColor="#2ecc71"
+                    BorderWidth="2"
+                    Padding="16,12"
+                    CornerRadius="8"
+                    FontSize="16"
+                    FontAttributes="Bold"/>
+
+            <!-- Demo Credentials -->
+            <Border StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#ddd" Padding="12" Background="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                <VerticalStackLayout Spacing="8" BackgroundColor="{AppThemeBinding Light=White, Dark=#2a2a2a}">
+                    <Label Text="Demo Credentials:" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light=#333333, Dark=#e0e0e0}"/>
+                    <Label Text="Email: juan@test.com" FontSize="11" TextColor="{AppThemeBinding Light=#666666, Dark=#b0b0b0}"/>
+                    <Label Text="Password: 123456" FontSize="11" TextColor="{AppThemeBinding Light=#666666, Dark=#b0b0b0}"/>
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
