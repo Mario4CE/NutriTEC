@@ -3,10 +3,13 @@
  * Vista Cliente
  */
 
+const runtimeConfig = window.NUTRITEC_CONFIG ?? {};
+const normalizeBaseUrl = (url) => (url ?? "").replace(/\/$/, "");
+
 const API_CONFIG = {
-  USE_MOCKS: false,
-  SQL:   "http://localhost:5255/api",
-  MONGO: "http://localhost:5272/api",
+  USE_MOCKS: runtimeConfig.USE_MOCKS ?? false,
+  SQL: normalizeBaseUrl(runtimeConfig.SQL_API_BASE_URL ?? "/api/sql"),
+  MONGO: normalizeBaseUrl(runtimeConfig.MONGO_API_BASE_URL ?? "/api/mongo"),
 };
 
 const ENDPOINTS = {

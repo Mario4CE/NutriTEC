@@ -9,8 +9,10 @@
 
 export const USE_MOCKS = false;
 
-const SQL   = "/api/sql";
-const MONGO = "/api/mongo";
+const normalizeBaseUrl = (url) => (url ?? "").replace(/\/$/, "");
+
+const SQL = normalizeBaseUrl(import.meta.env.VITE_SQL_API_BASE_URL ?? "/api/sql");
+const MONGO = normalizeBaseUrl(import.meta.env.VITE_MONGO_API_BASE_URL ?? "/api/mongo");
 
 export const ENDPOINTS = {
 
