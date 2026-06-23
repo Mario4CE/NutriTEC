@@ -26,6 +26,10 @@ public static class DependencyInjection
         services.AddScoped<IObjetosSqlRepository, ObjetosSqlRepository>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IPacienteRepository, PacienteSqlRepository>();
+        services.AddScoped<IUsuarioConsultaRepository, UsuarioConsultaSqlRepository>();
+        services.AddScoped<IPlanRepository, PlanSqlRepository>();
+        services.AddScoped<IAsignacionPlanRepository, AsignacionPlanSqlRepository>();
 
         return services;
     }

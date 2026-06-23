@@ -1,0 +1,28 @@
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+.card {
+    border: none;
+    border-radius: 0.75rem;
+}
+
+.item-plan {
+    background-color: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.btn-success {
+    background-color: #2e7d32;
+    border-color: #2e7d32;
+}
+
+.btn-success:hover {
+    background-color: #256528;
+    border-color: #256528;
+}

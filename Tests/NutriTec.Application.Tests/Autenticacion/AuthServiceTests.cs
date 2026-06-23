@@ -17,14 +17,12 @@ public sealed class AuthServiceTests
         var passwordHasher = new FakePasswordHasher();
         var tokenService = new FakeTokenService();
         repository.Credenciales["cliente@example.com"] = new CredencialAutenticacion(
-            "1",
-            "Cliente Demo",
-            "cliente@example.com",
+            "1", "Cliente Demo", "cliente@example.com",
             passwordHasher.GenerarHash("Password123!"),
-            "Cliente");
+            "Cliente", null, null, null, null, null, null);
         var service = new AuthService(repository, passwordHasher, tokenService);
 
-        var response = await service.LoginAsync(new LoginRequest(" cliente@example.com ", "Password123!"), CancellationToken.None);
+        var response = await service.LoginAsync(new LoginRequest { Correo = " cliente@example.com ", Contrasena = "Password123!" }, CancellationToken.None);
 
         Assert.NotNull(response);
         Assert.Equal("1", response.IdUsuario);
@@ -39,9 +37,7 @@ public sealed class AuthServiceTests
     public async Task LoginAsync_CuandoUsuarioNoExiste_RetornaNull()
     {
         var service = CrearServicio();
-
-        var response = await service.LoginAsync(new LoginRequest("nadie@example.com", "Password123!"), CancellationToken.None);
-
+        var response = await service.LoginAsync(new LoginRequest { Correo = "nadie@example.com", Contrasena = "Password123!" }, CancellationToken.None);
         Assert.Null(response);
     }
 
@@ -51,15 +47,12 @@ public sealed class AuthServiceTests
         var repository = new FakeAuthRepository();
         var passwordHasher = new FakePasswordHasher();
         repository.Credenciales["cliente@example.com"] = new CredencialAutenticacion(
-            "1",
-            "Cliente Demo",
-            "cliente@example.com",
+            "1", "Cliente Demo", "cliente@example.com",
             passwordHasher.GenerarHash("Password123!"),
-            "Cliente");
+            "Cliente", null, null, null, null, null, null);
         var service = new AuthService(repository, passwordHasher, new FakeTokenService());
 
-        var response = await service.LoginAsync(new LoginRequest("cliente@example.com", "OtraPassword123!"), CancellationToken.None);
-
+        var response = await service.LoginAsync(new LoginRequest { Correo = "cliente@example.com", Contrasena = "OtraPassword123!" }, CancellationToken.None);
         Assert.Null(response);
     }
 
@@ -133,28 +126,28 @@ public sealed class AuthServiceTests
         Correo: correo,
         Contrasena: "Password123!");
 
-    private static RegistrarNutricionistaRequest CrearRegistrarNutricionistaRequest(string correo = "nutricionista@example.com") => new(
-        Cedula: "1-1111-1111",
-        Nombre: "Nutricionista",
-        Apellidos: "Demo",
-        CodigoNutricionista: "NUT-001",
-        Edad: 35,
-        FechaNacimiento: new DateOnly(1989, 5, 10),
-        Peso: 68.0m,
-        Imc: 23.0m,
-        Direccion: "San José, Costa Rica",
-        FotoUrl: null,
-        TarjetaCredito: "411111******1111",
-        TipoCobro: "mensual",
-        Correo: correo,
-        Contrasena: "Password123!");
+    private static RegistrarNutricionistaRequest CrearRegistrarNutricionistaRequest(string correo = "nutricionista@example.com") => new()
+    {
+        Cedula = "1-1111-1111",
+        Nombre = "Nutricionista",
+        Apellidos = "Demo",
+        CodigoNutricionista = "NUT-001",
+        Edad = 35,
+        FechaNacimiento = new DateOnly(1989, 5, 10),
+        Peso = 68.0m,
+        Imc = 23.0m,
+        Direccion = "San José, Costa Rica",
+        FotoUrl = null,
+        TarjetaCredito = "411111******1111",
+        TipoCobro = "mensual",
+        Correo = correo,
+        Contrasena = "Password123!"
+    };
 
     private sealed class FakeAuthRepository : IAuthRepository
     {
         public Dictionary<string, CredencialAutenticacion> Credenciales { get; } = new(StringComparer.OrdinalIgnoreCase);
-
         public HashSet<string> CorreosExistentes { get; } = new(StringComparer.OrdinalIgnoreCase);
-
         public NuevoUsuarioAutenticacion? UltimoUsuarioRegistrado { get; private set; }
 
         public Task<CredencialAutenticacion?> ObtenerCredencialPorCorreoAsync(string correo, CancellationToken cancellationToken)
@@ -171,13 +164,10 @@ public sealed class AuthServiceTests
             UltimoUsuarioRegistrado = usuario;
             var idUsuario = usuario.TipoUsuario == "Nutricionista" ? usuario.Cedula ?? "1-1111-1111" : "1";
             var credencial = new CredencialAutenticacion(
-                idUsuario,
-                usuario.Nombre,
-                usuario.Correo,
-                usuario.ContrasenaHash,
-                usuario.TipoUsuario);
+                idUsuario, usuario.Nombre, usuario.Correo,
+                usuario.ContrasenaHash, usuario.TipoUsuario,
+                null, null, null, null, null, null);
             Credenciales[usuario.Correo] = credencial;
-
             return Task.FromResult(credencial);
         }
     }
@@ -185,14 +175,12 @@ public sealed class AuthServiceTests
     private sealed class FakePasswordHasher : IPasswordHasher
     {
         public string GenerarHash(string contrasena) => $"fake-hash:{Convert.ToBase64String(Encoding.UTF8.GetBytes(contrasena))}";
-
         public bool Verificar(string contrasena, string hashAlmacenado) => hashAlmacenado == GenerarHash(contrasena);
     }
 
     private sealed class FakeTokenService : ITokenService
     {
         public DateTimeOffset ExpiraEn { get; } = new(2026, 6, 15, 18, 0, 0, TimeSpan.Zero);
-
         public TokenAutenticacion GenerarToken(UsuarioTokenAutenticacion usuario) => new("jwt-token", ExpiraEn);
     }
 }
