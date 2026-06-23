@@ -115,4 +115,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+app.MapGet("/", () => Results.Ok(new
+{
+    message = "NutriTec Mongo API funcionando",
+    status = "OK"
+}));
+
+app.MapGet("/health", () => Results.Ok("OK"));
+
 app.Run();

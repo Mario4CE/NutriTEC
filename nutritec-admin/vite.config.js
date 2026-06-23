@@ -19,12 +19,12 @@ export default defineConfig({
       "/api/sql": {
         target: "http://localhost:5255",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/sql/, "/api"),
+            rewrite: (path) => path.replace(/^\/api\/sql/, "/api"), // Api SQL
       },
       "/api/mongo": {
         target: "http://localhost:5272",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/mongo/, "/api"),
+          rewrite: (path) => path.replace(/^\/api\/mongo/, "/api"), // Api Mongo
       },
     },
   },
