@@ -31,6 +31,25 @@ public sealed class VistasController(NutriTecDbContext context) : ControllerBase
         return Ok(ApiResponse<IReadOnlyCollection<object>>.SuccessResponse(await QueryAsync(sql, ct, P("@idUsuario", idUsuario))));
     }
 
+    [HttpGet("api/planes/{idPlan:int}/detalle")]
+    [Authorize(Policy = "Cliente")]
+    public async Task<ActionResult<ApiResponse<IReadOnlyCollection<object>>>> DetallePlan(int idPlan, CancellationToken ct)
+    {
+        const string sql = """
+            SELECT tc.id_tiempo, tc.tipo_comida,
+                pp.id_producto, pp.cantidad_porciones,
+                p.nombre AS nombre_producto, p.calorias, p.proteinas,
+                p.carbohidratos, p.grasas
+            FROM TIEMPO_COMIDA_PLAN tc
+            LEFT JOIN PLAN_PRODUCTO pp ON pp.id_tiempo = tc.id_tiempo
+            LEFT JOIN PRODUCTO p ON p.id_producto = pp.id_producto
+            WHERE tc.id_plan = @idPlan
+            ORDER BY tc.id_tiempo
+            """;
+        return Ok(ApiResponse<IReadOnlyCollection<object>>.SuccessResponse(
+            await QueryAsync(sql, ct, P("@idPlan", idPlan))));
+    }
+
     [HttpPost("api/registros-diarios")]
     [Authorize(Policy = "Cliente")]
     public async Task<ActionResult<ApiResponse<object>>> CrearRegistroDiario([FromBody] RegistroDiarioRequest r, CancellationToken ct)
@@ -147,7 +166,7 @@ public sealed class VistasController(NutriTecDbContext context) : ControllerBase
     [Authorize(Policy = "Nutricionista")]
     public async Task<ActionResult<ApiResponse<IReadOnlyCollection<object>>>> PlanesNutricionista(string cedula, CancellationToken ct) => Ok(ApiResponse<IReadOnlyCollection<object>>.SuccessResponse(await QueryAsync("SELECT id_plan,nombre,cedula_nutricionista,total_calorias FROM PLAN_ALIMENTACION WHERE cedula_nutricionista=@c ORDER BY nombre", ct, P("@c", cedula))));
 
-    [HttpPost("api/planes")]
+    [HttpPost("api/vistas/planes")]
     [Authorize(Policy = "Nutricionista")]
     public async Task<ActionResult<ApiResponse<object>>> CrearPlan([FromBody] PlanRequest r, CancellationToken ct)
     { var id = await ScalarAsync<int>(await OpenAsync(ct), null, "INSERT INTO PLAN_ALIMENTACION (nombre,cedula_nutricionista) OUTPUT INSERTED.id_plan VALUES (@n,@c)", ct, P("@n", r.Nombre), P("@c", r.CedulaNutricionista)); return StatusCode(201, ApiResponse<object>.SuccessResponse(new { IdPlan = id }, "Plan creado.")); }

@@ -136,7 +136,7 @@ class Views {
             </div>`;
     }
 
-    static getDashboardView(user, consumoHoy = [], medidasRecientes = [], nutrientesHoy = null) {
+    static getDashboardView(user, consumoHoy = [], medidasRecientes = [], nutrientesHoy = null, planes = []) {
         const nutrientes        = nutrientesHoy ?? { calorias: 0, proteinas: 0, grasas: 0, carbohidratos: 0, sodio: 0 };
         const metaDiaria        = user.caloriasDiariasMax ?? 2000;
         const porcentajeCaloria = Math.min((nutrientes.calorias / metaDiaria) * 100, 100);
@@ -230,6 +230,50 @@ class Views {
                                 <div class="col-md-4"><strong>Cuello:</strong> ${ultimaMedida.cuello} cm</div>
                                 <div class="col-md-4"><strong>Caderas:</strong> ${ultimaMedida.caderas} cm</div>
                             </div>
+                        </div>
+                    </div>
+                ` : ""}
+
+                ${planes.length > 0 ? `
+                    <div class="card mt-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Planes de Alimentación Asignados</h5>
+                        </div>
+                        <div class="card-body">
+                            ${planes.map(p => {
+                                const hoy    = new Date().toLocaleDateString("en-CA");
+                                const inicio = p.fecha_inicio?.split("T")[0];
+                                const fin    = p.fecha_fin?.split("T")[0];
+                                const activo = hoy >= inicio && hoy <= fin;
+                                return `
+                                <div class="mb-3 p-3 rounded ${activo ? 'border border-success' : 'border'}">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <strong>${p.nombre}</strong>
+                                        <span>
+                                            ${activo ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Inactivo</span>'}
+                                            <small class="text-muted ms-2">${inicio} al ${fin}</small>
+                                        </span>
+                                    </div>
+                                    ${p.tiempos && p.tiempos.length > 0 ? `
+                                        <div class="row">
+                                            ${p.tiempos.map(t => `
+                                                <div class="col-md-4 mb-2">
+                                                    <div class="card h-100">
+                                                        <div class="card-header py-1 bg-light">
+                                                            <small class="fw-bold">${t.tipo_comida}</small>
+                                                        </div>
+                                                        <div class="card-body py-2">
+                                                            ${t.productos.length > 0 ? t.productos.map(prod => `
+                                                                <div class="small">• ${prod.nombre} <span class="text-muted">(${prod.calorias} kcal)</span></div>
+                                                            `).join("") : '<small class="text-muted">Sin productos</small>'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            `).join("")}
+                                        </div>
+                                    ` : '<small class="text-muted">Sin tiempos de comida definidos</small>'}
+                                </div>`;
+                            }).join("")}
                         </div>
                     </div>
                 ` : ""}

@@ -2,18 +2,46 @@ using System.ComponentModel.DataAnnotations;
 
 namespace NutriTec.Contracts.Autenticacion;
 
-public sealed record RegistrarNutricionistaRequest(
-    [Required, MaxLength(20)] string Cedula,
-    [Required, MaxLength(100)] string Nombre,
-    [Required, MaxLength(150)] string Apellidos,
-    [Required, MaxLength(50)] string CodigoNutricionista,
-    [Range(0, 130)] int Edad,
-    DateOnly FechaNacimiento,
-    [Range(0.01, 1000)] decimal Peso,
-    [Range(0.01, 200)] decimal Imc,
-    [Required, MaxLength(255)] string Direccion,
-    [MaxLength(500)] string? FotoUrl,
-    [Required, MaxLength(100)] string TarjetaCredito,
-    [Required, RegularExpression("^(semanal|mensual|anual)$")] string TipoCobro,
-    [Required, EmailAddress, MaxLength(100)] string Correo,
-    [Required, MinLength(8), MaxLength(100)] string Contrasena);
+public sealed class RegistrarNutricionistaRequest
+{
+    [Required, MaxLength(20)]
+    public string Cedula { get; init; } = string.Empty;
+
+    [Required, MaxLength(100)]
+    public string Nombre { get; init; } = string.Empty;
+
+    [Required, MaxLength(150)]
+    public string Apellidos { get; init; } = string.Empty;
+
+    [Required, MaxLength(50)]
+    public string CodigoNutricionista { get; init; } = string.Empty;
+
+    [Range(0, 130)]
+    public int Edad { get; init; }
+
+    public DateOnly FechaNacimiento { get; init; }
+
+    [Range(0.01, 1000)]
+    public decimal Peso { get; init; }
+
+    [Range(0.01, 200)]
+    public decimal Imc { get; init; }
+
+    [Required, MaxLength(255)]
+    public string Direccion { get; init; } = string.Empty;
+
+    [MaxLength(500)]
+    public string? FotoUrl { get; init; }
+
+    [Required, MaxLength(100)]
+    public string TarjetaCredito { get; init; } = string.Empty;
+
+    [Required, RegularExpression("^(semanal|mensual|anual)$")]
+    public string TipoCobro { get; init; } = string.Empty;
+
+    [Required, EmailAddress, MaxLength(100)]
+    public string Correo { get; init; } = string.Empty;
+
+    [Required, MinLength(8), MaxLength(100)]
+    public string Contrasena { get; init; } = string.Empty;
+}

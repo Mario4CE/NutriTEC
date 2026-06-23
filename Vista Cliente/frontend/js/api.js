@@ -26,6 +26,7 @@ const ENDPOINTS = {
   },
   planes: {
     porUsuario: (idUsuario) => `${API_CONFIG.SQL}/planes/usuario/${idUsuario}`,
+    detalle:    (idPlan)    => `${API_CONFIG.SQL}/planes/${idPlan}/detalle`,
   },
   registros: {
     crear:      ()           => `${API_CONFIG.SQL}/registros-diarios`,
@@ -44,11 +45,10 @@ const ENDPOINTS = {
   sp: {
     calcularImc: (kg, cm) => `${API_CONFIG.SQL}/sql-programable/functions/imc?pesoKg=${kg}&estaturaCm=${cm}`,
   },
-  // MongoDB — retroalimentación entre paciente y nutricionista
   retroalimentacion: {
-    crear:          ()           => `${API_CONFIG.MONGO}/retroalimentaciones`,
-    porPaciente:    (idPaciente) => `${API_CONFIG.MONGO}/retroalimentaciones/pacientes/${idPaciente}`,
-    responder:      (id)         => `${API_CONFIG.MONGO}/retroalimentaciones/${id}/mensajes`,
+    crear:       ()           => `${API_CONFIG.MONGO}/retroalimentaciones`,
+    porPaciente: (idPaciente) => `${API_CONFIG.MONGO}/retroalimentaciones/pacientes/${idPaciente}`,
+    responder:   (id)         => `${API_CONFIG.MONGO}/retroalimentaciones/${id}/mensajes`,
   },
   pacientes: {
     nutricionista: (idUsuario) => `${API_CONFIG.SQL}/pacientes/usuario/${idUsuario}/nutricionista`,
