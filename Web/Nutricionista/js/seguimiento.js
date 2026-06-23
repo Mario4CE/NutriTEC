@@ -58,7 +58,7 @@ async function cargarRegistroDiario() {
 
 async function cargarConversacion() {
     try {
-        const respuesta = await apiMongoFetch(`/retroalimentaciones/pacientes/${idPaciente}`);
+        const respuesta = await apiMongoFetch(`/retroalimentaciones/pacientes/int/${idPaciente}`);
         const foros = respuesta.data;
 
         if (!foros || foros.length === 0) {
@@ -103,16 +103,19 @@ if (formMensaje) {
             if (idRetroalimentacionActual) {
                 await apiMongoFetch(`/retroalimentaciones/${idRetroalimentacionActual}/mensajes`, {
                     method: "POST",
-                    body: JSON.stringify({ autor: usuarioActual.nombre, mensaje: texto })
+                    body: JSON.stringify({ 
+                        Autor: usuarioActual.correo ?? usuarioActual.nombre, 
+                        Mensaje: texto 
+                    })
                 });
             } else {
                 await apiMongoFetch("/retroalimentaciones", {
                     method: "POST",
                     body: JSON.stringify({
-                        idPaciente,
-                        idNutricionista: usuarioActual.id,
-                        autor: usuarioActual.nombre,
-                        mensaje: texto
+                        IdPaciente: `00000000-0000-0000-0000-${String(idPaciente).padStart(12, "0")}`,
+                        IdNutricionista: `00000000-0000-0000-0000-${String(usuarioActual.id).padStart(12, "0")}`,
+                        Autor: usuarioActual.correo ?? usuarioActual.nombre,
+                        Mensaje: texto
                     })
                 });
             }

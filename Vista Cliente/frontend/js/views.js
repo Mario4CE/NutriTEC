@@ -136,7 +136,7 @@ class Views {
             </div>`;
     }
 
-    static getDashboardView(user, consumoHoy = [], medidasRecientes = [], nutrientesHoy = null) {
+    static getDashboardView(user, consumoHoy = [], medidasRecientes = [], nutrientesHoy = null, planes = []) {
         const nutrientes        = nutrientesHoy ?? { calorias: 0, proteinas: 0, grasas: 0, carbohidratos: 0, sodio: 0 };
         const metaDiaria        = user.caloriasDiariasMax ?? 2000;
         const porcentajeCaloria = Math.min((nutrientes.calorias / metaDiaria) * 100, 100);
@@ -230,6 +230,30 @@ class Views {
                                 <div class="col-md-4"><strong>Cuello:</strong> ${ultimaMedida.cuello} cm</div>
                                 <div class="col-md-4"><strong>Caderas:</strong> ${ultimaMedida.caderas} cm</div>
                             </div>
+                        </div>
+                    </div>
+                ` : ""}
+
+                ${planes.length > 0 ? `
+                    <div class="card mt-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Planes de Alimentación Asignados</h5>
+                        </div>
+                        <div class="card-body">
+                            ${planes.map(p => {
+                                const hoy = new Date().toLocaleDateString("en-CA");
+                                const inicio = p.fecha_inicio?.split("T")[0];
+                                const fin = p.fecha_fin?.split("T")[0];
+                                const activo = hoy >= inicio && hoy <= fin;
+                                return `
+                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded ${activo ? 'border border-success' : 'border'}">
+                                    <div>
+                                        <strong>${p.nombre}</strong>
+                                        ${activo ? '<span class="badge bg-success ms-2">Activo</span>' : '<span class="badge bg-secondary ms-2">Inactivo</span>'}
+                                        <div class="small text-muted">${p.total_calorias} kcal estimadas · Del ${inicio} al ${fin}</div>
+                                    </div>
+                                </div>`;
+                            }).join("")}
                         </div>
                     </div>
                 ` : ""}
@@ -657,7 +681,7 @@ class Views {
                                                         <strong>${m.autor === email ? "Tú" : "Nutricionista"}</strong>
                                                         · ${new Date(m.fechaUtc).toLocaleString("es-CR")}
                                                     </small>
-                                                    <p class="mb-0 mt-1">${m.contenido ?? m.mensaje ?? m.Mensaje ?? "—"}</p>
+                                                    <p class="mb-0 mt-1">${m.contenido}</p>
                                                 </div>
                                             </div>
                                         </div>

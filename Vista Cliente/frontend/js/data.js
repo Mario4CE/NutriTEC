@@ -27,10 +27,7 @@ class Data {
 
   static async buscarProductosYRecetas(query) {
     try {
-      // Buscar productos aprobados
       const productos = await Data.buscarProductos(query, "nombre");
-
-      // Buscar en recetas del usuario
       const session = getSession();
       const recetas = session?.idUsuario ? await Data.getRecetas(null) : [];
       const recetasFiltradas = recetas
@@ -52,7 +49,6 @@ class Data {
           idReceta:      r.id,
           productosReceta: r.productos,
         }));
-
       return [...productos, ...recetasFiltradas];
     } catch (err) {
       console.error("buscarProductosYRecetas error:", err.message);
@@ -116,6 +112,23 @@ class Data {
   }
 
   // ===========================================================
+  // PLANES — SQL API
+  // ===========================================================
+
+  static async getPlanesUsuario() {
+    try {
+      const session = getSession();
+      if (!session?.idUsuario) return [];
+      const res   = await apiFetch(ENDPOINTS.planes.porUsuario(session.idUsuario));
+      const lista = res?.data ?? res ?? [];
+      return Array.isArray(lista) ? lista : [];
+    } catch (err) {
+      console.error("getPlanesUsuario error:", err.message);
+      return [];
+    }
+  }
+
+  // ===========================================================
   // MEDIDAS
   // ===========================================================
 
@@ -126,7 +139,7 @@ class Data {
       await apiFetch(ENDPOINTS.medidas.registrar(session.idUsuario), {
         method: "POST",
         body: JSON.stringify({
-          Fecha:      new Date().toISOString().split("T")[0],
+          Fecha:      new Date().toLocaleDateString("en-CA"),
           Cintura:    parseFloat(medida.cintura)           || null,
           Cuello:     parseFloat(medida.cuello)            || null,
           Caderas:    parseFloat(medida.caderas)           || null,
@@ -284,7 +297,6 @@ class Data {
       const session = getSession();
       if (!session?.idUsuario) return false;
 
-      // Si es una receta, registrar cada producto de la receta por separado
       if (String(productoId).startsWith("receta-")) {
         const idReceta = String(productoId).replace("receta-", "");
         const recetas  = await Data.getRecetas(null);
@@ -362,7 +374,6 @@ class Data {
       const lista = res?.data ?? res ?? [];
       if (!Array.isArray(lista)) return [];
 
-      // Agrupar filas por id_receta (JOIN repite la receta por cada producto)
       const grupos = {};
       lista.forEach((r) => {
         if (!grupos[r.id_receta]) {

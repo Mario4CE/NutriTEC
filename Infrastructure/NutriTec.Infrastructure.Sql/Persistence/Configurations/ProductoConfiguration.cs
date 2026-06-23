@@ -74,10 +74,27 @@ public sealed class ProductoConfiguration : IEntityTypeConfiguration<Producto>
             .HasColumnName("fecha_creacion_utc")
             .IsRequired();
 
-        builder.Ignore(producto => producto.PorcionGramosMililitros);
-        builder.Ignore(producto => producto.SodioMiligramos);
-        builder.Ignore(producto => producto.Vitaminas);
-        builder.Ignore(producto => producto.CalcioMiligramos);
-        builder.Ignore(producto => producto.HierroMiligramos);
-    }
+        builder.Property(producto => producto.PorcionGramosMililitros)
+            .HasColumnName("porcion_g_ml")
+            .HasPrecision(10, 2)
+            .IsRequired();
+
+        builder.Property(producto => producto.SodioMiligramos)
+            .HasColumnName("sodio_mg")
+            .HasPrecision(10, 2)
+            .IsRequired();
+
+        builder.Property(producto => producto.Vitaminas)
+            .HasColumnName("vitaminas")
+            .HasMaxLength(255)
+            .IsUnicode(false);
+
+        builder.Property(producto => producto.CalcioMiligramos)
+            .HasColumnName("calcio_mg")
+            .HasPrecision(10, 2);
+
+        builder.Property(producto => producto.HierroMiligramos)
+            .HasColumnName("hierro_mg")
+            .HasPrecision(10, 2);
+            }
 }

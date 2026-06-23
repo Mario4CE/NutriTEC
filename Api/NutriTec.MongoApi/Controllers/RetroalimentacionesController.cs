@@ -134,4 +134,38 @@ public sealed class RetroalimentacionesController(IRetroalimentacionService serv
 
         return NoContent();
     }
+
+    /*
+    * Descripción:
+    * Endpoint alternativo que acepta el id_usuario como int (SQL Server)
+    * y lo convierte internamente a Guid para consultar MongoDB.
+    * Resuelve la incompatibilidad de tipos entre SQL Server (int) y MongoDB (Guid).
+    */
+    [HttpGet("pacientes/int/{idUsuario:int}")]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyCollection<RetroalimentacionResponse>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyCollection<RetroalimentacionResponse>>>> ObtenerPorPacienteIntAsync(
+        int idUsuario,
+        CancellationToken cancellationToken)
+    {
+        var idGuid = new Guid($"00000000-0000-0000-0000-{idUsuario:D12}");
+        var retroalimentaciones = await service.ObtenerPorPacienteAsync(idGuid, cancellationToken);
+        return Ok(ApiResponse<IReadOnlyCollection<RetroalimentacionResponse>>.SuccessResponse(retroalimentaciones));
+    }
+
+    /*
+    * Descripción:
+    * Endpoint alternativo que acepta la cédula del nutricionista como string (SQL Server)
+    * y la convierte internamente a Guid para consultar MongoDB.
+    */
+    [HttpGet("nutricionistas/cedula/{cedula}")]
+    [ProducesResponseType(typeof(ApiResponse<IReadOnlyCollection<RetroalimentacionResponse>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<IReadOnlyCollection<RetroalimentacionResponse>>>> ObtenerPorNutricionistaCedulaAsync(
+        string cedula,
+        CancellationToken cancellationToken)
+    {
+        var cedulaNum = long.TryParse(cedula, out var num) ? num : 0;
+        var idGuid = new Guid($"00000000-0000-0000-0000-{cedulaNum:D12}");
+        var retroalimentaciones = await service.ObtenerPorNutricionistaAsync(idGuid, cancellationToken);
+        return Ok(ApiResponse<IReadOnlyCollection<RetroalimentacionResponse>>.SuccessResponse(retroalimentaciones));
+    }
 }
