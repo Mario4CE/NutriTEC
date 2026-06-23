@@ -241,17 +241,37 @@ class Views {
                         </div>
                         <div class="card-body">
                             ${planes.map(p => {
-                                const hoy = new Date().toLocaleDateString("en-CA");
+                                const hoy    = new Date().toLocaleDateString("en-CA");
                                 const inicio = p.fecha_inicio?.split("T")[0];
-                                const fin = p.fecha_fin?.split("T")[0];
+                                const fin    = p.fecha_fin?.split("T")[0];
                                 const activo = hoy >= inicio && hoy <= fin;
                                 return `
-                                <div class="d-flex justify-content-between align-items-center mb-2 p-2 rounded ${activo ? 'border border-success' : 'border'}">
-                                    <div>
+                                <div class="mb-3 p-3 rounded ${activo ? 'border border-success' : 'border'}">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
                                         <strong>${p.nombre}</strong>
-                                        ${activo ? '<span class="badge bg-success ms-2">Activo</span>' : '<span class="badge bg-secondary ms-2">Inactivo</span>'}
-                                        <div class="small text-muted">${p.total_calorias} kcal estimadas · Del ${inicio} al ${fin}</div>
+                                        <span>
+                                            ${activo ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Inactivo</span>'}
+                                            <small class="text-muted ms-2">${inicio} al ${fin}</small>
+                                        </span>
                                     </div>
+                                    ${p.tiempos && p.tiempos.length > 0 ? `
+                                        <div class="row">
+                                            ${p.tiempos.map(t => `
+                                                <div class="col-md-4 mb-2">
+                                                    <div class="card h-100">
+                                                        <div class="card-header py-1 bg-light">
+                                                            <small class="fw-bold">${t.tipo_comida}</small>
+                                                        </div>
+                                                        <div class="card-body py-2">
+                                                            ${t.productos.length > 0 ? t.productos.map(prod => `
+                                                                <div class="small">• ${prod.nombre} <span class="text-muted">(${prod.calorias} kcal)</span></div>
+                                                            `).join("") : '<small class="text-muted">Sin productos</small>'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            `).join("")}
+                                        </div>
+                                    ` : '<small class="text-muted">Sin tiempos de comida definidos</small>'}
                                 </div>`;
                             }).join("")}
                         </div>
@@ -681,7 +701,7 @@ class Views {
                                                         <strong>${m.autor === email ? "Tú" : "Nutricionista"}</strong>
                                                         · ${new Date(m.fechaUtc).toLocaleString("es-CR")}
                                                     </small>
-                                                    <p class="mb-0 mt-1">${m.contenido}</p>
+                                                    <p class="mb-0 mt-1">${m.contenido ?? m.mensaje ?? m.Mensaje ?? "—"}</p>
                                                 </div>
                                             </div>
                                         </div>

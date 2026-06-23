@@ -33,20 +33,20 @@ class Data {
       const recetasFiltradas = recetas
         .filter((r) => r.nombre.toLowerCase().includes(query.toLowerCase()))
         .map((r) => ({
-          id:            `receta-${r.id}`,
-          codigoBarras:  null,
-          descripcion:   `🍽️ ${r.nombre} (receta)`,
-          porcion:       100,
-          energia:       r.energia ?? 0,
-          proteina:      0,
-          carbohidratos: 0,
-          grasa:         0,
-          sodio:         null,
-          vitaminas:     null,
-          calcio:        null,
-          hierro:        null,
-          esReceta:      true,
-          idReceta:      r.id,
+          id:              `receta-${r.id}`,
+          codigoBarras:    null,
+          descripcion:     `🍽️ ${r.nombre} (receta)`,
+          porcion:         100,
+          energia:         r.energia ?? 0,
+          proteina:        0,
+          carbohidratos:   0,
+          grasa:           0,
+          sodio:           null,
+          vitaminas:       null,
+          calcio:          null,
+          hierro:          null,
+          esReceta:        true,
+          idReceta:        r.id,
           productosReceta: r.productos,
         }));
       return [...productos, ...recetasFiltradas];
@@ -121,7 +121,39 @@ class Data {
       if (!session?.idUsuario) return [];
       const res   = await apiFetch(ENDPOINTS.planes.porUsuario(session.idUsuario));
       const lista = res?.data ?? res ?? [];
-      return Array.isArray(lista) ? lista : [];
+      if (!Array.isArray(lista)) return [];
+
+      // Cargar detalle de cada plan (tiempos de comida y productos)
+      const planesConDetalle = await Promise.all(lista.map(async (plan) => {
+        try {
+          const detRes  = await apiFetch(ENDPOINTS.planes.detalle(plan.id_plan));
+          const detalle = detRes?.data ?? detRes ?? [];
+
+          // Agrupar filas por tiempo de comida
+          const tiempos = {};
+          detalle.forEach((row) => {
+            if (!tiempos[row.id_tiempo]) {
+              tiempos[row.id_tiempo] = {
+                tipo_comida: row.tipo_comida,
+                productos:   [],
+              };
+            }
+            if (row.id_producto) {
+              tiempos[row.id_tiempo].productos.push({
+                nombre:             row.nombre_producto,
+                cantidad_porciones: row.cantidad_porciones,
+                calorias:           row.calorias,
+              });
+            }
+          });
+
+          return { ...plan, tiempos: Object.values(tiempos) };
+        } catch (err) {
+          return { ...plan, tiempos: [] };
+        }
+      }));
+
+      return planesConDetalle;
     } catch (err) {
       console.error("getPlanesUsuario error:", err.message);
       return [];
